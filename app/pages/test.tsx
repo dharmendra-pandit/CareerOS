@@ -248,21 +248,14 @@ const Test = () => {
     return score
   }
 
-  const getLanguageId = (lang: string) => {
-    switch (lang) {
-      case 'python': return 71
-      case 'javascript': return 93
-      case 'cpp': return 54
-      case 'java': return 91
-      default: return 71
-    }
-  }
+  // Maps UI language names to HackerEarth v4 language codes
+  const getLanguageId = (lang: string) => lang || 'python'
 
-  // Compiler code submission & execution via proxy API (Runs Judge0)
+  // Compiler code submission & execution via proxy API (HackerEarth v4)
   const handleRunCompiler = async (isSubmit: boolean = false) => {
     if (!activeCodingProblem) return
     setCompiling(true)
-    setConsoleOutput('Sending code to Judge0 compiler proxy...')
+    setConsoleOutput('Sending code to HackerEarth evaluator...')
     setTestCaseResults([])
 
     // Sample execution runs only test case 0, submit runs all
@@ -353,7 +346,7 @@ const Test = () => {
   const handleAutoSubmitCoding = async () => {
     if (timerRef.current) clearInterval(timerRef.current)
     setCompiling(true)
-    setConsoleOutput('Time limit reached! Auto-submitting code for compilation verification...')
+    setConsoleOutput('Time limit reached. Auto-submitting to HackerEarth evaluator...')
     
     try {
       const res = await fetch('/api/compile', {

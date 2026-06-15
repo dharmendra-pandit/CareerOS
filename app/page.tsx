@@ -6,8 +6,15 @@ import { Shield } from 'lucide-react'
 
 const Page = () => {
   const [selectedPage, setSelectedPage] = useState('home')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('career_os_auth_session') === 'true'
+  })
+  const isMounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
 
   // Auth gate flow states
   const [step, setStep] = useState<'code' | 'pass'>('code')
@@ -15,11 +22,6 @@ const Page = () => {
   const [error, setError] = useState('')
   const [attempts, setAttempts] = useState({ code: 0, pass: 0 })
   const [isLocked, setIsLocked] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-    setIsAuthenticated(localStorage.getItem('career_os_auth_session') === 'true')
-  }, [])
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()

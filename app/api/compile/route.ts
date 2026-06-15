@@ -5,6 +5,143 @@ interface TestCase {
   output: string
 }
 
+// HackerEarth v4 language identifiers
+const LANG_MAP: Record<string, string> = {
+  python: 'PYTHON3',
+  javascript: 'JAVASCRIPT_NODE',
+  cpp: 'CPP17',
+  java: 'JAVA8',
+}
+
+const HE_API = 'https://api.hackerearth.com/v4/partner/code-evaluation/submissions/'
+const MAX_POLL_ATTEMPTS = 20   // poll up to 20 times
+const POLL_INTERVAL_MS = 1500  // every 1.5 seconds
+
+function normalizeOutput(s: string): string {
+  return (s || '').trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+}
+
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function submitAndPoll(
+  apiKey: string,
+  source: string,
+  lang: string,
+  input: string,
+  expectedOutput: string,
+  index: number
+): Promise<object> {
+  // Step 1: Submit
+  const submitRes = await fetch(HE_API, {
+    method: 'POST',
+    headers: {
+      'client-secret': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      lang,
+      source,
+      input,
+      memory_limit: 262144,
+      time_limit: 5,
+    }),
+  })
+
+  if (!submitRes.ok) {
+    const text = await submitRes.text()
+    return {
+      index,
+      status: { description: 'Submission Error' },
+      stdout: null,
+      stderr: `HackerEarth API error (${submitRes.status}): ${text}`,
+      compile_output: null,
+      passed: false,
+    }
+  }
+
+  const submitData = await submitRes.json()
+  const heId: string = submitData.he_id
+  const statusUrl = `${HE_API}${heId}/`
+
+  if (!heId) {
+    return {
+      index,
+      status: { description: 'No submission ID returned' },
+      stdout: null,
+      stderr: JSON.stringify(submitData),
+      compile_output: null,
+      passed: false,
+    }
+  }
+
+  // Step 2: Poll until REQUEST_COMPLETED
+  let pollAttempts = 0
+  while (pollAttempts < MAX_POLL_ATTEMPTS) {
+    await sleep(POLL_INTERVAL_MS)
+    pollAttempts++
+
+    const statusRes = await fetch(statusUrl, {
+      headers: { 'client-secret': apiKey },
+    })
+
+    if (!statusRes.ok) continue
+
+    const statusData = await statusRes.json()
+    const code: string = statusData.request_status?.code || ''
+
+    if (code === 'REQUEST_COMPLETED') {
+      const result = statusData.result || {}
+      const runResult = result.run_status || {}
+      const compileResult = result.compile_status || {}
+
+      const stdout = normalizeOutput(runResult.output || '')
+      const stderr = normalizeOutput(runResult.stderr || runResult.signal || '')
+      const compileOutput = normalizeOutput(compileResult.message || '')
+      const statusDesc = runResult.status || compileResult.status || 'Unknown'
+      const expected = normalizeOutput(expectedOutput)
+
+      const passed =
+        (runResult.status === 'AC' || runResult.exit_code === 0) &&
+        stdout === expected
+
+      return {
+        index,
+        status: { description: statusDesc },
+        stdout,
+        stderr,
+        compile_output: compileOutput,
+        passed,
+      }
+    }
+
+    // Compile error — stop polling early
+    if (code === 'REQUEST_COMPILE_FAILED') {
+      const result = statusData.result || {}
+      const compileResult = result.compile_status || {}
+      return {
+        index,
+        status: { description: 'Compile Error' },
+        stdout: null,
+        stderr: null,
+        compile_output: normalizeOutput(compileResult.message || 'Compilation failed.'),
+        passed: false,
+      }
+    }
+  }
+
+  // Timed out waiting
+  return {
+    index,
+    status: { description: 'Evaluation Timeout' },
+    stdout: null,
+    stderr: 'The evaluation server did not respond in time. Please try again.',
+    compile_output: null,
+    passed: false,
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { source_code, language_id, test_cases } = await req.json()
@@ -13,80 +150,50 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Source code is required' }, { status: 400 })
     }
     if (!language_id) {
-      return NextResponse.json({ error: 'Language ID is required' }, { status: 400 })
+      return NextResponse.json({ error: 'Language is required' }, { status: 400 })
     }
     if (!test_cases || !Array.isArray(test_cases)) {
       return NextResponse.json({ error: 'Test cases must be an array' }, { status: 400 })
     }
 
-    const judge0Url = process.env.JUDGE0_API_URL || 'http://localhost:2358'
-
-    // Encode strings to base64
-    const b64Source = Buffer.from(source_code).toString('base64')
-
-    // Submit each testcase in parallel
-    const submissionPromises = test_cases.map(async (tc: TestCase, index: number) => {
-      const b64Input = Buffer.from(tc.input).toString('base64')
-      const b64Output = Buffer.from(tc.output).toString('base64')
-
-      try {
-        const res = await fetch(`${judge0Url}/submissions?base64_encoded=true&wait=true`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            source_code: b64Source,
-            language_id: Number(language_id),
-            stdin: b64Input,
-            expected_output: b64Output,
-          }),
-        })
-
-        if (!res.ok) {
-          const text = await res.text()
-          return {
-            index,
-            status: { id: 13, description: 'Internal Error' },
-            stdout: null,
-            stderr: `Judge0 returned error code ${res.status}: ${text}`,
-            compile_output: null,
-            passed: false,
-          }
-        }
-
-        const data = await res.json()
-
-        const decodedStdout = data.stdout ? Buffer.from(data.stdout, 'base64').toString('utf-8') : ''
-        const decodedStderr = data.stderr ? Buffer.from(data.stderr, 'base64').toString('utf-8') : ''
-        const decodedCompile = data.compile_output ? Buffer.from(data.compile_output, 'base64').toString('utf-8') : ''
-
-        return {
+    const apiKey = process.env.HACKEREARTH_API_KEY
+    if (!apiKey || apiKey === 'your_hackerearth_api_key_here') {
+      return NextResponse.json({
+        results: test_cases.map((_: TestCase, index: number) => ({
           index,
-          status: data.status || { id: 13, description: 'Unknown' },
-          stdout: decodedStdout,
-          stderr: decodedStderr,
-          compile_output: decodedCompile,
-          passed: data.status?.id === 3, // 3 means "Accepted"
-        }
-      } catch (err: any) {
-        console.error(`Error compiling testcase ${index}:`, err)
-        return {
-          index,
-          status: { id: 13, description: 'Judge0 Offline' },
+          status: { description: 'API Key Not Configured' },
           stdout: null,
-          stderr: `Failed to connect to Judge0 compiler at ${judge0Url}. Please make sure your self-hosted compiler is running.`,
+          stderr: 'HACKEREARTH_API_KEY is not set in environment variables.',
           compile_output: null,
           passed: false,
-        }
-      }
-    })
+        }))
+      })
+    }
 
-    const results = await Promise.all(submissionPromises)
+    // Map our language name to HackerEarth language code
+    const lang = LANG_MAP[language_id] || LANG_MAP['python']
+
+    // Run test cases sequentially to avoid rate limiting
+    const results: object[] = []
+    for (let i = 0; i < test_cases.length; i++) {
+      const tc: TestCase = test_cases[i]
+      const result = await submitAndPoll(
+        apiKey,
+        source_code,
+        lang,
+        tc.input,
+        tc.output,
+        i
+      )
+      results.push(result)
+    }
 
     return NextResponse.json({ results })
   } catch (error: any) {
     console.error('Compiler proxy error:', error)
-    return NextResponse.json({ error: 'Server error compiling code: ' + error.message }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Server error compiling code: ' + error.message },
+      { status: 500 }
+    )
   }
 }
