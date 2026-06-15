@@ -1,0 +1,170 @@
+{
+  "Monday": [
+    {
+      "time": "08:00 - 12:00",
+      "subject": "AI & ML",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#FF5733"
+    },
+    {
+      "time": "3:00 - 8:00",
+      "subject": "DSA",
+      "partsofday": "Afternoon",
+      "completed": false,
+      "color": "#33FF57"
+    },
+    {
+      "time": "9:00 - 12:00",
+      "subject": "Devops",
+      "partsofday": "Night",
+      "completed": false,
+      "color": "#3357FF"
+    }
+  ],
+  "Tuesday": [
+    {
+      "time": "08:00 - 12:00",
+      "subject": "AI & ML",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#FF5733"
+    },
+    {
+      "time": "3:00 - 8:00",
+      "subject": "DSA",
+      "partsofday": "Afternoon",
+      "completed": false,
+      "color": "#33FF57"
+    },
+    {
+      "time": "9:00 - 12:00",
+      "subject": "Devops",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#3357FF"
+    }
+  ],
+  "Wednesday": [
+    {
+      "time": "08:00 - 12:00",
+      "subject": "AI & ML",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#FF5733"
+    },
+    {
+      "time": "3:00 - 8:00",
+      "subject": "DSA",
+      "partsofday": "Afternoon",
+      "completed": false,
+      "color": "#33FF57"
+    },
+    {
+      "time": "9:00 - 12:00",
+      "subject": "Devops",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#3357FF"
+    }
+  ],
+  "Thursday": [
+    {
+      "time": "08:00 - 12:00",
+      "subject": "AI & ML",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#FF5733"
+    },
+    {
+      "time": "3:00 - 8:00",
+      "subject": "DSA",
+      "partsofday": "Afternoon",
+      "completed": false,
+      "color": "#33FF57"
+    },
+    {
+      "time": "9:00 - 12:00",
+      "subject": "Devops",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#3357FF"
+    }
+  ],
+  "Friday": [
+    {
+      "time": "08:00 - 12:00",
+      "subject": "AI & ML",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#FF5733"
+    },
+    {
+      "time": "3:00 - 8:00",
+      "subject": "DSA",
+      "partsofday": "Afternoon",
+      "completed": false,
+      "color": "#33FF57"
+    },
+    {
+      "time": "9:00 - 12:00",
+      "subject": "Devops",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#3357FF"
+    }
+  ],
+  "Saturday": [
+    {
+      "time": "08:00 - 12:00",
+      "subject": "AI & ML",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#FF5733"
+    },
+    {
+      "time": "3:00 - 8:00",
+      "subject": "DSA",
+      "partsofday": "Afternoon",
+      "completed": false,
+      "color": "#33FF57"
+    },
+    {
+      "time": "9:00 - 12:00",
+      "subject": "Devops",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#3357FF"
+    }
+  ],
+  "Sunday": [
+    {
+      "time": "08:00 - 11:00",
+      "subject": "core subjects",
+      "partsofday": "Morning",
+      "completed": false,
+      "color": "#FF5733"
+    },
+    {
+      "time": "2:00 - 5:00",
+      "subject": "Aptitude",
+      "partsofday": "Afternoon",
+      "completed": false,
+      "color": "#33FF57"
+    },
+    {
+      "time": "6:00 - 8:00",
+      "subject": "Soft skills",
+      "partsofday": "Evening",
+      "completed": false,
+      "color": "#3357FF"
+    },
+    {
+      "time": "9:00 - 12:00",
+      "subject": "Projects",
+      "partsofday": "Night",
+      "completed": false,
+      "color": "#FF33A1"
+    }
+  ]
+}
