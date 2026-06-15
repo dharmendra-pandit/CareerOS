@@ -184,6 +184,39 @@ const OFFLINE_CODING_FALLBACKS: Record<string, CodingProblem> = {
   }
 }
 
+/**
+ * Robustly parse a JSON string from an LLM response.
+ * Handles: markdown code fences (```json ... ```), trailing commas,
+ * extra text before/after the JSON object, and whitespace.
+ */
+function safeParseJSON(raw: string): any {
+  if (!raw || typeof raw !== 'string') throw new Error('Empty AI response content')
+
+  let text = raw.trim()
+
+  // Strip markdown code fences: ```json ... ``` or ``` ... ```
+  text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
+
+  // Extract the first JSON object or array (find first { or [)
+  const firstBrace = text.indexOf('{')
+  const firstBracket = text.indexOf('[')
+  let startIdx = -1
+  if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+    startIdx = firstBrace
+  } else if (firstBracket !== -1) {
+    startIdx = firstBracket
+  }
+
+  if (startIdx > 0) {
+    text = text.slice(startIdx)
+  }
+
+  // Remove trailing commas before ] or } (common LLM mistake)
+  text = text.replace(/,\s*([\]\}])/g, '$1')
+
+  return JSON.parse(text)
+}
+
 export async function POST(req: Request) {
   try {
     const { type, topic, company, difficulty, round } = await req.json()
@@ -246,7 +279,7 @@ Do not pretty-print. No markdown syntax (\`\`\`json). No indentation. Keep all s
 
       const payload = await apiRes.json()
       const content = payload.choices?.[0]?.message?.content
-      const parsed = JSON.parse(content)
+      const parsed = safeParseJSON(content)
       
       const formattedQuestions = (parsed.questions || []).map((item: any) => ({
         id: item.id,
@@ -345,7 +378,7 @@ Do not pretty-print. Keep all strings short to save tokens.`
 
       const payload = await apiRes.json()
       const content = payload.choices?.[0]?.message?.content
-      const parsed = JSON.parse(content)
+      const parsed = safeParseJSON(content)
 
       if (isCodingRound) {
         const rawProblem = parsed.codingProblem || {}
