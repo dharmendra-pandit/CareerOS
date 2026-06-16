@@ -240,6 +240,7 @@ export async function POST(req: Request) {
       }
 
       const prompt = `Generate exactly 20 highly tricky, practical, industry-standard multiple choice questions (MCQ) for practice on topic: "${normTopic}" at difficulty: "${normDiff}".
+The questions must be strictly oriented towards medium and hard difficulty levels (i.e. intermediate to advanced concept testing, debugging snippets, system optimization, no easy or trivial definition questions). Even if the requested difficulty is easy, internally elevate the complexity to a solid medium level.
 Focus on real-world coding snippets, algorithmic complexity, performance bottlenecks, and systems topics.
 Format output as a compact, minified JSON object containing key "questions" (array of MCQ objects).
 Each MCQ object must use exactly these short keys to save tokens:
@@ -248,6 +249,7 @@ Each MCQ object must use exactly these short keys to save tokens:
 - o: array of 4 options strings
 - c: number (index of correct option, 0-3)
 - e: string (explanation, strictly under 8 words)
+- difficulty: string (strictly either "medium" or "hard" based on the actual complexity)
 Do not pretty-print. No markdown syntax (\`\`\`json). No indentation. Keep all strings short to save tokens.`
 
       const apiRes = await fetch('https://api.deepseek.com/chat/completions', {
@@ -310,6 +312,7 @@ Do not pretty-print. No markdown syntax (\`\`\`json). No indentation. Keep all s
 
       if (isCodingRound) {
         prompt = `Generate exactly 1 highly practical, real-world scenario DSA coding challenge used in technical hiring at ${normCompany}.
+The coding challenge must be strictly oriented to medium or hard difficulty levels (similar to LeetCode Medium or LeetCode Hard). Do not generate easy challenges.
 The question should focus on core data structures/algorithms (such as graph traversals, heap, cache eviction, interval merge, rate limiting arrays, trees).
 Ensure to output a JSON object containing key "codingProblem" matching exactly the short keys below:
 - t: string (problem title)
@@ -345,6 +348,7 @@ Do not use markdown formatting. Keep descriptions concise to minimize tokens.`
         }
 
         prompt = `Generate exactly 10 highly tricky, practical, industry-standard MCQ questions for Round ${normRound} (${roundScope}) of simulated recruitment for "${normCompany}".
+The questions must be strictly oriented towards medium and hard difficulty levels (testing deep concept understanding, edge cases, trace analysis, and systems performance; no easy or trivial questions).
 Format output as a compact, minified JSON object containing key "questions" (array of MCQ objects).
 Each MCQ object must use exactly these short keys to save tokens:
 - id: number (1-10)

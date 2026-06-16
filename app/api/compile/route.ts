@@ -26,7 +26,8 @@ async function sleep(ms: number) {
 }
 
 async function submitAndPoll(
-  apiKey: string,
+  clientId: string,
+  clientSecret: string,
   source: string,
   lang: string,
   input: string,
@@ -37,7 +38,8 @@ async function submitAndPoll(
   const submitRes = await fetch(HE_API, {
     method: 'POST',
     headers: {
-      'client-secret': apiKey,
+      'client-id': clientId,
+      'client-secret': clientSecret,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -83,7 +85,10 @@ async function submitAndPoll(
     pollAttempts++
 
     const statusRes = await fetch(statusUrl, {
-      headers: { 'client-secret': apiKey },
+      headers: {
+        'client-id': clientId,
+        'client-secret': clientSecret,
+      },
     })
 
     if (!statusRes.ok) continue
@@ -156,14 +161,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Test cases must be an array' }, { status: 400 })
     }
 
-    const apiKey = process.env.HACKEREARTH_API_KEY
-    if (!apiKey || apiKey === 'your_hackerearth_api_key_here') {
+    const clientSecret = process.env.CLIENT_SECRET_KEY
+    const clientId = process.env.CLIENT_ID
+    if (!clientSecret || !clientId || clientSecret === 'your_hackerearth_api_key_here') {
       return NextResponse.json({
         results: test_cases.map((_: TestCase, index: number) => ({
           index,
-          status: { description: 'API Key Not Configured' },
+          status: { description: 'API Credentials Not Configured' },
           stdout: null,
-          stderr: 'HACKEREARTH_API_KEY is not set in environment variables.',
+          stderr: 'CLIENT_ID or CLIENT_SECRET_KEY is not set in environment variables.',
           compile_output: null,
           passed: false,
         }))
@@ -178,7 +184,8 @@ export async function POST(req: Request) {
     for (let i = 0; i < test_cases.length; i++) {
       const tc: TestCase = test_cases[i]
       const result = await submitAndPoll(
-        apiKey,
+        clientId,
+        clientSecret,
         source_code,
         lang,
         tc.input,

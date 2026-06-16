@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import MainBar from './components/mainbar'
 import SideBar from './components/sidebar'
-import { Shield } from 'lucide-react'
+
 
 const Page = () => {
   const [selectedPage, setSelectedPage] = useState('home')
@@ -11,7 +11,7 @@ const Page = () => {
     return localStorage.getItem('career_os_auth_session') === 'true'
   })
   const isMounted = React.useSyncExternalStore(
-    () => () => {},
+    () => () => { },
     () => true,
     () => false
   )
@@ -149,11 +149,10 @@ const Page = () => {
               {[0, 1, 2].map(i => (
                 <div
                   key={i}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    i < currentAttempts
-                      ? 'bg-rose-500 shadow-sm shadow-rose-500/50'
-                      : 'bg-zinc-800 border border-zinc-700'
-                  }`}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${i < currentAttempts
+                    ? 'bg-rose-500 shadow-sm shadow-rose-500/50'
+                    : 'bg-zinc-800 border border-zinc-700'
+                    }`}
                 />
               ))}
               {currentAttempts > 0 && (
@@ -170,11 +169,10 @@ const Page = () => {
             <button
               type="submit"
               disabled={inputValue.length < 6}
-              className={`w-full py-3.5 rounded-xl text-xs font-bold transition-all border ${
-                inputValue.length === 6
-                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/20 shadow-md shadow-indigo-600/10 cursor-pointer'
-                  : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 cursor-not-allowed'
-              }`}
+              className={`w-full py-3.5 rounded-xl text-xs font-bold transition-all border ${inputValue.length === 6
+                ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/20 shadow-md shadow-indigo-600/10 cursor-pointer'
+                : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 cursor-not-allowed'
+                }`}
             >
               Verify &amp; Proceed
             </button>
@@ -188,10 +186,10 @@ const Page = () => {
     <div className="flex w-full h-screen overflow-hidden bg-zinc-950 text-zinc-100">
       {/* Sidebar container with fixed width and separator */}
       <aside className="w-64 md:w-72 h-full flex-shrink-0 border-r border-zinc-800/80 bg-zinc-900/30 backdrop-blur-md">
-        <SideBar 
-          selectedPage={selectedPage} 
-          setSelectedPage={setSelectedPage} 
-          onLogout={handleLogout} 
+        <SideBar
+          selectedPage={selectedPage}
+          setSelectedPage={setSelectedPage}
+          onLogout={handleLogout}
         />
       </aside>
 

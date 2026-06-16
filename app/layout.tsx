@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'CareerOS',
   description: 'A platform for career development and skill enhancement.',
+  manifest: '/manifest.json',
 }
 
 export default function RootLayout({

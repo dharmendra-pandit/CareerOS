@@ -35,6 +35,45 @@ const Home = () => {
   // Schedule states
   const [schedule, setSchedule] = useState<ScheduleItem[]>([])
   const [loadingSchedule, setLoadingSchedule] = useState(false)
+  const [allSchedules, setAllSchedules] = useState<{ date: string; completedTimes: string[] }[]>([])
+
+  const fetchAllSchedules = async () => {
+    try {
+      const res = await fetch('/api/schedule?all=true')
+      if (res.ok) {
+        const data = await res.json()
+        setAllSchedules(data.schedules || [])
+      }
+    } catch (err) {
+      console.error('Error fetching all schedules:', err)
+    }
+  }
+
+  useEffect(() => {
+    fetchAllSchedules()
+  }, [])
+
+  const getCompletionStatusForDate = (date: Date) => {
+    const today = new Date()
+    const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const compareToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+
+    if (compareDate > compareToday) {
+      return 'future'
+    }
+
+    const dateString = formatDateString(date)
+    const scheduleDoc = allSchedules.find(s => s.date === dateString)
+    const completedCount = scheduleDoc?.completedTimes?.length || 0
+
+    if (completedCount >= 3) {
+      return 'green'
+    } else if (completedCount === 2) {
+      return 'yellow'
+    } else {
+      return 'red'
+    }
+  }
 
   // Calendar calculations
   const getDaysInMonth = (date: Date) => {
@@ -129,6 +168,7 @@ const Home = () => {
             idx === index ? { ...sItem, completed } : sItem
           )
         )
+        fetchAllSchedules()
       } else {
         alert('Failed to update task completion in database')
       }
@@ -148,7 +188,7 @@ const Home = () => {
       cells.push(<div key={`empty-${i}`} className="h-8 md:h-10" />)
     }
 
-    // Add actual days of month
+      // Add actual days of month
     for (let day = 1; day <= daysInMonth; day++) {
       const cellDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
       const isSelected = 
@@ -161,17 +201,38 @@ const Home = () => {
         cellDate.getMonth() === today.getMonth() &&
         cellDate.getFullYear() === today.getFullYear()
 
+      const status = getCompletionStatusForDate(cellDate)
+
+      let colorClass = ''
+      if (isSelected) {
+        if (status === 'green') {
+          colorClass = 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-400 shadow-md shadow-emerald-500/20 border border-emerald-500/20'
+        } else if (status === 'yellow') {
+          colorClass = 'bg-amber-500 text-black font-bold ring-2 ring-amber-400 shadow-md shadow-amber-500/20 border border-amber-500/20'
+        } else if (status === 'red') {
+          colorClass = 'bg-rose-600 text-white font-bold ring-2 ring-rose-400 shadow-md shadow-rose-500/20 border border-rose-500/20'
+        } else {
+          colorClass = 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/20 border border-indigo-500/20'
+        }
+      } else {
+        if (status === 'green') {
+          colorClass = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold hover:bg-emerald-500/20'
+        } else if (status === 'yellow') {
+          colorClass = 'bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold hover:bg-amber-500/20'
+        } else if (status === 'red') {
+          colorClass = 'bg-rose-500/10 text-rose-400 border border-rose-500/30 font-bold hover:bg-rose-500/20'
+        } else {
+          colorClass = isToday
+            ? 'bg-zinc-800 text-indigo-400 border border-indigo-500/20 font-bold'
+            : 'hover:bg-zinc-900/60 text-zinc-300'
+        }
+      }
+
       cells.push(
         <button
           key={day}
           onClick={() => setSelectedDate(cellDate)}
-          className={`h-8 w-8 md:h-10 md:w-10 text-xs font-semibold rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-            isSelected
-              ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/20 border border-indigo-500/20'
-              : isToday
-              ? 'bg-zinc-800 text-indigo-400 border border-indigo-500/20 font-bold'
-              : 'hover:bg-zinc-900/60 text-zinc-300'
-          }`}
+          className={`h-8 w-8 md:h-10 md:w-10 text-xs font-semibold rounded-xl flex items-center justify-center transition-all cursor-pointer ${colorClass}`}
         >
           {day}
         </button>

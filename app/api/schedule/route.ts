@@ -4,13 +4,27 @@ import { getDb } from '@/lib/mongodb'
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
+    const all = searchParams.get('all')
     const date = searchParams.get('date')
+
+    const db = await getDb()
+
+    if (all === 'true') {
+      const docs = await db.collection('schedule').find({
+        userId: 'dharmendra_pandit'
+      }).toArray()
+      return NextResponse.json({
+        schedules: docs.map(doc => ({
+          date: doc.date,
+          completedTimes: doc.completedTimes || []
+        }))
+      })
+    }
 
     if (!date) {
       return NextResponse.json({ error: 'Missing date parameter' }, { status: 400 })
     }
 
-    const db = await getDb()
     const doc = await db.collection('schedule').findOne({
       userId: 'dharmendra_pandit',
       date: date
@@ -21,7 +35,7 @@ export async function GET(req: Request) {
     })
   } catch (error) {
     console.error('Error fetching schedule completions from MongoDB:', error)
-    return NextResponse.json({ completedTimes: [] })
+    return NextResponse.json({ completedTimes: [], schedules: [] })
   }
 }
 
