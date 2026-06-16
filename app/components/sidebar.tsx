@@ -1,5 +1,6 @@
 'use client'
 import React from 'react'
+import Image from 'next/image'
 import { 
   LayoutDashboard, 
   User, 
@@ -30,9 +31,19 @@ const SideBar: React.FC<SideBarProps> = ({ selectedPage = 'home', setSelectedPag
     <div className="h-full flex flex-col justify-between p-6 text-zinc-300 select-none">
       <div>
         {/* Brand Header */}
-        <div className="mb-8 px-2.5">
-          <h2 className="text-lg font-black text-zinc-100 tracking-wide">CareerOS</h2>
-          <span className="text-[10px] text-zinc-500 font-semibold tracking-wider uppercase">Beta v1.4</span>
+        <div className="mb-8 px-2.5 flex items-center gap-3">
+          <div className="relative h-7 w-7 overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 flex-shrink-0">
+            <Image
+              src="/careeros.png"
+              alt="CareerOS Logo"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="flex flex-col">
+            <h2 className="text-lg font-black text-zinc-100 tracking-wide leading-none">CareerOS</h2>
+            <span className="text-[10px] text-zinc-500 font-semibold tracking-wider uppercase mt-1">Beta v1.4</span>
+          </div>
         </div>
 
         {/* Navigation Items */}
