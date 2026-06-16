@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: 'CareerOS',
   description: 'A platform for career development and skill enhancement.',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/careeros.png',
+  },
 }
 
 export default function RootLayout({
