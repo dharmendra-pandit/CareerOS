@@ -32,52 +32,91 @@ interface GenerationResponse {
   error?: boolean
 }
 
-const sections = [
+const roadmaps = [
   {
-    title: 'Programming Languages',
-    items: ['Python', 'Java', 'C++', 'JavaScript'],
-    icon: <Code2 size={20} />,
-  },
-  {
-    title: 'Core Subjects',
-    items: [
-      'Computer Networks',
-      'Operating Systems',
-      'DBMS',
-      'Software Engineering',
-    ],
-    icon: <Database size={20} />,
-  },
-  {
-    title: 'Problem Solving',
-    items: ['Data Structures', 'Algorithms', 'SQL', 'OOPs'],
-    icon: <Cpu size={20} />,
-  },
-  {
-    title: 'Advanced Topics',
-    items: ['System Design', 'DevOps', 'Cloud Computing', 'Cyber Security'],
-    icon: <Cloud size={20} />,
-  },
-  {
-    title: 'AI & Data',
-    items: [
-      'Artificial Intelligence',
-      'Machine Learning',
-      'Deep Learning',
-      'Data Science',
-    ],
+    title: 'AI & ML',
     icon: <Brain size={20} />,
+    colorClass: 'indigo',
+    borderColor: 'hover:border-indigo-500/50',
+    glowColor: 'hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]',
+    iconBg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    pillClass: 'bg-indigo-500/5 hover:bg-indigo-600 border-indigo-500/10 hover:border-indigo-400 text-indigo-200',
+    topics: [
+      'Python', 'Maths', 'NumPy', 'Pandas', 'Visualization', 
+      'ML', 'Scikit-Learn', 'SQL', 'Deep Learning', 'NLP', 
+      'GenAI', 'Computer Vision', 'MLOps', 'Projects'
+    ]
   },
   {
-    title: 'Aptitude & English',
-    items: [
-      'Quantitative Aptitude',
-      'Logical Reasoning',
-      'Verbal Ability',
-      'English',
-    ],
-    icon: <Calculator size={20} />,
+    title: 'DevOps',
+    icon: <Cloud size={20} />,
+    colorClass: 'sky',
+    borderColor: 'hover:border-sky-500/50',
+    glowColor: 'hover:shadow-[0_0_20px_rgba(56,189,248,0.15)]',
+    iconBg: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+    pillClass: 'bg-sky-500/5 hover:bg-sky-600 border-sky-500/10 hover:border-sky-400 text-sky-200',
+    topics: [
+      'Linux', 'Networking', 'Git/GitHub', 'Docker', 'CI/CD', 
+      'AWS', 'Nginx', 'Databases', 'Kubernetes', 'Terraform', 
+      'Monitoring', 'Security', 'Projects'
+    ]
   },
+  {
+    title: 'DSA Basic',
+    icon: <Code2 size={20} />,
+    colorClass: 'emerald',
+    borderColor: 'hover:border-emerald-500/50',
+    glowColor: 'hover:shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+    iconBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    pillClass: 'bg-emerald-500/5 hover:bg-emerald-600 border-emerald-500/10 hover:border-emerald-400 text-emerald-200',
+    topics: [
+      'Time & Space Complexity', 'Arrays & 2D Arrays', 'Strings', 
+      'Python Collections (List, Set, Dict, deque, Counter, heapq)', 
+      'Sorting Algorithms', 'Recursion', 'Backtracking', 
+      'Divide & Conquer', 'OOP', 'Linked Lists', 'Stacks & Queues', 
+      'Binary Trees', 'Binary Search Trees (BST)'
+    ]
+  },
+  {
+    title: 'DSA Adv',
+    icon: <Cpu size={20} />,
+    colorClass: 'amber',
+    borderColor: 'hover:border-amber-500/50',
+    glowColor: 'hover:shadow-[0_0_20px_rgba(245,158,11,0.15)]',
+    iconBg: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    pillClass: 'bg-amber-500/5 hover:bg-amber-600 border-amber-500/10 hover:border-amber-400 text-amber-200',
+    topics: [
+      'Heaps (Priority Queue)', 'HashMaps & HashSets', 'Greedy Algorithms', 
+      'Graphs', 'Dynamic Programming', 'Tries', 'Segment Trees'
+    ]
+  },
+  {
+    title: 'Core MERN',
+    icon: <Database size={20} />,
+    colorClass: 'orange',
+    borderColor: 'hover:border-orange-500/50',
+    glowColor: 'hover:shadow-[0_0_20px_rgba(249,115,22,0.15)]',
+    iconBg: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    pillClass: 'bg-orange-500/5 hover:bg-orange-600 border-orange-500/10 hover:border-orange-400 text-orange-200',
+    topics: [
+      'HTML', 'CSS', 'JavaScript', 'React.js', 'Node.js', 
+      'Express.js', 'MongoDB', 'Mongoose', 'REST APIs', 
+      'Authentication', 'Deployment', 'Projects'
+    ]
+  },
+  {
+    title: 'Adv MERN',
+    icon: <Sliders size={20} />,
+    colorClass: 'rose',
+    borderColor: 'hover:border-rose-500/50',
+    glowColor: 'hover:shadow-[0_0_20px_rgba(244,63,94,0.15)]',
+    iconBg: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    pillClass: 'bg-rose-500/5 hover:bg-rose-600 border-rose-500/10 hover:border-rose-400 text-rose-200',
+    topics: [
+      'React Query', 'Redux Toolkit', 'Next.js', 'WebSockets', 
+      'Docker', 'AWS', 'CI/CD', 'Microservices', 'System Design'
+    ]
+  }
 ]
 
 const Practice = () => {
@@ -491,29 +530,38 @@ const Practice = () => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {sections.map((section) => (
+      <div className="grid lg:grid-cols-2 gap-6">
+        {roadmaps.map((roadmap) => (
           <div
-            key={section.title}
-            className="glass-card rounded-2xl p-5 border border-zinc-800/80 bg-zinc-900/10 flex flex-col justify-between"
+            key={roadmap.title}
+            className={`glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-900/10 flex flex-col justify-between transition-all duration-300 ${roadmap.borderColor} ${roadmap.glowColor}`}
           >
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  {section.icon}
+              <div className="flex items-center gap-3 mb-6">
+                <div className={`p-2.5 rounded-xl border ${roadmap.iconBg}`}>
+                  {roadmap.icon}
                 </div>
-                <h2 className="text-md font-bold tracking-tight text-zinc-200">{section.title}</h2>
+                <div>
+                  <h2 className="text-md font-bold tracking-tight text-zinc-200">{roadmap.title}</h2>
+                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+                    {roadmap.topics.length} Steps
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                {section.items.map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => handleSelectTopic(item)}
-                    className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 hover:bg-indigo-600 border border-zinc-800 text-xs font-semibold hover:text-white hover:border-indigo-500 transition-all duration-200 cursor-pointer"
-                  >
-                    {item}
-                  </button>
+              <div className="flex flex-wrap items-center gap-y-3.5 gap-x-2.5 pb-2">
+                {roadmap.topics.map((topic, tIdx) => (
+                  <React.Fragment key={topic}>
+                    <button
+                      onClick={() => handleSelectTopic(topic)}
+                      className={`text-left px-3 py-1.5 rounded-xl border text-[11px] font-semibold hover:text-white hover:scale-102 transition-all duration-200 cursor-pointer ${roadmap.pillClass}`}
+                    >
+                      {topic}
+                    </button>
+                    {tIdx < roadmap.topics.length - 1 && (
+                      <ChevronRight size={14} className="text-zinc-700 flex-shrink-0" />
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
             </div>
