@@ -4,7 +4,8 @@ import { getDb } from '@/lib/mongodb'
 const DEFAULT_PROGRESS = {
   userId: 'dharmendra_pandit',
   practiceCount: 0,
-  mockTestsCount: 0
+  mockTestsCount: 0,
+  history: []
 }
 
 export async function GET() {
@@ -32,17 +33,35 @@ export async function POST(req: Request) {
     if (type === 'reset') {
       await db.collection('progress').updateOne(
         { userId: 'dharmendra_pandit' },
-        { $set: { practiceCount: 0, mockTestsCount: 0 } },
+        { $set: { practiceCount: 0, mockTestsCount: 0, history: [] } },
         { upsert: true }
       )
-      return NextResponse.json({ success: true, practiceCount: 0, mockTestsCount: 0 })
+      return NextResponse.json({ success: true, practiceCount: 0, mockTestsCount: 0, history: [] })
     }
 
     const incrementField = type === 'practice' ? 'practiceCount' : 'mockTestsCount'
+    const { topic, difficulty, score, total } = body
+
+    const updateObj: any = {
+      $inc: { [incrementField]: 1 }
+    }
+
+    if (topic) {
+      updateObj.$push = {
+        history: {
+          type,
+          topic,
+          difficulty: difficulty || 'medium',
+          score: typeof score === 'number' ? score : 0,
+          total: typeof total === 'number' ? total : 20,
+          timestamp: new Date()
+        }
+      }
+    }
 
     const result = await db.collection('progress').findOneAndUpdate(
       { userId: 'dharmendra_pandit' },
-      { $inc: { [incrementField]: 1 } },
+      updateObj,
       { upsert: true, returnDocument: 'after' }
     )
 
@@ -52,7 +71,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       practiceCount: updatedDocument.practiceCount ?? 0,
-      mockTestsCount: updatedDocument.mockTestsCount ?? 0
+      mockTestsCount: updatedDocument.mockTestsCount ?? 0,
+      history: updatedDocument.history ?? []
     })
   } catch (error) {
     console.error('Error updating progress in MongoDB:', error)

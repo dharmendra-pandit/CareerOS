@@ -39,7 +39,7 @@ const roadmaps = [
     topics: [
       'Python', 'Maths', 'NumPy', 'Pandas', 'Visualization', 
       'ML', 'Scikit-Learn', 'SQL', 'Deep Learning', 'NLP', 
-      'GenAI', 'Computer Vision', 'MLOps', 'Projects'
+      'GenAI', 'Computer Vision', 'MLOps'
     ]
   },
   {
@@ -48,7 +48,7 @@ const roadmaps = [
     topics: [
       'Linux', 'Networking', 'Git/GitHub', 'Docker', 'CI/CD', 
       'AWS', 'Nginx', 'Databases', 'Kubernetes', 'Terraform', 
-      'Monitoring', 'Security', 'Projects'
+      'Monitoring', 'Security'
     ]
   },
   {
@@ -76,7 +76,7 @@ const roadmaps = [
     topics: [
       'HTML', 'CSS', 'JavaScript', 'React.js', 'Node.js', 
       'Express.js', 'MongoDB', 'Mongoose', 'REST APIs', 
-      'Authentication', 'Deployment', 'Projects'
+      'Authentication', 'Deployment'
     ]
   },
   {
@@ -181,13 +181,27 @@ const Practice = () => {
     setIsFinished(true)
     if (timerRef.current) clearInterval(timerRef.current)
 
+    let score = 0
+    questions.forEach(q => {
+      if (selectedAnswers[q.id] === q.correctOption) {
+        score++
+      }
+    })
+    const total = questions.length
+
     try {
       await fetch('/api/progress', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type: 'practice' }),
+        body: JSON.stringify({ 
+          type: 'practice',
+          topic: selectedTopic,
+          difficulty: selectedDifficulty,
+          score,
+          total
+        }),
       })
       window.dispatchEvent(new Event('storage'))
     } catch (err) {

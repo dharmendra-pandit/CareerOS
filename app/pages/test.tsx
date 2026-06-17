@@ -403,14 +403,19 @@ const Test = () => {
     
     if (activeRoundIdx === companyRounds.length - 1) {
       setCompletedRounds(prev => ({ ...prev, [currentRound]: true }))
-      
       try {
         await fetch('/api/progress', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ type: 'test' }),
+          body: JSON.stringify({ 
+            type: 'test',
+            topic: `${selectedCompany} Full Interview`,
+            difficulty: 'hard',
+            score: 10,
+            total: 10
+          }),
         })
         window.dispatchEvent(new Event('storage'))
       } catch (err) {
