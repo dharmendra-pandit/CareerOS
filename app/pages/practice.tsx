@@ -36,11 +36,6 @@ const roadmaps = [
   {
     title: 'AI & ML',
     icon: <Brain size={20} />,
-    colorClass: 'indigo',
-    borderColor: 'hover:border-indigo-500/50',
-    glowColor: 'hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]',
-    iconBg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    pillClass: 'bg-indigo-500/5 hover:bg-indigo-600 border-indigo-500/10 hover:border-indigo-400 text-indigo-200',
     topics: [
       'Python', 'Maths', 'NumPy', 'Pandas', 'Visualization', 
       'ML', 'Scikit-Learn', 'SQL', 'Deep Learning', 'NLP', 
@@ -50,11 +45,6 @@ const roadmaps = [
   {
     title: 'DevOps',
     icon: <Cloud size={20} />,
-    colorClass: 'sky',
-    borderColor: 'hover:border-sky-500/50',
-    glowColor: 'hover:shadow-[0_0_20px_rgba(56,189,248,0.15)]',
-    iconBg: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-    pillClass: 'bg-sky-500/5 hover:bg-sky-600 border-sky-500/10 hover:border-sky-400 text-sky-200',
     topics: [
       'Linux', 'Networking', 'Git/GitHub', 'Docker', 'CI/CD', 
       'AWS', 'Nginx', 'Databases', 'Kubernetes', 'Terraform', 
@@ -62,13 +52,8 @@ const roadmaps = [
     ]
   },
   {
-    title: 'DSA Basic',
+    title: 'Basic DSA',
     icon: <Code2 size={20} />,
-    colorClass: 'emerald',
-    borderColor: 'hover:border-emerald-500/50',
-    glowColor: 'hover:shadow-[0_0_20px_rgba(16,185,129,0.15)]',
-    iconBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    pillClass: 'bg-emerald-500/5 hover:bg-emerald-600 border-emerald-500/10 hover:border-emerald-400 text-emerald-200',
     topics: [
       'Time & Space Complexity', 'Arrays & 2D Arrays', 'Strings', 
       'Python Collections (List, Set, Dict, deque, Counter, heapq)', 
@@ -78,13 +63,8 @@ const roadmaps = [
     ]
   },
   {
-    title: 'DSA Adv',
+    title: 'Advanced DSA',
     icon: <Cpu size={20} />,
-    colorClass: 'amber',
-    borderColor: 'hover:border-amber-500/50',
-    glowColor: 'hover:shadow-[0_0_20px_rgba(245,158,11,0.15)]',
-    iconBg: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    pillClass: 'bg-amber-500/5 hover:bg-amber-600 border-amber-500/10 hover:border-amber-400 text-amber-200',
     topics: [
       'Heaps (Priority Queue)', 'HashMaps & HashSets', 'Greedy Algorithms', 
       'Graphs', 'Dynamic Programming', 'Tries', 'Segment Trees'
@@ -93,11 +73,6 @@ const roadmaps = [
   {
     title: 'Core MERN',
     icon: <Database size={20} />,
-    colorClass: 'orange',
-    borderColor: 'hover:border-orange-500/50',
-    glowColor: 'hover:shadow-[0_0_20px_rgba(249,115,22,0.15)]',
-    iconBg: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-    pillClass: 'bg-orange-500/5 hover:bg-orange-600 border-orange-500/10 hover:border-orange-400 text-orange-200',
     topics: [
       'HTML', 'CSS', 'JavaScript', 'React.js', 'Node.js', 
       'Express.js', 'MongoDB', 'Mongoose', 'REST APIs', 
@@ -105,13 +80,8 @@ const roadmaps = [
     ]
   },
   {
-    title: 'Adv MERN',
+    title: 'Advanced MERN',
     icon: <Sliders size={20} />,
-    colorClass: 'rose',
-    borderColor: 'hover:border-rose-500/50',
-    glowColor: 'hover:shadow-[0_0_20px_rgba(244,63,94,0.15)]',
-    iconBg: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    pillClass: 'bg-rose-500/5 hover:bg-rose-600 border-rose-500/10 hover:border-rose-400 text-rose-200',
     topics: [
       'React Query', 'Redux Toolkit', 'Next.js', 'WebSockets', 
       'Docker', 'AWS', 'CI/CD', 'Microservices', 'System Design'
@@ -534,11 +504,11 @@ const Practice = () => {
         {roadmaps.map((roadmap) => (
           <div
             key={roadmap.title}
-            className={`glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-900/10 flex flex-col justify-between transition-all duration-300 ${roadmap.borderColor} ${roadmap.glowColor}`}
+            className="glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-900/10 flex flex-col justify-between transition-all duration-300"
           >
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className={`p-2.5 rounded-xl border ${roadmap.iconBg}`}>
+                <div className="p-2.5 rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">
                   {roadmap.icon}
                 </div>
                 <div>
@@ -554,7 +524,7 @@ const Practice = () => {
                   <React.Fragment key={topic}>
                     <button
                       onClick={() => handleSelectTopic(topic)}
-                      className={`text-left px-3 py-1.5 rounded-xl border text-[11px] font-semibold hover:text-white hover:scale-102 transition-all duration-200 cursor-pointer ${roadmap.pillClass}`}
+                      className="text-left px-3 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-indigo-600 hover:border-indigo-500 text-[11px] font-semibold text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer"
                     >
                       {topic}
                     </button>
