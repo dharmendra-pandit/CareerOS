@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { Calendar as CalendarIcon, Clock, Check, X, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import Rightbar from '../components/subs/rightbar'
 
 interface ScheduleItem {
   time: string
@@ -28,6 +29,9 @@ const months = [
 ]
 
 const Home = () => {
+  // Layout shift state
+  const [isShifted, setIsShifted] = useState(false)
+
   // Date states
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
@@ -146,6 +150,14 @@ const Home = () => {
   }, [selectedDate])
 
   const toggleComplete = async (index: number, completed: boolean) => {
+    const today = new Date()
+    const isTodaySelected = 
+      selectedDate.getDate() === today.getDate() &&
+      selectedDate.getMonth() === today.getMonth() &&
+      selectedDate.getFullYear() === today.getFullYear()
+
+    if (!isTodaySelected) return
+
     const item = schedule[index]
     const dateString = formatDateString(selectedDate)
 
@@ -232,9 +244,12 @@ const Home = () => {
         <button
           key={day}
           onClick={() => setSelectedDate(cellDate)}
-          className={`h-8 w-8 md:h-10 md:w-10 text-xs font-semibold rounded-xl flex items-center justify-center transition-all cursor-pointer ${colorClass}`}
+          className={`h-8 w-8 md:h-10 md:w-10 text-xs font-semibold rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer relative ${colorClass}`}
         >
-          {day}
+          <span>{day}</span>
+          {isToday && (
+            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-indigo-500" />
+          )}
         </button>
       )
     }
@@ -246,166 +261,227 @@ const Home = () => {
   const totalCount = schedule.length
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
+  const today = new Date()
+  const isTodaySelected = 
+    selectedDate.getDate() === today.getDate() &&
+    selectedDate.getMonth() === today.getMonth() &&
+    selectedDate.getFullYear() === today.getFullYear()
+
   return (
-    <div className="p-6 text-zinc-100 min-h-screen animate-fade-in space-y-6">
-      {/* Overview Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-900">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Timetable Logs</span>
-          <h1 className="text-3xl font-black tracking-tight mt-0.5">Scheduler & History</h1>
-          <p className="text-xs text-zinc-400 mt-1">Select dates on the calendar to track and update task checklist logs.</p>
-        </div>
+    <div className="p-6 text-zinc-100 min-h-screen animate-fade-in relative overflow-hidden">
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setIsShifted(!isShifted)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4.5 py-3 bg-indigo-650 hover:bg-indigo-500 text-white rounded-full font-bold text-xs shadow-xl shadow-indigo-650/20 border border-indigo-500/20 transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer"
+        aria-label={isShifted ? "Restore Layout" : "Shift Left"}
+      >
+        <span className={`transition-transform duration-300 ${isShifted ? 'rotate-180' : ''}`}>
+          <ChevronLeft size={16} />
+        </span>
+        {isShifted ? "Restore Layout" : "Shift Left"}
+      </button>
 
-        {/* Completion Gauge */}
-        <div className="glass-card p-4 rounded-2xl flex items-center gap-4 w-full md:w-64">
-          <div className="relative h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700">
-            <span className="text-[10px] font-bold text-indigo-400">{progressPercent}%</span>
-            <svg className="absolute -inset-0 h-full w-full rotate-270" viewBox="0 0 36 36">
-              <path
-                className="text-zinc-800"
-                strokeWidth="2.5"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              <path
-                className="text-indigo-500 transition-all duration-500"
-                strokeWidth="2.5"
-                strokeDasharray={`${progressPercent}, 100`}
-                strokeLinecap="round"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-            </svg>
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-zinc-200">Date Progress</h4>
-            <p className="text-[10px] text-zinc-500 mt-0.5">{completedCount} of {totalCount} completed</p>
-          </div>
-        </div>
-      </div>
+      {/* Sliding Viewport Container */}
+      <div className="w-full overflow-hidden">
+        <div 
+          className={`flex transition-transform duration-500 ease-in-out w-[200%] lg:w-[133.33%] ${
+            isShifted 
+              ? 'translate-x-[-50%] lg:translate-x-[-25%]' 
+              : 'translate-x-0'
+          }`}
+        >
+          {/* Dashboard Left Content */}
+          <div className="w-1/2 lg:w-3/4 pr-0 lg:pr-6 space-y-6 flex-shrink-0">
+            {/* Overview Banner */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-900">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Timetable Logs</span>
+                <h1 className="text-3xl font-black tracking-tight mt-0.5">Scheduler &amp; History</h1>
+                <p className="text-xs text-zinc-400 mt-1">Select dates on the calendar to track and update task checklist logs.</p>
+              </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 items-start">
-        {/* Left Side: Calendar Module */}
-        <div className="lg:col-span-1 glass-card rounded-2xl p-5 border border-zinc-800 bg-zinc-900/10 space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-              <CalendarIcon className="h-3.5 w-3.5 text-indigo-400" />
-              Calendar
-            </h3>
-            
-            <div className="flex items-center gap-1">
-              <button onClick={prevMonth} className="p-1 rounded-lg hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 cursor-pointer">
-                <ChevronLeft size={16} />
-              </button>
-              <button onClick={nextMonth} className="p-1 rounded-lg hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 cursor-pointer">
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Month Indicator */}
-          <div className="text-center">
-            <span className="text-xs font-bold text-zinc-200 tracking-wide">
-              {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-            </span>
-          </div>
-
-          {/* Calendar Table Grid */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-            </div>
-            
-            <div className="grid grid-cols-7 gap-1 justify-items-center">
-              {renderCalendarCells()}
-            </div>
-          </div>
-
-          {/* Selected Date Summary */}
-          <div className="pt-3 border-t border-zinc-850 text-center">
-            <p className="text-[10px] font-semibold text-zinc-500">
-              Selected: <span className="text-indigo-400">{formatDateString(selectedDate)}</span> ({daysOfWeek[selectedDate.getDay()]})
-            </p>
-          </div>
-        </div>
-
-        {/* Right Side: Schedule Slot checklist */}
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1">
-            Tasks Checklist ({daysOfWeek[selectedDate.getDay()]})
-          </h3>
-
-          {loadingSchedule ? (
-            <div className="glass-card rounded-2xl p-10 text-center text-zinc-500 text-xs font-semibold flex items-center justify-center gap-2">
-              <div className="h-4 w-4 rounded-full border border-zinc-800 border-t-zinc-500 animate-spin" />
-              Syncing Schedule...
-            </div>
-          ) : schedule.length === 0 ? (
-            <div className="glass-card rounded-2xl p-8 text-center flex flex-col items-center justify-center">
-              <AlertCircle className="h-7 w-7 text-zinc-700 mb-2.5" />
-              <p className="text-zinc-500 text-xs font-semibold">No slots allocated for {daysOfWeek[selectedDate.getDay()]}.</p>
-            </div>
-          ) : (
-            schedule.map((item, index) => (
-              <div
-                key={index}
-                className={`glass-card rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 transition-all duration-200 ${
-                  item.completed
-                    ? 'border-l-emerald-500 bg-emerald-950/5'
-                    : 'border-l-indigo-500 bg-zinc-900/10'
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-850 text-center min-w-[95px] flex-shrink-0">
-                    <span className="text-[9px] font-bold text-zinc-500 uppercase block tracking-wider">
-                      {item.partsofday}
-                    </span>
-                    <span className="text-xs font-semibold text-zinc-350 mt-1 block flex items-center justify-center gap-1.5">
-                      <Clock className="h-3 w-3 text-zinc-500" />
-                      {item.time}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 className="text-md font-bold text-zinc-200 mt-0.5">{item.subject}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                          item.completed
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                        }`}
-                      >
-                        {item.completed ? 'Completed' : 'Pending'}
-                      </span>
-                    </div>
-                  </div>
+              {/* Completion Gauge */}
+              <div className="glass-card p-4 rounded-2xl flex items-center gap-4 w-full md:w-64">
+                <div className="relative h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700">
+                  <span className="text-[10px] font-bold text-indigo-400">{progressPercent}%</span>
+                  <svg className="absolute -inset-0 h-full w-full rotate-270" viewBox="0 0 36 36">
+                    <path
+                      className="text-zinc-800"
+                      strokeWidth="2.5"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className="text-indigo-500 transition-all duration-500"
+                      strokeWidth="2.5"
+                      strokeDasharray={`${progressPercent}, 100`}
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
                 </div>
-
-                <div className="flex items-center gap-2 self-end sm:self-center">
-                  {!item.completed ? (
-                    <button
-                      onClick={() => toggleComplete(index, true)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-lg shadow-emerald-600/10 border border-emerald-500/20 cursor-pointer"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      Complete
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => toggleComplete(index, false)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-zinc-750 text-zinc-350 transition-all border border-zinc-750 cursor-pointer"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      Undo
-                    </button>
-                  )}
+                <div>
+                  <h4 className="text-xs font-bold text-zinc-200">Date Progress</h4>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">{completedCount} of {totalCount} completed</p>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-6 items-start">
+              {/* Left Side: Calendar Module */}
+              <div className="lg:col-span-1 glass-card rounded-2xl p-5 border border-zinc-800 bg-zinc-900/10 space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                    <CalendarIcon className="h-3.5 w-3.5 text-indigo-400" />
+                    Calendar
+                  </h3>
+                  
+                  <div className="flex items-center gap-1">
+                    <button onClick={prevMonth} className="p-1 rounded-lg hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 cursor-pointer">
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button onClick={nextMonth} className="p-1 rounded-lg hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 cursor-pointer">
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Month Indicator */}
+                <div className="text-center">
+                  <span className="text-xs font-bold text-zinc-200 tracking-wide">
+                    {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                  </span>
+                </div>
+
+                {/* Calendar Table Grid */}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-7 gap-1 justify-items-center">
+                    {renderCalendarCells()}
+                  </div>
+                </div>
+
+                {/* Selected Date Summary */}
+                <div className="pt-3 border-t border-zinc-850 text-center">
+                  <p className="text-[10px] font-semibold text-zinc-500">
+                    Selected: <span className="text-indigo-400">{formatDateString(selectedDate)}</span> ({daysOfWeek[selectedDate.getDay()]})
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Side: Schedule Slot checklist */}
+              <div className="lg:col-span-2 space-y-4">
+                <div className="flex items-center gap-2 flex-wrap px-1">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    Tasks Checklist ({daysOfWeek[selectedDate.getDay()]})
+                  </h3>
+                  {isTodaySelected && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full font-sans">
+                      Today
+                    </span>
+                  )}
+                </div>
+
+                {!isTodaySelected && (
+                  <div className="glass-card rounded-2xl p-4 bg-amber-500/5 border border-amber-500/20 flex items-center gap-2.5 text-xs text-amber-400 font-medium">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>Task completion is allowed only for the current day.</span>
+                  </div>
+                )}
+
+                {loadingSchedule ? (
+                  <div className="glass-card rounded-2xl p-10 text-center text-zinc-500 text-xs font-semibold flex items-center justify-center gap-2">
+                    <div className="h-4 w-4 rounded-full border border-zinc-800 border-t-zinc-500 animate-spin" />
+                    Syncing Schedule...
+                  </div>
+                ) : schedule.length === 0 ? (
+                  <div className="glass-card rounded-2xl p-8 text-center flex flex-col items-center justify-center">
+                    <AlertCircle className="h-7 w-7 text-zinc-700 mb-2.5" />
+                    <p className="text-zinc-500 text-xs font-semibold">No slots allocated for {daysOfWeek[selectedDate.getDay()]}.</p>
+                  </div>
+                ) : (
+                  schedule.map((item, index) => (
+                    <div
+                      key={index}
+                      className={`glass-card rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 transition-all duration-200 ${
+                        item.completed
+                          ? 'border-l-emerald-500 bg-emerald-950/5'
+                          : 'border-l-indigo-500 bg-zinc-900/10'
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-850 text-center min-w-[95px] flex-shrink-0">
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase block tracking-wider">
+                            {item.partsofday}
+                          </span>
+                          <span className="text-xs font-semibold text-zinc-350 mt-1 block flex items-center justify-center gap-1.5">
+                            <Clock className="h-3 w-3 text-zinc-500" />
+                            {item.time}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h3 className="text-md font-bold text-zinc-200 mt-0.5">{item.subject}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span
+                              className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                item.completed
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                  : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                              }`}
+                            >
+                              {item.completed ? 'Completed' : 'Pending'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        {!item.completed ? (
+                          <button
+                            disabled={!isTodaySelected}
+                            onClick={() => toggleComplete(index, true)}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                              isTodaySelected
+                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/20 shadow-lg shadow-emerald-600/10'
+                                : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 opacity-40 cursor-not-allowed'
+                            }`}
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            Complete
+                          </button>
+                        ) : (
+                          <button
+                            disabled={!isTodaySelected}
+                            onClick={() => toggleComplete(index, false)}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                              isTodaySelected
+                                ? 'bg-zinc-850 hover:bg-zinc-800 text-zinc-350 border-zinc-750'
+                                : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 opacity-40 cursor-not-allowed'
+                            }`}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                            Undo
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right widgets panel */}
+          <div className="w-1/2 lg:w-1/4 flex-shrink-0 pl-4 lg:pl-6 border-l border-zinc-900 bg-zinc-950/20 rounded-3xl p-4 lg:p-6 h-fit max-h-[calc(100vh-50px)] overflow-y-auto space-y-6">
+            <Rightbar />
+          </div>
         </div>
       </div>
     </div>

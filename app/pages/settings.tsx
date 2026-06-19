@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import { Sliders, Bell, Eye, ShieldAlert, Check, User, Save, Plus, Trash2, History } from 'lucide-react'
+import { Sliders, Bell, Eye, ShieldAlert, Check, User, Save, Plus, Trash2 } from 'lucide-react'
 
 interface ProfileData {
   name: string
@@ -25,10 +25,7 @@ interface ScheduleItem {
 
 type Timetable = Record<string, ScheduleItem[]>
 
-interface HistoryLog {
-  date: string
-  completedTimes: string[]
-}
+
 
 const daysOfWeek = [
   'Sunday',
@@ -61,8 +58,7 @@ const Settings = () => {
   const [timetableTemplates, setTimetableTemplates] = useState<Timetable>({})
   const [activeDayTab, setActiveDayTab] = useState('Monday')
 
-  // History logs
-  const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([])
+
 
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -105,22 +101,8 @@ const Settings = () => {
       }
     }
 
-    // Fetch completion history logs
-    const fetchHistory = async () => {
-      try {
-        const res = await fetch('/api/schedule/history')
-        if (res.ok) {
-          const data = await res.json() as { logs: HistoryLog[] }
-          setHistoryLogs(data.logs || [])
-        }
-      } catch (err) {
-        console.error('Error fetching schedule history logs:', err)
-      }
-    }
-
     fetchProfile()
     fetchTimetable()
-    fetchHistory()
   }, [])
 
   const handleSave = async () => {
@@ -240,26 +222,7 @@ const Settings = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
-  // Calculate completion percentage for history logs
-  const getCompletionStats = (log: HistoryLog) => {
-    if (!log || !log.date) {
-      return { completed: 0, total: 0, percent: 0 }
-    }
-    const dateObj = new Date(log.date)
-    if (isNaN(dateObj.getTime())) {
-      return { completed: 0, total: 0, percent: 0 }
-    }
-    const dayName = daysOfWeek[dateObj.getDay()]
-    const templateSlots = timetableTemplates[dayName] || []
-    
-    const total = templateSlots.length
-    const completed = (log.completedTimes || []).filter(t => 
-      templateSlots.some(s => s.time === t)
-    ).length
 
-    const percent = total > 0 ? Math.round((completed / total) * 100) : 0
-    return { completed, total, percent }
-  }
 
   if (!isMounted) {
     return <div className="min-h-screen bg-zinc-950" />
@@ -439,44 +402,7 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Timetable Task Completion Logs History */}
-          <div className="glass-card rounded-2xl p-6 border border-zinc-800 bg-zinc-900/10 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                <History size={16} />
-              </div>
-              <h2 className="text-sm font-bold text-zinc-200">Completion History Logs</h2>
-            </div>
 
-            <div className="space-y-3 pt-1">
-              {historyLogs.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-[11px] text-zinc-550 font-semibold">No logs available. Check off dashboard tasks to initialize logs.</p>
-                </div>
-              ) : (
-                historyLogs.map((log) => {
-                  const { completed, total, percent } = getCompletionStats(log)
-                  return (
-                    <div key={log.date} className="space-y-1 bg-zinc-950/30 p-3 rounded-xl border border-zinc-850 animate-fade-in">
-                      <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400">
-                        <span className="truncate">{formatReadableDate(log.date)}</span>
-                        <span className={`${percent >= 80 ? 'text-emerald-400' : 'text-zinc-500'}`}>
-                          {completed} / {total}
-                        </span>
-                      </div>
-                      
-                      <div className="h-1.5 w-full bg-zinc-850 rounded-full overflow-hidden mt-1 relative">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-500 ${percent >= 80 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          </div>
 
           {/* Reset Metrics */}
           <div className="glass-card rounded-2xl p-6 border border-zinc-800 bg-zinc-900/10 space-y-4">

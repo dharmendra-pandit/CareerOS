@@ -18,7 +18,8 @@ import {
   UserCheck,
   Play,
   Terminal,
-  Code
+  Code,
+  ShieldAlert
 } from 'lucide-react'
 
 interface Question {
@@ -138,6 +139,247 @@ const Test = () => {
   const [testCaseResults, setTestCaseResults] = useState<any[]>([])
   const [codingSolvedVerified, setCodingSolvedVerified] = useState(false)
 
+  // Proctoring security states
+  const [violationsCount, setViolationsCount] = useState(0)
+  const [suspiciousActivities, setSuspiciousActivities] = useState<{ timestamp: string; activity: string }[]>([])
+  const [showWarningModal, setShowWarningModal] = useState(false)
+  const [warningMessage, setWarningMessage] = useState('')
+  const inactivityTimeoutRef = useRef<any>(null)
+
+  const activeCodingProblemRef = useRef(activeCodingProblem)
+  const codeTextRef = useRef(codeText)
+  const selectedLanguageRef = useRef(selectedLanguage)
+  const selectedCompanyRef = useRef(selectedCompany)
+  const currentRoundRef = useRef(currentRound)
+  const logSuspiciousActivityRef = useRef<any>(null)
+
+  useEffect(() => {
+    activeCodingProblemRef.current = activeCodingProblem
+  }, [activeCodingProblem])
+
+  useEffect(() => {
+    codeTextRef.current = codeText
+  }, [codeText])
+
+  useEffect(() => {
+    selectedLanguageRef.current = selectedLanguage
+  }, [selectedLanguage])
+
+  useEffect(() => {
+    selectedCompanyRef.current = selectedCompany
+  }, [selectedCompany])
+
+  useEffect(() => {
+    currentRoundRef.current = currentRound
+  }, [currentRound])
+
+  const handleViolationAutoSubmit = async () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(err => console.error(err))
+    }
+    
+    if (activeCodingProblemRef.current) {
+      if (timerRef.current) clearInterval(timerRef.current)
+      setCompiling(true)
+      setConsoleOutput('Disqualified: 3 Proctoring Violations. Auto-submitting to HackerEarth evaluator...')
+      
+      try {
+        const res = await fetch('/api/compile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            source_code: codeTextRef.current,
+            language_id: getLanguageId(selectedLanguageRef.current),
+            test_cases: activeCodingProblemRef.current.testCases
+          })
+        })
+
+        if (!res.ok) throw new Error('Auto-submit compilation error')
+        
+        const data = await res.json()
+        const results = data.results || []
+        const allPassed = results.length > 0 && results.every((r: any) => r.passed)
+
+        const companyRounds = getCompanyRounds(selectedCompanyRef.current!)
+        const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRoundRef.current)
+
+        if (allPassed) {
+          setCompletedRounds(prev => ({ ...prev, [currentRoundRef.current]: true }))
+          if (activeRoundIdx < companyRounds.length - 1) {
+            const nextRound = companyRounds[activeRoundIdx + 1]
+            setUnlockedRounds(prev => ({ ...prev, [nextRound.id]: true }))
+          }
+          setCodingSolvedVerified(true)
+          setIsRoundActive(false)
+          setRoundFinished(true)
+        } else {
+          setCodingSolvedVerified(false)
+          setIsRoundActive(true)
+          setRoundFinished(true)
+        }
+      } catch (err) {
+        console.error(err)
+        setCodingSolvedVerified(false)
+        setIsRoundActive(true)
+        setRoundFinished(true)
+      } finally {
+        setCompiling(false)
+      }
+    } else {
+      handleFinishMCQRound()
+    }
+  }
+
+  const logSuspiciousActivity = (activity: string) => {
+    const time = new Date().toLocaleTimeString()
+    setSuspiciousActivities(prev => [...prev, { timestamp: time, activity }])
+    
+    setViolationsCount(prev => {
+      const nextCount = prev + 1
+      if (nextCount >= 3) {
+        handleViolationAutoSubmit()
+      } else {
+        setWarningMessage(activity)
+        setShowWarningModal(true)
+      }
+      return nextCount
+    })
+  }
+
+  useEffect(() => {
+    logSuspiciousActivityRef.current = logSuspiciousActivity
+  })
+
+  // Proctoring event listeners registration
+  useEffect(() => {
+    if (!isRoundActive || roundFinished) {
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current)
+      return
+    }
+
+    // Force fullscreen
+    const enterFullscreen = async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen()
+        }
+      } catch (err) {
+        console.error('Error forcing fullscreen:', err)
+      }
+    }
+    enterFullscreen()
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        logSuspiciousActivityRef.current?.('Tab switched or minimized / Page hidden')
+      }
+    }
+
+    const handleWindowBlur = () => {
+      logSuspiciousActivityRef.current?.('Window lost focus / Blur event detected')
+    }
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && isRoundActive && !roundFinished) {
+        logSuspiciousActivityRef.current?.('Exited fullscreen mode')
+      }
+    }
+
+    const handleOffline = () => {
+      logSuspiciousActivityRef.current?.('Network disconnected (Offline)')
+    }
+
+    const handleOnline = () => {
+      const time = new Date().toLocaleTimeString()
+      setSuspiciousActivities(prev => [...prev, { timestamp: time, activity: 'Network reconnected (Online)' }])
+    }
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault()
+      logSuspiciousActivityRef.current?.('Attempted to right-click')
+    }
+
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault()
+      logSuspiciousActivityRef.current?.('Attempted to copy text')
+    }
+
+    const handleCut = (e: ClipboardEvent) => {
+      e.preventDefault()
+      logSuspiciousActivityRef.current?.('Attempted to cut text')
+    }
+
+    const handlePaste = (e: ClipboardEvent) => {
+      e.preventDefault()
+      logSuspiciousActivityRef.current?.('Attempted to paste text')
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey
+      const isShift = e.shiftKey
+
+      if (e.key === 'F12') {
+        e.preventDefault()
+        logSuspiciousActivityRef.current?.('Attempted F12 (DevTools)')
+      } else if (isCtrlOrCmd && isShift && e.key.toLowerCase() === 'i') {
+        e.preventDefault()
+        logSuspiciousActivityRef.current?.('Attempted DevTools shortcut (Ctrl+Shift+I)')
+      } else if (isCtrlOrCmd && isShift && e.key.toLowerCase() === 'j') {
+        e.preventDefault()
+        logSuspiciousActivityRef.current?.('Attempted Console shortcut (Ctrl+Shift+J)')
+      } else if (isCtrlOrCmd && isShift && e.key.toLowerCase() === 'c') {
+        e.preventDefault()
+        logSuspiciousActivityRef.current?.('Attempted Element Inspect shortcut (Ctrl+Shift+C)')
+      } else if (isCtrlOrCmd && e.key.toLowerCase() === 'u') {
+        e.preventDefault()
+        logSuspiciousActivityRef.current?.('Attempted View Source (Ctrl+U)')
+      } else if (isCtrlOrCmd && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        logSuspiciousActivityRef.current?.('Attempted Save Page (Ctrl+S)')
+      }
+    }
+
+    const resetInactivityTimer = () => {
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current)
+      inactivityTimeoutRef.current = setTimeout(() => {
+        logSuspiciousActivityRef.current?.('User inactive for 45 seconds')
+      }, 45000)
+    }
+
+    const activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+    activityEvents.forEach(evt => window.addEventListener(evt, resetInactivityTimer))
+    resetInactivityTimer()
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('blur', handleWindowBlur)
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('contextmenu', handleContextMenu)
+    window.addEventListener('copy', handleCopy)
+    window.addEventListener('cut', handleCut)
+    window.addEventListener('paste', handlePaste)
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('blur', handleWindowBlur)
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('contextmenu', handleContextMenu)
+      window.removeEventListener('copy', handleCopy)
+      window.removeEventListener('cut', handleCut)
+      window.removeEventListener('paste', handlePaste)
+      window.removeEventListener('keydown', handleKeyDown)
+      
+      activityEvents.forEach(evt => window.removeEventListener(evt, resetInactivityTimer))
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current)
+    }
+  }, [isRoundActive, roundFinished])
+
   // Sync editor starter code when problem or language changes
   useEffect(() => {
     if (activeCodingProblem) {
@@ -181,6 +423,8 @@ const Test = () => {
     setSelectedAnswers({})
     setConsoleOutput('')
     setTestCaseResults([])
+    setViolationsCount(0)
+    setSuspiciousActivities([])
     
     const rounds = getCompanyRounds(selectedCompany!)
     const activeRound = rounds.find(r => r.id === roundNumber)
@@ -628,6 +872,43 @@ const Test = () => {
             </div>
           </div>
         </div>
+
+        {showWarningModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="glass-card rounded-3xl p-8 border border-rose-500/20 max-w-sm w-full space-y-6 bg-zinc-900/90 text-center shadow-2xl shadow-rose-500/10">
+              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto">
+                <ShieldAlert className="h-6 w-6 text-rose-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-zinc-100 tracking-tight">Proctoring Warning</h2>
+                <p className="text-xs text-rose-400 mt-2 font-bold uppercase tracking-wide">
+                  Violation {violationsCount} of 3
+                </p>
+                <p className="text-[11px] text-zinc-400 mt-2.5 leading-relaxed font-medium">
+                  Suspicious Activity: <span className="text-zinc-250 font-bold">{warningMessage}</span>.
+                </p>
+                <p className="text-[10px] text-zinc-550 mt-4 leading-normal">
+                  Please focus on the exam window. You will be disqualified and your test auto-submitted after 3 violations.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  setShowWarningModal(false)
+                  try {
+                    if (!document.fullscreenElement) {
+                      await document.documentElement.requestFullscreen()
+                    }
+                  } catch (err) {
+                    console.error(err)
+                  }
+                }}
+                className="w-full py-3 rounded-xl text-xs font-bold bg-rose-650 hover:bg-rose-500 text-white transition-all cursor-pointer border border-rose-500/20"
+              >
+                Resume Test
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -643,8 +924,16 @@ const Test = () => {
             Round {currentRound}: Failed
           </h1>
           <p className="text-zinc-400 text-xs mt-2 font-medium">
-            You did not verify solving the DSA problem using the compiler before the timer expired.
+            {violationsCount >= 3 
+              ? "You were disqualified due to security proctoring violations." 
+              : "You did not verify solving the DSA problem using the compiler before the timer expired."
+            }
           </p>
+          {violationsCount >= 3 && (
+            <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs">
+              ⚠️ Disqualified: 3 Proctoring Violations Detected
+            </div>
+          )}
           <div className="mt-8 flex justify-center">
             <button
               onClick={() => startInterviewRound(currentRound)}
@@ -655,6 +944,29 @@ const Test = () => {
             </button>
           </div>
         </div>
+
+        {/* Proctoring Security Audit Log */}
+        {suspiciousActivities.length > 0 && (
+          <div className="space-y-4 pt-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 px-1 flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4" />
+              Proctoring Security Audit Log
+            </h3>
+            <div className="glass-card rounded-2xl p-5 border border-rose-500/15 bg-rose-500/5 space-y-3">
+              <p className="text-[11px] text-zinc-400 leading-normal">
+                The following proctoring events were captured during this assessment round:
+              </p>
+              <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                {suspiciousActivities.map((act, index) => (
+                  <div key={index} className="flex justify-between items-start text-xs border-b border-zinc-900/50 pb-2">
+                    <span className="text-rose-400 font-medium">{act.activity}</span>
+                    <span className="text-zinc-500 font-mono text-[10px] ml-4">{act.timestamp}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -689,7 +1001,7 @@ const Test = () => {
       return (
         <div className="min-h-screen text-zinc-100 p-6 max-w-2xl mx-auto flex flex-col justify-center animate-fade-in space-y-6">
           <div className="glass-card rounded-3xl p-8 border border-zinc-800 bg-zinc-900/10 text-center">
-            {isPassed ? (
+            {isPassed && violationsCount < 3 ? (
               <CheckCircle className="h-12 w-12 text-emerald-400 mx-auto" />
             ) : (
               <XCircle className="h-12 w-12 text-rose-455 mx-auto" />
@@ -697,14 +1009,22 @@ const Test = () => {
 
             <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-400 mt-4">Round Results</h2>
             <h1 className="text-xl font-black mt-1">
-              Round {currentRound}: {isPassed ? 'Passed' : 'Failed'}
+              Round {currentRound}: {isPassed && violationsCount < 3 ? 'Passed' : 'Failed'}
             </h1>
             <p className="text-zinc-400 text-xs mt-2">
-              Score: {score} / {total} ({percentage}% accuracy). Needs at least 60% to pass.
+              {violationsCount >= 3 
+                ? "You were disqualified due to security proctoring violations."
+                : `Score: ${score} / ${total} (${percentage}% accuracy). Needs at least 60% to pass.`
+              }
             </p>
+            {violationsCount >= 3 && (
+              <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs">
+                ⚠️ Disqualified: 3 Proctoring Violations Detected
+              </div>
+            )}
 
             <div className="mt-8 flex justify-center gap-3">
-              {isPassed ? (
+              {isPassed && violationsCount < 3 ? (
                 <button
                   onClick={handleConfirmResults}
                   className="px-6 py-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/20 transition-all cursor-pointer shadow-lg shadow-indigo-600/10"
@@ -722,6 +1042,29 @@ const Test = () => {
               )}
             </div>
           </div>
+
+          {/* Proctoring Security Audit Log */}
+          {suspiciousActivities.length > 0 && (
+            <div className="space-y-4 pt-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 px-1 flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4" />
+                Proctoring Security Audit Log
+              </h3>
+              <div className="glass-card rounded-2xl p-5 border border-rose-500/15 bg-rose-500/5 space-y-3">
+                <p className="text-[11px] text-zinc-400 leading-normal">
+                  The following proctoring events were captured during this assessment round:
+                </p>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {suspiciousActivities.map((act, index) => (
+                    <div key={index} className="flex justify-between items-start text-xs border-b border-zinc-900/50 pb-2">
+                      <span className="text-rose-400 font-medium">{act.activity}</span>
+                      <span className="text-zinc-500 font-mono text-[10px] ml-4">{act.timestamp}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Deep-dive review of questions */}
           <div className="space-y-4 pt-4">
@@ -840,6 +1183,43 @@ const Test = () => {
             )}
           </div>
         </div>
+
+        {showWarningModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="glass-card rounded-3xl p-8 border border-rose-500/20 max-w-sm w-full space-y-6 bg-zinc-900/90 text-center shadow-2xl shadow-rose-500/10">
+              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto">
+                <ShieldAlert className="h-6 w-6 text-rose-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-zinc-100 tracking-tight">Proctoring Warning</h2>
+                <p className="text-xs text-rose-400 mt-2 font-bold uppercase tracking-wide">
+                  Violation {violationsCount} of 3
+                </p>
+                <p className="text-[11px] text-zinc-400 mt-2.5 leading-relaxed font-medium">
+                  Suspicious Activity: <span className="text-zinc-250 font-bold">{warningMessage}</span>.
+                </p>
+                <p className="text-[10px] text-zinc-550 mt-4 leading-normal">
+                  Please focus on the exam window. You will be disqualified and your test auto-submitted after 3 violations.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  setShowWarningModal(false)
+                  try {
+                    if (!document.fullscreenElement) {
+                      await document.documentElement.requestFullscreen()
+                    }
+                  } catch (err) {
+                    console.error(err)
+                  }
+                }}
+                className="w-full py-3 rounded-xl text-xs font-bold bg-rose-650 hover:bg-rose-500 text-white transition-all cursor-pointer border border-rose-500/20"
+              >
+                Resume Test
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
