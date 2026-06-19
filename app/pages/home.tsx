@@ -30,7 +30,7 @@ const months = [
 
 const Home = () => {
   // Layout shift state
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   // Date states
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -276,18 +276,6 @@ const Home = () => {
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
-
-      {/* Floating Action Button */}
-      <button
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="fixed bottom-6 right-6 z-55 flex items-center gap-2 px-4.5 py-3 bg-indigo-650 hover:bg-indigo-500 text-white rounded-full font-bold text-xs shadow-xl shadow-indigo-650/20 border border-indigo-500/20 transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer"
-        aria-label={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
-      >
-        <span className={`transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`}>
-          <ChevronLeft size={16} />
-        </span>
-        {isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
-      </button>
 
       {/* Flex Layout Container */}
       <div className="flex w-full gap-0 lg:gap-6 relative">

@@ -6,6 +6,7 @@ import SideBar from './components/sidebar'
 
 const Page = () => {
   const [selectedPage, setSelectedPage] = useState('home')
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem('career_os_auth_session') === 'true'
@@ -184,12 +185,16 @@ const Page = () => {
 
   return (
     <div className="flex w-full h-screen overflow-hidden bg-zinc-950 text-zinc-100">
-      {/* Sidebar container with fixed width and separator */}
-      <aside className="w-64 md:w-72 h-full flex-shrink-0 border-r border-zinc-800/80 bg-zinc-900/30 backdrop-blur-md">
+      {/* Sidebar container with dynamic width, transition, and separator */}
+      <aside className={`h-full flex-shrink-0 border-r border-zinc-800/80 bg-zinc-900/30 backdrop-blur-md transition-all duration-300 ease-in-out ${
+        isCollapsed ? 'w-20' : 'w-64 md:w-72'
+      }`}>
         <SideBar
           selectedPage={selectedPage}
           setSelectedPage={setSelectedPage}
           onLogout={handleLogout}
+          isCollapsed={isCollapsed}
+          setIsCollapsed={setIsCollapsed}
         />
       </aside>
 
