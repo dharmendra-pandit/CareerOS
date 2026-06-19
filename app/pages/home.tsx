@@ -1,7 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { Calendar as CalendarIcon, Clock, Check, X, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
-import Rightbar from '../components/subs/rightbar'
 
 interface ScheduleItem {
   time: string
@@ -29,9 +28,6 @@ const months = [
 ]
 
 const Home = () => {
-  // Layout shift state
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-
   // Date states
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
@@ -269,14 +265,6 @@ const Home = () => {
 
   return (
     <div className="p-6 text-zinc-100 min-h-screen animate-fade-in relative overflow-hidden">
-      {/* Mobile Sidebar Backdrop Overlay */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-45 lg:hidden transition-opacity duration-300"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
       {/* Flex Layout Container */}
       <div className="flex w-full gap-0 lg:gap-6 relative">
         {/* Dashboard Left Content */}
@@ -466,37 +454,8 @@ const Home = () => {
               </div>
             </div>
           </div>
-
-          {/* Right widgets panel */}
-          <div className={`
-            /* Transitions */
-            transition-all duration-500 ease-in-out
-            
-            /* Responsive Layout: slide-out drawer on mobile, inline panel on desktop */
-            fixed lg:relative
-            top-0 lg:top-auto
-            right-0 lg:right-auto
-            h-screen lg:h-fit
-            z-50 lg:z-auto
-            
-            /* Width, padding, border and visibility based on open state */
-            ${isSidebarOpen 
-              ? 'w-[320px] lg:w-1/4 opacity-100 translate-x-0 pl-4 lg:pl-6 border-l border-zinc-900 bg-zinc-950/95 lg:bg-zinc-950/20 p-4 lg:p-6' 
-              : 'w-0 lg:w-0 opacity-0 translate-x-full lg:translate-x-0 pointer-events-none p-0 border-l-0 overflow-hidden'
-            }
-            
-            /* Styling */
-            flex-shrink-0
-            backdrop-blur-md lg:backdrop-blur-none
-            rounded-l-3xl lg:rounded-3xl
-            max-h-screen lg:max-h-[calc(100vh-50px)]
-            overflow-y-auto
-            space-y-6
-          `}>
-            <Rightbar />
-          </div>
+        </div>
       </div>
-    </div>
   )
 }
 
