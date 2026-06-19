@@ -30,7 +30,7 @@ const months = [
 
 const Home = () => {
   // Layout shift state
-  const [isShifted, setIsShifted] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   // Date states
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -269,29 +269,30 @@ const Home = () => {
 
   return (
     <div className="p-6 text-zinc-100 min-h-screen animate-fade-in relative overflow-hidden">
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-45 lg:hidden transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Floating Action Button */}
       <button
-        onClick={() => setIsShifted(!isShifted)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4.5 py-3 bg-indigo-650 hover:bg-indigo-500 text-white rounded-full font-bold text-xs shadow-xl shadow-indigo-650/20 border border-indigo-500/20 transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer"
-        aria-label={isShifted ? "Restore Layout" : "Shift Left"}
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="fixed bottom-6 right-6 z-55 flex items-center gap-2 px-4.5 py-3 bg-indigo-650 hover:bg-indigo-500 text-white rounded-full font-bold text-xs shadow-xl shadow-indigo-650/20 border border-indigo-500/20 transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer"
+        aria-label={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
       >
-        <span className={`transition-transform duration-300 ${isShifted ? 'rotate-180' : ''}`}>
+        <span className={`transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`}>
           <ChevronLeft size={16} />
         </span>
-        {isShifted ? "Restore Layout" : "Shift Left"}
+        {isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
       </button>
 
-      {/* Sliding Viewport Container */}
-      <div className="w-full overflow-hidden">
-        <div 
-          className={`flex transition-transform duration-500 ease-in-out w-[200%] lg:w-[133.33%] ${
-            isShifted 
-              ? 'translate-x-[-50%] lg:translate-x-[-25%]' 
-              : 'translate-x-0'
-          }`}
-        >
-          {/* Dashboard Left Content */}
-          <div className="w-1/2 lg:w-3/4 pr-0 lg:pr-6 space-y-6 flex-shrink-0">
+      {/* Flex Layout Container */}
+      <div className="flex w-full gap-0 lg:gap-6 relative">
+        {/* Dashboard Left Content */}
+        <div className="flex-1 min-w-0 space-y-6 transition-all duration-500">
             {/* Overview Banner */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-900">
               <div>
@@ -479,10 +480,33 @@ const Home = () => {
           </div>
 
           {/* Right widgets panel */}
-          <div className="w-1/2 lg:w-1/4 flex-shrink-0 pl-4 lg:pl-6 border-l border-zinc-900 bg-zinc-950/20 rounded-3xl p-4 lg:p-6 h-fit max-h-[calc(100vh-50px)] overflow-y-auto space-y-6">
+          <div className={`
+            /* Transitions */
+            transition-all duration-500 ease-in-out
+            
+            /* Responsive Layout: slide-out drawer on mobile, inline panel on desktop */
+            fixed lg:relative
+            top-0 lg:top-auto
+            right-0 lg:right-auto
+            h-screen lg:h-fit
+            z-50 lg:z-auto
+            
+            /* Width, padding, border and visibility based on open state */
+            ${isSidebarOpen 
+              ? 'w-[320px] lg:w-1/4 opacity-100 translate-x-0 pl-4 lg:pl-6 border-l border-zinc-900 bg-zinc-950/95 lg:bg-zinc-950/20 p-4 lg:p-6' 
+              : 'w-0 lg:w-0 opacity-0 translate-x-full lg:translate-x-0 pointer-events-none p-0 border-l-0 overflow-hidden'
+            }
+            
+            /* Styling */
+            flex-shrink-0
+            backdrop-blur-md lg:backdrop-blur-none
+            rounded-l-3xl lg:rounded-3xl
+            max-h-screen lg:max-h-[calc(100vh-50px)]
+            overflow-y-auto
+            space-y-6
+          `}>
             <Rightbar />
           </div>
-        </div>
       </div>
     </div>
   )
