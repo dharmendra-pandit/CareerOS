@@ -86,6 +86,13 @@ const roadmaps = [
       'React Query', 'Redux Toolkit', 'Next.js', 'WebSockets', 
       'Docker', 'AWS', 'CI/CD', 'Microservices', 'System Design'
     ]
+  },
+  {
+    title: 'General',
+    icon: <Calculator size={20} />,
+    topics: [
+      'Aptitude', 'English/Verbal Ability', 'Logical Reasoning'
+    ]
   }
 ]
 

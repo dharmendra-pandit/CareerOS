@@ -83,6 +83,103 @@ const OFFLINE_PRACTICE: Record<string, Record<string, Question[]>> = {
         explanation: "Average case hash lookup."
       }
     ]
+  },
+  aptitude: {
+    easy: [
+      {
+        id: 1,
+        question: "A car travels at a constant speed of 60 km/h. How far does it travel in 2.5 hours?",
+        options: ["120 km", "150 km", "180 km", "200 km"],
+        correctOption: 1,
+        explanation: "Distance = speed * time = 60 * 2.5."
+      }
+    ],
+    medium: [
+      {
+        id: 1,
+        question: "If 5 workers can build a wall in 12 days, how many days would it take 6 workers to build the same wall?",
+        options: ["8 days", "10 days", "12 days", "15 days"],
+        correctOption: 1,
+        explanation: "Worker-days is constant: 5 * 12 = 6 * days."
+      }
+    ],
+    hard: [
+      {
+        id: 1,
+        question: "A bag contains 4 red balls and 6 blue balls. If two balls are drawn at random without replacement, what is the probability that both are red?",
+        options: ["2/15", "4/15", "2/9", "6/25"],
+        correctOption: 0,
+        explanation: "P = (4/10) * (3/9) = 12/90 = 2/15."
+      }
+    ]
+  },
+  "english/verbal ability": {
+    easy: [
+      {
+        id: 1,
+        question: "Choose the correct synonym for the word 'Diligent':",
+        options: ["Lazy", "Hardworking", "Clever", "Careless"],
+        correctOption: 1,
+        explanation: "Diligent means showing care and effort."
+      }
+    ],
+    medium: [
+      {
+        id: 1,
+        question: "Identify the grammatically correct sentence from the following options:",
+        options: [
+          "He did not wrote the letter yesterday.",
+          "He did not write the letter yesterday.",
+          "He has not wrote the letter yesterday.",
+          "He was not write the letter yesterday."
+        ],
+        correctOption: 1,
+        explanation: "'did not' is followed by base verb."
+      }
+    ],
+    hard: [
+      {
+        id: 1,
+        question: "Choose the word that best fits the sentence: 'The speaker's argument was ________; it was clear, logical, and extremely persuasive.'",
+        options: ["spurious", "cogent", "redundant", "convoluted"],
+        correctOption: 1,
+        explanation: "Cogent means clear, logical, and convincing."
+      }
+    ]
+  },
+  "logical reasoning": {
+    easy: [
+      {
+        id: 1,
+        question: "Find the missing number in the sequence: 2, 4, 8, 16, ?",
+        options: ["20", "24", "30", "32"],
+        correctOption: 3,
+        explanation: "The terms double each time: 16 * 2."
+      }
+    ],
+    medium: [
+      {
+        id: 1,
+        question: "Point A is 10m West of Point B. Point C is 10m North of Point B. In which direction is Point C with respect to Point A?",
+        options: ["North-West", "North-East", "South-East", "South-West"],
+        correctOption: 1,
+        explanation: "North and East of Point A."
+      }
+    ],
+    hard: [
+      {
+        id: 1,
+        question: "If all cats are animals, and some animals are dogs, which of the following is definitely true?",
+        options: [
+          "Some cats are dogs",
+          "All dogs are animals",
+          "All animals are cats",
+          "None of the above"
+        ],
+        correctOption: 3,
+        explanation: "No direct relation between cats and dogs."
+      }
+    ]
   }
 }
 
