@@ -19,7 +19,11 @@ import {
   Play,
   Terminal,
   Code,
-  ShieldAlert
+  ShieldAlert,
+  Check,
+  BookOpen,
+  HelpCircle,
+  TrendingUp
 } from 'lucide-react'
 
 interface Question {
@@ -138,6 +142,31 @@ const Test = () => {
   const [compiling, setCompiling] = useState(false)
   const [testCaseResults, setTestCaseResults] = useState<any[]>([])
   const [codingSolvedVerified, setCodingSolvedVerified] = useState(false)
+  const [useCustomInput, setUseCustomInput] = useState(false)
+  const [customInput, setCustomInput] = useState('')
+  const [activeTestTab, setActiveTestTab] = useState(0)
+
+  // Overall test stats
+  const [stats, setStats] = useState({ mockTestsCount: 0, clearedCount: 0 })
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const res = await fetch('/api/progress')
+        if (res.ok) {
+          const data = await res.json()
+          const history = data.history || []
+          const mockTests = history.filter((h: any) => h.type === 'test' || h.type === 'mocktest')
+          setStats({
+            mockTestsCount: data.mockTestsCount || 0,
+            clearedCount: mockTests.length
+          })
+        }
+      } catch (err) {
+        console.error('Error loading progress stats:', err)
+      }
+    }
+    loadStats()
+  }, [selectedCompany])
 
   // Proctoring security states
   const [violationsCount, setViolationsCount] = useState(0)
@@ -181,7 +210,7 @@ const Test = () => {
     if (activeCodingProblemRef.current) {
       if (timerRef.current) clearInterval(timerRef.current)
       setCompiling(true)
-      setConsoleOutput('Disqualified: 3 Proctoring Violations. Auto-submitting to HackerEarth evaluator...')
+      setConsoleOutput('Disqualified: 3 Proctoring Violations. Auto-submitting to OnlineCompiler evaluation system...')
       
       try {
         const res = await fetch('/api/compile', {
@@ -492,20 +521,25 @@ const Test = () => {
     return score
   }
 
-  // Maps UI language names to HackerEarth v4 language codes
+  // Maps UI language names to compiler IDs
   const getLanguageId = (lang: string) => lang || 'python'
 
-  // Compiler code submission & execution via proxy API (HackerEarth v4)
+  // Compiler code submission & execution via proxy API (OnlineCompiler)
   const handleRunCompiler = async (isSubmit: boolean = false) => {
     if (!activeCodingProblem) return
     setCompiling(true)
-    setConsoleOutput('Sending code to HackerEarth evaluator...')
+    setConsoleOutput('Sending code to OnlineCompiler evaluation system...')
     setTestCaseResults([])
 
-    // Sample execution runs only test case 0, submit runs all
-    const testCasesToRun = isSubmit 
-      ? activeCodingProblem.testCases 
-      : [activeCodingProblem.testCases[0]]
+    // Determine test cases to run
+    let testCasesToRun = []
+    if (useCustomInput && !isSubmit) {
+      testCasesToRun = [{ input: customInput, output: '' }]
+    } else {
+      testCasesToRun = isSubmit 
+        ? activeCodingProblem.testCases 
+        : [activeCodingProblem.testCases[0]]
+    }
 
     try {
       const res = await fetch('/api/compile', {
@@ -529,6 +563,22 @@ const Test = () => {
       const results = data.results || []
 
       setTestCaseResults(results)
+      setActiveTestTab(0) // Default to first tab
+
+      if (useCustomInput && !isSubmit) {
+        const resItem = results[0]
+        let logs = ''
+        if (resItem.compile_output) {
+          logs += `Compilation Error:\n${resItem.compile_output}\n`
+        } else if (resItem.stderr) {
+          logs += `Runtime Error:\n${resItem.stderr}\n`
+        } else {
+          logs += `✓ Custom Input Executed Successfully\n\nOutput:\n${resItem.stdout || '(no output)'}\n`
+        }
+        setConsoleOutput(logs)
+        setCompiling(false)
+        return
+      }
 
       let allPassed = true
       let logs = ''
@@ -590,7 +640,7 @@ const Test = () => {
   const handleAutoSubmitCoding = async () => {
     if (timerRef.current) clearInterval(timerRef.current)
     setCompiling(true)
-    setConsoleOutput('Time limit reached. Auto-submitting to HackerEarth evaluator...')
+    setConsoleOutput('Time limit reached. Auto-submitting to OnlineCompiler evaluation system...')
     
     try {
       const res = await fetch('/api/compile', {
@@ -999,47 +1049,52 @@ const Test = () => {
       }
 
       return (
-        <div className="min-h-screen text-zinc-100 p-6 max-w-2xl mx-auto flex flex-col justify-center animate-fade-in space-y-6">
-          <div className="glass-card rounded-3xl p-8 border border-zinc-800 bg-zinc-900/10 text-center">
-            {isPassed && violationsCount < 3 ? (
-              <CheckCircle className="h-12 w-12 text-emerald-400 mx-auto" />
-            ) : (
-              <XCircle className="h-12 w-12 text-rose-455 mx-auto" />
-            )}
-
-            <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-400 mt-4">Round Results</h2>
-            <h1 className="text-xl font-black mt-1">
-              Round {currentRound}: {isPassed && violationsCount < 3 ? 'Passed' : 'Failed'}
-            </h1>
-            <p className="text-zinc-400 text-xs mt-2">
-              {violationsCount >= 3 
-                ? "You were disqualified due to security proctoring violations."
-                : `Score: ${score} / ${total} (${percentage}% accuracy). Needs at least 60% to pass.`
-              }
-            </p>
-            {violationsCount >= 3 && (
-              <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs">
-                ⚠️ Disqualified: 3 Proctoring Violations Detected
-              </div>
-            )}
-
-            <div className="mt-8 flex justify-center gap-3">
+        <div className="min-h-screen text-zinc-100 p-6 max-w-4xl mx-auto animate-fade-in space-y-6">
+          {/* Results summary card */}
+          <div className="glass-card rounded-3xl p-8 text-center border border-zinc-800 bg-zinc-900/25 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
+            
+            <div className="relative z-10 text-center space-y-4">
               {isPassed && violationsCount < 3 ? (
-                <button
-                  onClick={handleConfirmResults}
-                  className="px-6 py-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/20 transition-all cursor-pointer shadow-lg shadow-indigo-600/10"
-                >
-                  Continue to Roadmap
-                </button>
+                <CheckCircle className="h-12 w-12 text-emerald-400 mx-auto" />
               ) : (
-                <button
-                  onClick={() => startInterviewRound(currentRound)}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 font-bold text-xs border border-rose-500/20 transition-all cursor-pointer"
-                >
-                  <RefreshCw size={13} />
-                  Retake Round {currentRound}
-                </button>
+                <XCircle className="h-12 w-12 text-rose-455 mx-auto" />
               )}
+              
+              <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-405 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Round Results</span>
+              <h1 className="text-3xl font-black mt-2">
+                Round {currentRound}: {isPassed && violationsCount < 3 ? 'Passed' : 'Failed'}
+              </h1>
+              <p className="text-zinc-400 text-xs mt-2 max-w-md mx-auto">
+                {violationsCount >= 3 
+                  ? "You were disqualified due to security proctoring violations."
+                  : `Score: ${score} / ${total} (${percentage}% accuracy). Needs at least 60% to pass.`
+                }
+              </p>
+              {violationsCount >= 3 && (
+                <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs max-w-sm mx-auto">
+                  ⚠️ Disqualified: 3 Proctoring Violations Detected
+                </div>
+              )}
+
+              <div className="mt-8 flex justify-center gap-3">
+                {isPassed && violationsCount < 3 ? (
+                  <button
+                    onClick={handleConfirmResults}
+                    className="px-6 py-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/20 transition-all cursor-pointer shadow-lg shadow-indigo-650/10"
+                  >
+                    Continue to Roadmap
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => startInterviewRound(currentRound)}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-550 text-white font-bold text-xs border border-rose-500/25 transition-all cursor-pointer shadow-lg shadow-rose-650/10"
+                  >
+                    <RefreshCw size={13} />
+                    Retake Round {currentRound}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1057,7 +1112,7 @@ const Test = () => {
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                   {suspiciousActivities.map((act, index) => (
                     <div key={index} className="flex justify-between items-start text-xs border-b border-zinc-900/50 pb-2">
-                      <span className="text-rose-400 font-medium">{act.activity}</span>
+                      <span className="text-rose-455 font-medium">{act.activity}</span>
                       <span className="text-zinc-500 font-mono text-[10px] ml-4">{act.timestamp}</span>
                     </div>
                   ))}
@@ -1068,119 +1123,203 @@ const Test = () => {
 
           {/* Deep-dive review of questions */}
           <div className="space-y-4 pt-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1">Round Questions Review</h3>
-            {activeQuizQuestions.map((q, idx) => {
-              const uChoice = selectedAnswers[q.id]
-              const isCorrect = uChoice === q.correctOption
+            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-450 px-1 flex items-center gap-2">
+              <BookOpen size={14} /> Questions Review
+            </h3>
+            <div className="space-y-4">
+              {activeQuizQuestions.map((q, idx) => {
+                const uChoice = selectedAnswers[q.id]
+                const isCorrect = uChoice === q.correctOption
+                const hasSkipped = uChoice === undefined
 
-              return (
-                <div key={q.id} className={`glass-card rounded-2xl p-5 border ${isCorrect ? 'border-emerald-500/10' : 'border-rose-500/10'}`}>
-                  <h4 className="font-bold text-xs text-zinc-250 mb-3">{idx + 1}. {q.question}</h4>
-                  <div className="grid sm:grid-cols-2 gap-2 text-xs">
-                    {q.options.map((opt, oIdx) => {
-                      const isCorrectOpt = oIdx === q.correctOption
-                      const isUserChoice = oIdx === uChoice
-                      let optStyle = 'bg-zinc-950/20 text-zinc-550 border border-zinc-850'
-                      if (isCorrectOpt) optStyle = 'bg-emerald-500/10 text-emerald-400 border border-emerald-555/20 font-bold'
-                      else if (isUserChoice) optStyle = 'bg-rose-500/10 text-rose-400 border border-rose-555/20 font-bold'
+                return (
+                  <div key={q.id} className={`glass-card rounded-2xl p-6 border ${isCorrect ? 'border-emerald-500/20 bg-emerald-955/5' : hasSkipped ? 'border-zinc-800 bg-zinc-900/10' : 'border-rose-500/20 bg-rose-955/5'}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <h4 className="font-bold text-sm text-zinc-200 leading-relaxed">{idx + 1}. {q.question}</h4>
+                      {isCorrect ? (
+                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                          <CheckCircle className="h-3.5 w-3.5" /> Correct
+                        </span>
+                      ) : hasSkipped ? (
+                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold text-zinc-400 bg-zinc-850 px-2.5 py-1 rounded-full border border-zinc-700">
+                          Skipped
+                        </span>
+                      ) : (
+                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold text-rose-405 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
+                          <XCircle className="h-3.5 w-3.5" /> Incorrect
+                        </span>
+                      )}
+                    </div>
 
-                      return (
-                        <div key={oIdx} className={`p-2.5 rounded-xl border ${optStyle}`}>{opt}</div>
-                      )
-                    })}
+                    <div className="grid sm:grid-cols-2 gap-3 mt-5">
+                      {q.options.map((opt, oIdx) => {
+                        const isCorrectOpt = oIdx === q.correctOption
+                        const isUserChoice = oIdx === uChoice
+                        
+                        let optStyle = 'bg-zinc-955/30 text-zinc-400 border border-zinc-850'
+                        if (isCorrectOpt) optStyle = 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-semibold'
+                        else if (isUserChoice) optStyle = 'bg-rose-500/10 text-rose-305 border border-rose-500/30 font-semibold'
+
+                        const optLabel = String.fromCharCode(65 + oIdx) // A, B, C, D
+
+                        return (
+                          <div key={oIdx} className={`px-4 py-3 rounded-xl text-xs font-medium flex items-center gap-3 transition-all ${optStyle}`}>
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                              isCorrectOpt ? 'bg-emerald-500/25 text-emerald-300' : isUserChoice ? 'bg-rose-500/25 text-rose-305' : 'bg-zinc-800 text-zinc-550'
+                            }`}>{optLabel}</span>
+                            <span>{opt}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         </div>
       )
     }
 
+    // Dynamic timer coloring
+    let timerBadgeColor = 'text-emerald-450 bg-emerald-500/10 border-emerald-555/20'
+    if (timeLeft < 90) { // < 1.5 mins
+      timerBadgeColor = 'text-rose-455 bg-rose-500/15 border-rose-500/30 animate-pulse font-black'
+    }
+
     return (
-      <div className="min-h-screen text-zinc-100 p-6 max-w-2xl mx-auto flex flex-col justify-center animate-fade-in space-y-6">
+      <div className="min-h-screen text-zinc-100 p-6 max-w-7xl mx-auto animate-fade-in flex flex-col space-y-6">
         {/* Navigation Indicator */}
-        <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
+        <div className="flex items-center justify-between border-b border-zinc-900 pb-4 flex-shrink-0">
           <div>
-            <span className="text-[10px] uppercase font-bold text-indigo-400">Round {currentRound} Assessment</span>
-            <h2 className="text-sm font-bold text-zinc-200 mt-0.5">{selectedCompany} Simulated Screening</h2>
+            <span className="text-[10px] uppercase font-bold text-indigo-405">{selectedCompany} Assessment round</span>
+            <h2 className="text-sm font-bold text-zinc-200 mt-0.5">Round {currentRound}: Screening</h2>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-rose-400 font-bold bg-rose-500/10 px-2.5 py-1.5 rounded-full border border-rose-500/20 animate-time-pulse">
+            <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all duration-350 ${timerBadgeColor}`}>
               <Clock className="h-3.5 w-3.5" />
               {formatTime(timeLeft)}
             </span>
-            <span className="text-[10px] text-zinc-400 font-bold bg-zinc-900 border border-zinc-850 px-2.5 py-1 rounded-full">
+            <span className="text-[10px] text-indigo-405 font-bold bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full">
               Q: {currentQuestionIdx + 1} / {activeQuizQuestions.length}
             </span>
           </div>
         </div>
 
-        {/* Question Panel */}
-        <div className="glass-card rounded-2xl p-6 border border-zinc-805 bg-zinc-900/10 space-y-5">
-          <h2 className="text-sm font-bold text-zinc-150 leading-relaxed">{currentQuestion.question}</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Question Grid navigation */}
+          <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
+            <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[10px] uppercase font-bold text-zinc-550 tracking-wider">Round Questions</span>
+                <span className="text-[10px] font-semibold text-indigo-405">
+                  {Object.keys(selectedAnswers).length} / {activeQuizQuestions.length} Done
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-5 gap-2">
+                {activeQuizQuestions.map((q, idx) => {
+                  const uChoice = selectedAnswers[q.id]
+                  const isCurrent = currentQuestionIdx === idx
+                  
+                  let statusStyle = 'bg-zinc-955/40 border-zinc-850 text-zinc-555 hover:border-zinc-700 hover:text-zinc-350'
+                  if (isCurrent) {
+                    statusStyle = 'border-indigo-500 text-indigo-400 bg-indigo-500/10 font-bold shadow-md shadow-indigo-500/5'
+                  } else if (uChoice !== undefined) {
+                    statusStyle = 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-650/10'
+                  }
 
-          <div className="space-y-2.5">
-            {currentQuestion.options.map((option, index) => {
-              const isSelected = userChoice === index
-              let style = 'bg-zinc-900/40 hover:bg-zinc-900/80 border-zinc-850 text-zinc-300'
-              if (isSelected) {
-                style = 'bg-indigo-500/5 border-indigo-500/40 text-indigo-300 font-bold shadow-md shadow-indigo-500/5'
-              }
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleSelectOption(index)}
-                  className={`w-full text-left px-4 py-3.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${style}`}
-                >
-                  {option}
-                </button>
-              )
-            })}
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentQuestionIdx(idx)}
+                      className={`w-10 h-10 text-xs font-bold rounded-xl border flex items-center justify-center transition-all cursor-pointer ${statusStyle}`}
+                    >
+                      {idx + 1}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Navigation Action Buttons */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setIsRoundActive(false)}
-            className="flex items-center gap-1 text-xs text-zinc-550 hover:text-zinc-350 transition-all font-semibold cursor-pointer"
-          >
-            <AlertCircle className="h-4 w-4" /> Quit to Roadmap
-          </button>
+          {/* Right Column: Question Panel */}
+          <div className="lg:col-span-8 space-y-6">
+            <div className="glass-card rounded-2xl p-6 md:p-8 border border-zinc-800 bg-zinc-900/10 min-h-[380px] flex flex-col justify-between">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-zinc-555 tracking-wider">Question {currentQuestionIdx + 1} of {activeQuizQuestions.length}</span>
+                <h2 className="text-base font-bold text-zinc-150 leading-relaxed mt-3">{currentQuestion.question}</h2>
 
-          <div className="flex gap-2">
-            {currentQuestionIdx > 0 && (
-              <button
-                onClick={() => setCurrentQuestionIdx((prev) => prev - 1)}
-                className="px-4.5 py-2.5 rounded-xl text-xs font-bold bg-zinc-900 hover:bg-zinc-850 text-zinc-400 border border-zinc-800 cursor-pointer"
-              >
-                Previous
-              </button>
-            )}
+                <div className="space-y-3 mt-6">
+                  {currentQuestion.options.map((option, index) => {
+                    const isSelected = userChoice === index
+                    const optionLetter = String.fromCharCode(65 + index) // A, B, C, D
 
-            {currentQuestionIdx < activeQuizQuestions.length - 1 ? (
-              <button
-                onClick={() => setCurrentQuestionIdx((prev) => prev + 1)}
-                className="px-4.5 py-2.5 rounded-xl text-xs font-bold bg-zinc-900 hover:bg-zinc-850 text-zinc-400 border border-zinc-800 cursor-pointer"
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                onClick={handleFinishMCQRound}
-                disabled={userChoice === undefined}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-all ${
-                  userChoice !== undefined
-                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/20 cursor-pointer shadow-lg shadow-indigo-600/10'
-                    : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 cursor-not-allowed'
-                }`}
-              >
-                Submit Round
-              </button>
-            )}
+                    let cardStyle = 'bg-zinc-955/35 hover:bg-zinc-900/60 border-zinc-855 text-zinc-350 hover:text-zinc-200'
+                    if (isSelected) {
+                      cardStyle = 'bg-indigo-500/10 border-indigo-500 text-indigo-305 font-bold shadow-md shadow-indigo-500/5'
+                    }
+
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleSelectOption(index)}
+                        className={`w-full text-left px-5 py-4 rounded-xl text-xs font-semibold border transition-all flex items-center gap-4 group cursor-pointer ${cardStyle}`}
+                      >
+                        <span className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center text-[10px] font-extrabold border transition-all ${
+                          isSelected ? 'bg-indigo-500 text-white border-indigo-400' : 'bg-zinc-905 text-zinc-550 border-zinc-805 group-hover:border-zinc-700'
+                        }`}>{optionLetter}</span>
+                        <span className="flex-1">{option}</span>
+                        {isSelected && <Check size={14} className="text-indigo-400" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Navigation Action Buttons */}
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-zinc-905">
+                <button
+                  onClick={() => setIsRoundActive(false)}
+                  className="flex items-center gap-1 text-xs text-zinc-555 hover:text-zinc-350 transition-all font-bold cursor-pointer"
+                >
+                  <AlertCircle className="h-4 w-4" /> Quit to Roadmap
+                </button>
+
+                <div className="flex gap-2">
+                  {currentQuestionIdx > 0 && (
+                    <button
+                      onClick={() => setCurrentQuestionIdx((prev) => prev - 1)}
+                      className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-955/50 hover:bg-zinc-850 text-zinc-450 hover:text-zinc-205 text-xs font-bold cursor-pointer"
+                    >
+                      Previous
+                    </button>
+                  )}
+
+                  {currentQuestionIdx < activeQuizQuestions.length - 1 ? (
+                    <button
+                      onClick={() => setCurrentQuestionIdx((prev) => prev + 1)}
+                      className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-955/50 hover:bg-zinc-850 text-zinc-450 hover:text-zinc-205 text-xs font-bold cursor-pointer"
+                    >
+                      Next
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleFinishMCQRound}
+                      disabled={userChoice === undefined}
+                      className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                        userChoice !== undefined
+                          ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/20 cursor-pointer shadow-lg shadow-indigo-650/10'
+                          : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 cursor-not-allowed'
+                      }`}
+                    >
+                      Submit Round
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1188,17 +1327,17 @@ const Test = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
             <div className="glass-card rounded-3xl p-8 border border-rose-500/20 max-w-sm w-full space-y-6 bg-zinc-900/90 text-center shadow-2xl shadow-rose-500/10">
               <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto">
-                <ShieldAlert className="h-6 w-6 text-rose-400" />
+                <ShieldAlert className="h-6 w-6 text-rose-450" />
               </div>
               <div>
                 <h2 className="text-base font-black text-zinc-100 tracking-tight">Proctoring Warning</h2>
-                <p className="text-xs text-rose-400 mt-2 font-bold uppercase tracking-wide">
+                <p className="text-xs text-rose-455 mt-2 font-bold uppercase tracking-wide">
                   Violation {violationsCount} of 3
                 </p>
                 <p className="text-[11px] text-zinc-400 mt-2.5 leading-relaxed font-medium">
                   Suspicious Activity: <span className="text-zinc-250 font-bold">{warningMessage}</span>.
                 </p>
-                <p className="text-[10px] text-zinc-550 mt-4 leading-normal">
+                <p className="text-[10px] text-zinc-555 mt-4 leading-normal">
                   Please focus on the exam window. You will be disqualified and your test auto-submitted after 3 violations.
                 </p>
               </div>
@@ -1213,7 +1352,7 @@ const Test = () => {
                     console.error(err)
                   }
                 }}
-                className="w-full py-3 rounded-xl text-xs font-bold bg-rose-650 hover:bg-rose-500 text-white transition-all cursor-pointer border border-rose-500/20"
+                className="w-full py-3 rounded-xl text-xs font-bold bg-rose-650 hover:bg-rose-550 text-white transition-all cursor-pointer border border-rose-500/20"
               >
                 Resume Test
               </button>
@@ -1338,29 +1477,58 @@ const Test = () => {
   // Categories Landing grid view
   return (
     <div className="p-6 text-zinc-100 min-h-screen animate-fade-in space-y-6">
-      <div className="pb-2 border-b border-zinc-900">
-        <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Assessments</span>
-        <h1 className="text-3xl font-black tracking-tight mt-0.5">Company Tests</h1>
-        <p className="text-zinc-400 text-sm mt-1">
-          Select corporations to start dynamic simulated recruitment pathways. Contains Aptitude, English, screening, and built-in coding compilers.
-        </p>
+      {/* Page Header */}
+      <div className="pb-4 border-b border-zinc-900 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-indigo-455 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">Recruiter Gates</span>
+          <h1 className="text-3xl font-black tracking-tight mt-2.5 bg-gradient-to-r from-zinc-100 to-zinc-450 bg-clip-text text-transparent">Company Tests</h1>
+          <p className="text-zinc-450 text-xs mt-1.5 max-w-xl">
+            Select corporations to start simulated multi-round recruitment pipelines containing Aptitude, English, system design, and coding evaluators.
+          </p>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      {/* Stats Summary Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+        <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10 flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <Award size={20} />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase text-zinc-555 tracking-wider">Completed Pathway Exams</span>
+            <p className="text-xl font-black text-zinc-200 mt-1">{stats.mockTestsCount} Companies cleared</p>
+          </div>
+        </div>
+        <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10 flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <TrendingUp size={20} />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase text-zinc-555 tracking-wider">Pass Record</span>
+            <p className="text-xl font-black text-emerald-400 mt-1">{stats.clearedCount} Assessments Passed</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recruiter Tiers Grid */}
+      <div className="grid md:grid-cols-3 gap-6 mt-6">
         {/* Tier-1 Product Giants */}
-        <div className="glass-card rounded-2xl p-5 border border-zinc-800/80 bg-zinc-900/5 flex flex-col">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Cpu size={18} />
+        <div className="glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-900/5 flex flex-col hover:border-zinc-700/60 hover:shadow-lg transition-all duration-300 group">
+          <div className="flex items-center gap-3.5 mb-5 border-b border-zinc-905 pb-3 flex-shrink-0">
+            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-455 border border-indigo-500/20">
+              <Cpu size={20} />
             </div>
-            <h2 className="text-sm font-bold tracking-tight text-zinc-200 font-sans">Product Giants</h2>
+            <div>
+              <h2 className="text-md font-bold tracking-tight text-zinc-200 font-sans">Product Giants</h2>
+              <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Tier-1 Giants</span>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 flex-grow">
             {productCompanies.map((company) => (
               <button
                 key={company}
                 onClick={() => handleStartTest(company)}
-                className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 hover:bg-indigo-600 border border-zinc-800 text-xs font-semibold hover:text-white hover:border-indigo-500 transition-all duration-200 cursor-pointer"
+                className="text-left px-3.5 py-3 rounded-xl bg-zinc-950/20 hover:bg-indigo-650 border border-zinc-850 text-xs font-semibold text-zinc-400 hover:text-white hover:border-indigo-550 hover:shadow-sm transition-all duration-205 cursor-pointer"
               >
                 {company}
               </button>
@@ -1369,19 +1537,22 @@ const Test = () => {
         </div>
 
         {/* Service Based Firms */}
-        <div className="glass-card rounded-2xl p-5 border border-zinc-800/80 bg-zinc-900/5 flex flex-col">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20">
-              <Building size={18} />
+        <div className="glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-905/5 flex flex-col hover:border-zinc-700/60 hover:shadow-lg transition-all duration-300 group">
+          <div className="flex items-center gap-3.5 mb-5 border-b border-zinc-905 pb-3 flex-shrink-0">
+            <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-455 border border-violet-500/20">
+              <Building size={20} />
             </div>
-            <h2 className="text-sm font-bold tracking-tight text-zinc-200 font-sans">Service Firms</h2>
+            <div>
+              <h2 className="text-md font-bold tracking-tight text-zinc-200 font-sans">Service Firms</h2>
+              <span className="text-[9px] uppercase font-bold text-zinc-555 tracking-wider">Scale Firms</span>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 flex-grow">
             {serviceCompanies.map((company) => (
               <button
                 key={company}
                 onClick={() => handleStartTest(company)}
-                className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 hover:bg-violet-600 border border-zinc-800 text-xs font-semibold hover:text-white hover:border-violet-500 transition-all duration-200 cursor-pointer"
+                className="text-left px-3.5 py-3 rounded-xl bg-zinc-950/20 hover:bg-violet-650 border border-zinc-850 text-xs font-semibold text-zinc-400 hover:text-white hover:border-violet-550 hover:shadow-sm transition-all duration-205 cursor-pointer"
               >
                 {company}
               </button>
@@ -1390,19 +1561,22 @@ const Test = () => {
         </div>
 
         {/* Indian Startups */}
-        <div className="glass-card rounded-2xl p-5 border border-zinc-800/80 bg-zinc-900/5 flex flex-col">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <Zap size={18} />
+        <div className="glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-905/5 flex flex-col hover:border-zinc-700/60 hover:shadow-lg transition-all duration-300 group">
+          <div className="flex items-center gap-3.5 mb-5 border-b border-zinc-905 pb-3 flex-shrink-0">
+            <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-455 border border-cyan-500/20">
+              <Zap size={20} />
             </div>
-            <h2 className="text-sm font-bold tracking-tight text-zinc-200 font-sans">Indian Startups</h2>
+            <div>
+              <h2 className="text-md font-bold tracking-tight text-zinc-200 font-sans">Indian Startups</h2>
+              <span className="text-[9px] uppercase font-bold text-zinc-550 tracking-wider">Unicorn Tiers</span>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 flex-grow">
             {startups.map((company) => (
               <button
                 key={company}
                 onClick={() => handleStartTest(company)}
-                className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 hover:bg-cyan-600 border border-zinc-800 text-xs font-semibold hover:text-white hover:border-cyan-500 transition-all duration-200 cursor-pointer"
+                className="text-left px-3.5 py-3 rounded-xl bg-zinc-950/20 hover:bg-cyan-650 border border-zinc-850 text-xs font-semibold text-zinc-400 hover:text-white hover:border-cyan-555 hover:shadow-sm transition-all duration-205 cursor-pointer"
               >
                 {company}
               </button>
