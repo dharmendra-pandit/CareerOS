@@ -23,7 +23,9 @@ import {
   Check,
   BookOpen,
   HelpCircle,
-  TrendingUp
+  TrendingUp,
+  Brain,
+  Globe
 } from 'lucide-react'
 
 interface Question {
@@ -76,6 +78,8 @@ const startups = [
 
 const Test = () => {
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null)
+  const [selectedRole, setSelectedRole] = useState<string | null>(null)
+  const [selectingRole, setSelectingRole] = useState<boolean>(false)
 
   const getCompanyCategory = (company: string) => {
     if (productCompanies.includes(company)) return 'product'
@@ -83,34 +87,35 @@ const Test = () => {
     return 'startup'
   }
 
-  const getCompanyRounds = (company: string) => {
+  const getCompanyRounds = (company: string, role: string | null = null) => {
     const category = getCompanyCategory(company)
+    const activeRole = role || selectedRole || 'Software Engineer'
     if (category === 'product') {
       return [
-        { id: 1, name: 'Round 1: Aptitude Assessment', type: 'Aptitude MCQ', desc: '10 mathematical, logic & analytical queries. Passing: 60%' },
-        { id: 2, name: 'Round 2: English & Verbal Ability', type: 'English MCQ', desc: '10 reading comprehension, grammar & vocabulary questions. Passing: 60%' },
-        { id: 3, name: 'Round 3: Technical Screening', type: 'Technical MCQ', desc: '10 core DSA concepts, complexity analysis and language queries. Passing: 60%' },
-        { id: 4, name: 'Round 4: Advanced DSA Coding', type: 'Code Editor', desc: '1 real-world algorithmic challenge compiling against self-hosted compiler.' },
-        { id: 5, name: 'Round 5: System Architecture', type: 'Design MCQ', desc: '10 scale-design, microservices and caching patterns queries. Passing: 60%' },
-        { id: 6, name: 'Round 6: Tricky Logic & Debugging', type: 'Logic MCQ', desc: '10 dry-runs, execution tracer and memory management tasks. Passing: 60%' },
-        { id: 7, name: 'Round 7: Behavioral Alignment', type: 'Scenario MCQ', desc: '10 workplace situational dilemmas and culture alignment queries. Passing: 60%' },
+        { id: 1, name: 'Round 1: Aptitude Assessment', type: 'Aptitude MCQ', desc: '10 mathematical, logic and analytical queries. Passing: 60%' },
+        { id: 2, name: 'Round 2: English & Verbal Ability', type: 'English MCQ', desc: '10 reading comprehension, grammar and vocabulary questions. Passing: 60%' },
+        { id: 3, name: `Round 3: ${activeRole} Technical Core`, type: 'Technical MCQ', desc: `10 specialized questions on ${activeRole} concepts, frameworks, and syntax. Passing: 60%` },
+        { id: 4, name: `Round 4: ${activeRole} Practical Coding`, type: 'Code Editor', desc: `1 practical algorithmic challenge compiling against the compiler.` },
+        { id: 5, name: `Round 5: ${activeRole === 'Software Engineer' ? 'System Architecture' : activeRole === 'AI/ML' ? 'ML Ops & Data Pipelines' : activeRole === 'DevOps' ? 'Infrastructure & Scaling' : 'API Scale & State Design'}`, type: 'Design MCQ', desc: '10 scale-design, deployment, and performance scaling queries. Passing: 60%' },
+        { id: 6, name: 'Round 6: Tricky Logic & Debugging', type: 'Logic MCQ', desc: '10 code-trace logic puzzles, pointer arithmetic, and dry-run execution tasks. Passing: 60%' },
+        { id: 7, name: 'Round 7: Cultural & Behavioral Fit', type: 'Scenario MCQ', desc: '10 workplace situational dilemmas and leadership queries. Passing: 60%' },
       ]
     }
     if (category === 'service') {
       return [
         { id: 1, name: 'Round 1: Aptitude Assessment', type: 'Aptitude MCQ', desc: '10 basic math, quantitative reasoning, and patterns problems. Passing: 60%' },
         { id: 2, name: 'Round 2: English & Communication', type: 'English MCQ', desc: '10 verbal logic, grammar correction and sentence structure tasks. Passing: 60%' },
-        { id: 3, name: 'Round 3: Technical Screening', type: 'Technical MCQ', desc: '10 OOPs, database queries, and basic programming logic queries. Passing: 60%' },
-        { id: 4, name: 'Round 4: Practical DSA Coding', type: 'Code Editor', desc: '1 practical programming task compiling in the visual code editor.' },
+        { id: 3, name: `Round 3: ${activeRole} Core Fundamentals`, type: 'Technical MCQ', desc: `10 specialized questions on basic ${activeRole} structures and OOPs. Passing: 60%` },
+        { id: 4, name: `Round 4: ${activeRole} Practical Coding`, type: 'Code Editor', desc: `1 programming task compiling in the visual code editor.` },
         { id: 5, name: 'Round 5: Technical & HR Fit', type: 'HR MCQ', desc: '10 project-handling, client relation, and workplace policy queries. Passing: 60%' },
       ]
     }
     // startup
     return [
       { id: 1, name: 'Round 1: Aptitude Assessment', type: 'Aptitude MCQ', desc: '10 analytical puzzles, quick math, and logical reasoning under pressure. Passing: 60%' },
-      { id: 2, name: 'Round 2: Technical Screening', type: 'Technical MCQ', desc: '10 basic language variables, loops, async logic, and algorithms. Passing: 60%' },
-      { id: 3, name: 'Round 3: Fast-Paced DSA Coding', type: 'Code Editor', desc: '1 intense startup application programming task in the IDE.' },
-      { id: 4, name: 'Round 4: High-Scale Systems', type: 'Systems MCQ', desc: '10 API scaling, database schema design, and caching decision queries. Passing: 60%' },
+      { id: 2, name: `Round 2: ${activeRole} Technical Core`, type: 'Technical MCQ', desc: `10 specialized questions on language variables, loops, async logic, and algorithms. Passing: 60%` },
+      { id: 3, name: `Round 3: ${activeRole} Practical Coding`, type: 'Code Editor', desc: `1 intense deployment scripting or algorithm task in the IDE.` },
+      { id: 4, name: `Round 4: ${activeRole === 'Software Engineer' ? 'High-Scale Systems' : activeRole === 'AI/ML' ? 'Large-Scale Data Engineering' : activeRole === 'DevOps' ? 'Kubernetes & Scaling' : 'Web & Caching Scaling'}`, type: 'Systems MCQ', desc: '10 database schema design, request handling, and caching decision queries. Passing: 60%' },
     ]
   }
   
@@ -179,6 +184,7 @@ const Test = () => {
   const codeTextRef = useRef(codeText)
   const selectedLanguageRef = useRef(selectedLanguage)
   const selectedCompanyRef = useRef(selectedCompany)
+  const selectedRoleRef = useRef(selectedRole)
   const currentRoundRef = useRef(currentRound)
   const logSuspiciousActivityRef = useRef<any>(null)
 
@@ -197,6 +203,10 @@ const Test = () => {
   useEffect(() => {
     selectedCompanyRef.current = selectedCompany
   }, [selectedCompany])
+
+  useEffect(() => {
+    selectedRoleRef.current = selectedRole
+  }, [selectedRole])
 
   useEffect(() => {
     currentRoundRef.current = currentRound
@@ -231,7 +241,7 @@ const Test = () => {
         const results = data.results || []
         const allPassed = results.length > 0 && results.every((r: any) => r.passed)
 
-        const companyRounds = getCompanyRounds(selectedCompanyRef.current!)
+        const companyRounds = getCompanyRounds(selectedCompanyRef.current!, selectedRoleRef.current)
         const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRoundRef.current)
 
         if (allPassed) {
@@ -455,7 +465,7 @@ const Test = () => {
     setViolationsCount(0)
     setSuspiciousActivities([])
     
-    const rounds = getCompanyRounds(selectedCompany!)
+    const rounds = getCompanyRounds(selectedCompany!, selectedRole)
     const activeRound = rounds.find(r => r.id === roundNumber)
     const isCoding = activeRound?.type === 'Code Editor'
     
@@ -475,7 +485,8 @@ const Test = () => {
         body: JSON.stringify({
           type: 'test',
           company: selectedCompany,
-          round: roundNumber
+          round: roundNumber,
+          role: selectedRole
         }),
       })
 
@@ -519,6 +530,43 @@ const Test = () => {
       }
     })
     return score
+  }
+
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      const textarea = e.currentTarget
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const val = textarea.value
+      
+      const newValue = val.substring(0, start) + '    ' + val.substring(end)
+      setCodeText(newValue)
+      
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + 4
+      }, 0)
+    } else if (e.key === 'Enter') {
+      const textarea = e.currentTarget
+      const start = textarea.selectionStart
+      const val = textarea.value
+      
+      const lastNewLine = val.lastIndexOf('\n', start - 1)
+      const currentLine = val.substring(lastNewLine + 1, start)
+      const indentMatch = currentLine.match(/^(\s*)/)
+      const indent = indentMatch ? indentMatch[1] : ''
+      
+      if (indent.length > 0) {
+        e.preventDefault()
+        const insertText = '\n' + indent
+        const newValue = val.substring(0, start) + insertText + val.substring(start)
+        setCodeText(newValue)
+        
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + insertText.length
+        }, 0)
+      }
+    }
   }
 
   // Maps UI language names to compiler IDs
@@ -601,12 +649,12 @@ const Test = () => {
       })
 
       if (allPassed) {
-        logs += `\n🎉 All verified test cases passed!`
+        logs += `\nAll verified test cases passed successfully.`
         if (isSubmit) {
           setCodingSolvedVerified(true)
         }
       } else {
-        logs += `\n⚠️ Some test cases failed. Please review your logic.`
+        logs += `\nSome test cases failed. Please review your logic.`
       }
 
       setConsoleOutput(logs)
@@ -620,7 +668,7 @@ const Test = () => {
 
   const handleVerifyCoding = async () => {
     if (timerRef.current) clearInterval(timerRef.current)
-    const companyRounds = getCompanyRounds(selectedCompany!)
+    const companyRounds = getCompanyRounds(selectedCompany!, selectedRole)
     const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRound)
     
     if (codingSolvedVerified) {
@@ -661,7 +709,7 @@ const Test = () => {
       const results = data.results || []
       const allPassed = results.length > 0 && results.every((r: any) => r.passed)
 
-      const companyRounds = getCompanyRounds(selectedCompany!)
+      const companyRounds = getCompanyRounds(selectedCompany!, selectedRole)
       const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRound)
 
       if (allPassed) {
@@ -692,7 +740,7 @@ const Test = () => {
     setIsRoundActive(false)
     setRoundFinished(false)
     
-    const companyRounds = getCompanyRounds(selectedCompany!)
+    const companyRounds = getCompanyRounds(selectedCompany!, selectedRole)
     const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRound)
     
     if (activeRoundIdx === companyRounds.length - 1) {
@@ -724,10 +772,10 @@ const Test = () => {
     return `${min}:${sec < 10 ? '0' : ''}${sec}`
   }
 
-  const resetRoadmap = (company?: string) => {
+  const resetRoadmap = (company?: string, roleOverride?: string | null) => {
     const target = company || selectedCompany
     if (!target) return
-    const rounds = getCompanyRounds(target)
+    const rounds = getCompanyRounds(target, roleOverride || selectedRole)
     
     const initialUnlocked: Record<number, boolean> = {}
     const initialCompleted: Record<number, boolean> = {}
@@ -746,6 +794,8 @@ const Test = () => {
 
   const quitCompany = () => {
     setSelectedCompany(null)
+    setSelectedRole(null)
+    setSelectingRole(false)
   }
 
   // Loading indicator screen
@@ -882,6 +932,7 @@ const Test = () => {
               <textarea
                 value={codeText}
                 onChange={(e) => setCodeText(e.target.value)}
+                onKeyDown={handleEditorKeyDown}
                 className="flex-1 p-4 bg-transparent border-0 outline-none text-zinc-200 resize-none overflow-y-auto whitespace-pre font-mono text-[11px] leading-relaxed focus:ring-0 focus:outline-none h-full"
                 placeholder="// Write your program solution here..."
                 spellCheck={false}
@@ -903,8 +954,8 @@ const Test = () => {
             <div className="px-4 py-3 border-t border-zinc-850 bg-zinc-950/20 flex items-center justify-between gap-4 flex-shrink-0">
               <span className="text-[10px] font-semibold text-zinc-450">
                 {codingSolvedVerified 
-                  ? "✓ Verification checks completed. You may continue to next round."
-                  : "⌛ Verify solutions via compiler submissions. Needs 100% test cases passed."
+                  ? "Verification checks completed. You may continue to next round."
+                  : "Pending verification: Verify solutions via compiler submissions. Needs 100% test cases passed."
                 }
               </span>
 
@@ -981,7 +1032,7 @@ const Test = () => {
           </p>
           {violationsCount >= 3 && (
             <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs">
-              ⚠️ Disqualified: 3 Proctoring Violations Detected
+              Disqualified: 3 Proctoring Violations Detected
             </div>
           )}
           <div className="mt-8 flex justify-center">
@@ -1036,7 +1087,7 @@ const Test = () => {
       const handleConfirmResults = () => {
         if (isPassed) {
           setCompletedRounds(prev => ({ ...prev, [currentRound]: true }))
-          const companyRounds = getCompanyRounds(selectedCompany!)
+          const companyRounds = getCompanyRounds(selectedCompany!, selectedRole)
           const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRound)
           if (activeRoundIdx < companyRounds.length - 1) {
             const nextRound = companyRounds[activeRoundIdx + 1]
@@ -1073,7 +1124,7 @@ const Test = () => {
               </p>
               {violationsCount >= 3 && (
                 <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs max-w-sm mx-auto">
-                  ⚠️ Disqualified: 3 Proctoring Violations Detected
+                  Disqualified: 3 Proctoring Violations Detected
                 </div>
               )}
 
@@ -1363,9 +1414,80 @@ const Test = () => {
     )
   }
 
+  // Role Selection Screen
+  if (selectedCompany && selectingRole) {
+    return (
+      <div className="min-h-screen text-zinc-100 p-6 max-w-4xl mx-auto flex flex-col justify-center animate-fade-in space-y-8">
+        <div className="text-center space-y-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Target Role Selection</span>
+          <h1 className="text-3xl font-black tracking-tight text-zinc-100 font-sans">Prepare for {selectedCompany}</h1>
+          <p className="text-zinc-400 text-xs max-w-lg mx-auto leading-relaxed">
+            Select the specialization path you are targeting. Your simulated interview rounds, conceptual assessments, and coding challenges will adapt to be highly accurate and practical.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto w-full">
+          {[
+            {
+              id: 'Software Engineer',
+              title: 'Software Engineer',
+              desc: 'Core data structures, algorithms (DSA), OOPs, and general software design paradigms.',
+              icon: <Cpu className="h-6 w-6 text-indigo-400" />
+            },
+            {
+              id: 'MERN Stack',
+              title: 'MERN Stack',
+              desc: 'Frontend and backend JavaScript, React rendering, Node.js architecture, and MongoDB data layers.',
+              icon: <Globe className="h-6 w-6 text-emerald-400" />
+            },
+            {
+              id: 'AI/ML',
+              title: 'AI/ML',
+              desc: 'Machine learning fundamentals, Python ML libraries, neural networks, and vector-space algorithms.',
+              icon: <Brain className="h-6 w-6 text-rose-400" />
+            },
+            {
+              id: 'DevOps',
+              title: 'DevOps',
+              desc: 'Linux scripting, container orchestration (Docker/K8s), deployment pipelines, and cloud scaling.',
+              icon: <Terminal className="h-6 w-6 text-cyan-400" />
+            }
+          ].map((roleItem) => (
+            <button
+              key={roleItem.id}
+              onClick={() => {
+                setSelectedRole(roleItem.id)
+                setSelectingRole(false)
+                resetRoadmap(selectedCompany, roleItem.id)
+              }}
+              className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10 hover:bg-zinc-800/40 text-left hover:border-zinc-750 transition-all duration-300 flex items-start gap-4 cursor-pointer group"
+            >
+              <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-850 flex-shrink-0">
+                {roleItem.icon}
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-zinc-200 group-hover:text-white transition-colors">{roleItem.title}</h3>
+                <p className="text-[11px] text-zinc-500 leading-relaxed font-medium">{roleItem.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={quitCompany}
+            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-all font-semibold cursor-pointer px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-850"
+          >
+            <ArrowLeft size={13} /> Back to Companies
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // Interview Roadmap Funnel for Selected Company
   if (selectedCompany) {
-    const rounds = getCompanyRounds(selectedCompany)
+    const rounds = getCompanyRounds(selectedCompany, selectedRole)
     const allCompleted = rounds.every(r => completedRounds[r.id])
 
     return (
@@ -1373,7 +1495,7 @@ const Test = () => {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Company Funnel</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Company Funnel &bull; {selectedRole}</span>
             <h1 className="text-3xl font-black text-zinc-100 mt-0.5">{selectedCompany} Recruitment Path</h1>
           </div>
           <button onClick={quitCompany} className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-all font-semibold cursor-pointer">
@@ -1392,7 +1514,7 @@ const Test = () => {
               </p>
             </div>
             <button
-              onClick={() => resetRoadmap(selectedCompany)}
+              onClick={() => resetRoadmap(selectedCompany, selectedRole)}
               className="flex items-center gap-1.5 px-4.5 py-2.5 bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-350 hover:bg-zinc-800 rounded-xl mx-auto transition-all cursor-pointer"
             >
               <RefreshCw size={13} /> Retake Pathway
@@ -1589,7 +1711,7 @@ const Test = () => {
 
   function handleStartTest(companyName: string) {
     setSelectedCompany(companyName)
-    resetRoadmap(companyName)
+    setSelectingRole(true)
   }
 }
 

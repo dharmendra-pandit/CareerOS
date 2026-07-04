@@ -201,10 +201,10 @@ const OFFLINE_CODING_FALLBACKS: Record<string, CodingProblem> = {
       { input: "1\n5 10", output: "5 10" }
     ],
     starterTemplates: {
-      python: `import sys\n\ndef solve():\n    lines = sys.stdin.read().splitlines()\n    if not lines:\n        return\n    k = int(lines[0])\n    merged = []\n    for i in range(1, k + 1):\n        if i < len(lines) and lines[i].strip():\n            merged.extend(map(int, lines[i].split()))\n    merged.sort()\n    print(*(merged))\n\nif __name__ == '__main__':\n    solve()`,
-      javascript: `const fs = require('fs');\n\nfunction solve() {\n    const input = fs.readFileSync(0, 'utf-8');\n    const lines = input.trim().split('\\n');\n    if (lines.length === 0 || !lines[0]) return;\n    const k = parseInt(lines[0]);\n    let merged = [];\n    for (let i = 1; i <= k; i++) {\n        if (lines[i] && lines[i].trim()) {\n            merged.push(...lines[i].trim().split(/\\s+/).map(Number));\n        }\n    }\n    merged.sort((a, b) => a - b);\n    console.log(merged.join(' '));\n}\n\nsolve();`,
-      cpp: `#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nint main() {\n    int k;\n    if (!(cin >> k)) return 0;\n    string line;\n    getline(cin, line); // consume remainder of line\n    vector<int> merged;\n    for (int i = 0; i < k; ++i) {\n        if (getline(cin, line)) {\n            stringstream ss(line);\n            int num;\n            while (ss >> num) {\n                merged.push_back(num);\n            }\n        }\n    }\n    sort(merged.begin(), merged.end());\n    for (size_t i = 0; i < merged.size(); ++i) {\n        cout << merged[i] << (i + 1 == merged.size() ? "" : " ");\n    }\n    cout << endl;\n    return 0;\n}`,
-      java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String kStr = br.readLine();\n        if (kStr == null) return;\n        int k = Integer.parseInt(kStr.trim());\n        List<Integer> list = new ArrayList<>();\n        for (int i = 0; i < k; i++) {\n            String line = br.readLine();\n            if (line == null) break;\n            if (line.trim().isEmpty()) continue;\n            String[] parts = line.trim().split("\\\\s+");\n            for (String part : parts) {\n                list.add(Integer.parseInt(part));\n            }\n        }\n        Collections.sort(list);\n        StringBuilder sb = new StringBuilder();\n        for (int i = 0; i < list.size(); i++) {\n            sb.append(list.get(i)).append(i + 1 == list.size() ? "" : " ");\n        }\n        System.out.println(sb.toString());\n    }\n}`
+      python: `import sys\n\ndef solve():\n    lines = sys.stdin.read().splitlines()\n    if not lines:\n        return\n    k = int(lines[0])\n    # TODO: Write your logic here to merge the k sorted lists\n    # Each list is represented as a space-separated string of integers in lines[1...k]\n    \n    # Print the space-separated values of the merged sorted list\n    pass\n\nif __name__ == '__main__':\n    solve()`,
+      javascript: `const fs = require('fs');\n\nfunction solve() {\n    const input = fs.readFileSync(0, 'utf-8');\n    const lines = input.trim().split('\\n');\n    if (lines.length === 0 || !lines[0]) return;\n    const k = parseInt(lines[0]);\n    // TODO: Write your logic here to merge the k sorted lists\n    \n    // Print the space-separated values of the merged sorted list\n}\n\nsolve();`,
+      cpp: `#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nint main() {\n    int k;\n    if (!(cin >> k)) return 0;\n    string line;\n    getline(cin, line); // consume remainder of line\n    // TODO: Write your logic here to merge the k sorted lists\n    \n    // Print the space-separated values of the merged sorted list\n    return 0;\n}`,
+      java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String kStr = br.readLine();\n        if (kStr == null) return;\n        int k = Integer.parseInt(kStr.trim());\n        // TODO: Write your logic here to merge the k sorted lists\n        \n        // Print the space-separated values of the merged sorted list\n    }\n}`
     }
   },
   service: {
@@ -221,10 +221,10 @@ const OFFLINE_CODING_FALLBACKS: Record<string, CodingProblem> = {
       { input: "3 3\n6", output: "0 1" }
     ],
     starterTemplates: {
-      python: `import sys\n\ndef solve():\n    lines = sys.stdin.read().splitlines()\n    if len(lines) < 2:\n        return\n    nums = list(map(int, lines[0].split()))\n    target = int(lines[1])\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            if nums[i] + nums[j] == target:\n                print(f"{i} {j}")\n                return\n\nif __name__ == '__main__':\n    solve()`,
-      javascript: `const fs = require('fs');\n\nfunction solve() {\n    const input = fs.readFileSync(0, 'utf-8');\n    const lines = input.trim().split('\\n');\n    if (lines.length < 2) return;\n    const nums = lines[0].trim().split(/\\s+/).map(Number);\n    const target = parseInt(lines[1]);\n    for (let i = 0; i < nums.length; i++) {\n        for (let j = i + 1; j < nums.length; j++) {\n            if (nums[i] + nums[j] === target) {\n                console.log(i + " " + j);\n                return;\n            }\n        }\n    }\n}\n\nsolve();`,
-      cpp: `#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nint main() {\n    string line;\n    if (!getline(cin, line)) return 0;\n    stringstream ss(line);\n    vector<int> nums;\n    int num;\n    while (ss >> num) {\n        nums.push_back(num);\n    }\n    int target;\n    if (!(cin >> target)) return 0;\n    for (size_t i = 0; i < nums.size(); ++i) {\n        for (size_t j = i + 1; j < nums.size(); ++j) {\n            if (nums[i] + nums[j] == target) {\n                cout << i << " " << j << endl;\n                return 0;\n            }\n        }\n    }\n    return 0;\n}`,
-      java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String firstLine = br.readLine();\n        String secondLine = br.readLine();\n        if (firstLine == null || secondLine == null) return;\n        String[] parts = firstLine.trim().split("\\\\s+");\n        int[] nums = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) {\n            nums[i] = Integer.parseInt(parts[i]);\n        }\n        int target = Integer.parseInt(secondLine.trim());\n        for (int i = 0; i < nums.length; i++) {\n            for (int j = i + 1; j < nums.length; j++) {\n                if (nums[i] + nums[j] == target) {\n                    System.out.println(i + " " + j);\n                    return;\n                }\n            }\n        }\n    }\n}`
+      python: `import sys\n\ndef solve():\n    lines = sys.stdin.read().splitlines()\n    if len(lines) < 2:\n        return\n    nums = list(map(int, lines[0].split()))\n    target = int(lines[1])\n    # TODO: Write logic here to find indices of the two numbers that add up to target\n    \n    # Print the indices of the two numbers separated by a space\n    pass\n\nif __name__ == '__main__':\n    solve()`,
+      javascript: `const fs = require('fs');\n\nfunction solve() {\n    const input = fs.readFileSync(0, 'utf-8');\n    const lines = input.trim().split('\\n');\n    if (lines.length < 2) return;\n    const nums = lines[0].trim().split(/\\s+/).map(Number);\n    const target = parseInt(lines[1]);\n    // TODO: Write logic here to find indices of the two numbers that add up to target\n    \n    // Print the indices of the two numbers separated by a space\n}\n\nsolve();`,
+      cpp: `#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nint main() {\n    string line;\n    if (!getline(cin, line)) return 0;\n    stringstream ss(line);\n    vector<int> nums;\n    int num;\n    while (ss >> num) {\n        nums.push_back(num);\n    }\n    int target;\n    if (!(cin >> target)) return 0;\n    // TODO: Write logic here to find indices of the two numbers that add up to target\n    \n    // Print the indices of the two numbers separated by a space\n    return 0;\n}`,
+      java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String firstLine = br.readLine();\n        String secondLine = br.readLine();\n        if (firstLine == null || secondLine == null) return;\n        String[] parts = firstLine.trim().split("\\\\s+");\n        int[] nums = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) {\n            nums[i] = Integer.parseInt(parts[i]);\n        }\n        int target = Integer.parseInt(secondLine.trim());\n        // TODO: Write logic here to find indices of the two numbers that add up to target\n        \n        // Print the indices of the two numbers separated by a space\n    }\n}`
     }
   },
   startup: {
@@ -241,10 +241,10 @@ const OFFLINE_CODING_FALLBACKS: Record<string, CodingProblem> = {
       { input: "([)]", output: "false" }
     ],
     starterTemplates: {
-      python: `import sys\n\ndef solve():\n    s = sys.stdin.read().strip()\n    stack = []\n    mapping = {")": "(", "}": "{", "]": "["}\n    for char in s:\n        if char in mapping:\n            top_element = stack.pop() if stack else '#'\n            if mapping[char] != top_element:\n                print("false")\n                return\n        else:\n            stack.append(char)\n    print("true" if not stack else "false")\n\nif __name__ == '__main__':\n    solve()`,
-      javascript: `const fs = require('fs');\n\nfunction solve() {\n    const s = fs.readFileSync(0, 'utf-8').trim();\n    const stack = [];\n    const mapping = {')': '(', '}': '{', ']': '['};\n    for (let i = 0; i < s.length; i++) {\n        const char = s[i];\n        if (mapping[char]) {\n            const top = stack.length ? stack.pop() : '#';\n            if (mapping[char] !== top) {\n                console.log("false");\n                return;\n            }\n        } else {\n            stack.push(char);\n        }\n    }\n    console.log(stack.length === 0 ? "true" : "false");\n}\n\nsolve();`,
-      cpp: `#include <iostream>\n#include <stack>\n#include <string>\n#include <map>\nusing namespace std;\n\nint main() {\n    string s;\n    if (!(cin >> s)) return 0;\n    stack<char> st;\n    map<char, char> mapping = {{')', '('}, {'}', '{'}, {']', '['}};\n    for (char c : s) {\n        if (mapping.count(c)) {\n            char top = st.empty() ? '#' : st.top();\n            if (!st.empty()) st.pop();\n            if (mapping[c] != top) {\n                cout << "false" << endl;\n                return 0;\n            }\n        } else {\n            st.push(c);\n        }\n    }\n    cout << (st.empty() ? "true" : "false") << endl;\n    return 0;\n}`,
-      java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String s = br.readLine();\n        if (s == null) return;\n        s = s.trim();\n        Stack<Character> stack = new Stack<>();\n        Map<Character, Character> mapping = new HashMap<>();\n        mapping.put(')', '(');\n        mapping.put('}', '{');\n        mapping.put(']', '[');\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (mapping.containsKey(c)) {\n                char top = stack.isEmpty() ? '#' : stack.pop();\n                if (mapping.get(c) != top) {\n                    System.out.println("false");\n                    return;\n                }\n            } else {\n                stack.push(c);\n            }\n        }\n        System.out.println(stack.isEmpty() ? "true" : "false");\n    }\n}`
+      python: `import sys\n\ndef solve():\n    s = sys.stdin.read().strip()\n    # TODO: Write logic here to check if the parentheses string s is valid\n    \n    # Print 'true' if the string is valid, otherwise 'false'\n    pass\n\nif __name__ == '__main__':\n    solve()`,
+      javascript: `const fs = require('fs');\n\nfunction solve() {\n    const s = fs.readFileSync(0, 'utf-8').trim();\n    // TODO: Write logic here to check if the parentheses string s is valid\n    \n    # Print 'true' if the string is valid, otherwise 'false'\n}\n\nsolve();`,
+      cpp: `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string s;\n    if (!(cin >> s)) return 0;\n    // TODO: Write logic here to check if the parentheses string s is valid\n    \n    // Print 'true' if the string is valid, otherwise 'false'\n    return 0;\n}`,
+      java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String s = br.readLine();\n        if (s == null) return;\n        s = s.trim();\n        // TODO: Write logic here to check if the parentheses string s is valid\n        \n        // Print 'true' if the string is valid, otherwise 'false'\n    }\n}`
     }
   }
 }
@@ -311,7 +311,8 @@ const getCompanyDifficulty = (company: string): string => {
 
 export async function POST(req: Request) {
   try {
-    const { type, topic, company, difficulty, round } = await req.json()
+    const body = await req.json()
+    const { type, topic, company, difficulty, round, role } = body
     const apiKey = process.env.DEEPSEEK_API_KEY
     const hasApiKey = apiKey && apiKey !== 'your_deepseek_api_key_here'
 
@@ -319,6 +320,7 @@ export async function POST(req: Request) {
     const normDiff = (difficulty || 'medium').toLowerCase()
     const normCompany = (company || 'Google').trim()
     const normRound = Number(round || 1)
+    const normRole = (role || 'Software Engineer').trim()
 
     const category = getCompanyCategory(normCompany)
 
@@ -398,27 +400,36 @@ Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all t
                             (category === 'startup' && normRound === 3)
 
       if (!hasApiKey) {
-        return handleOfflineTestFallback(normCompany, normRound)
+        return handleOfflineTestFallback(normCompany, normRound, normRole)
       }
 
-      let systemPrompt = 'You are a cost-optimized recruitment system. Output strictly minified JSON.'
+      let systemPrompt = 'You are a recruitment engine. Output strictly minified JSON.'
       let prompt = ''
 
       if (isCodingRound) {
-        prompt = `Generate exactly 1 practical, real-world scenario DSA coding challenge used in technical hiring at ${normCompany}.
+        let roleFocus = 'core data structures/algorithms (such as graph traversals, heap, cache eviction, interval merge, rate limiting arrays, trees)'
+        if (normRole === 'AI/ML') {
+          roleFocus = 'AI/ML algorithmic implementations (such as linear algebra matrix operations, model metrics calculations like F1/Precision/Recall/ROC-AUC, distance calculations like Cosine/Euclidean, k-means clustering iterations, array vectorization processing, or simple regression/backpropagation formulas)'
+        } else if (normRole === 'DevOps') {
+          roleFocus = 'DevOps/systems automation scripting challenges (such as parsing system logs, configuration/JSON validation, container resource calculation arrays, IP subnet range parsing, cron schedule validators, file-path traversal matching, or command arguments parsing)'
+        } else if (normRole === 'MERN Stack') {
+          roleFocus = 'web/full-stack programming logic (such as deep merging nested config structures, URL route pattern matching and parameter extraction, validating complex JSON request shapes, asynchronous callback sequence execution queues, or string tokenizers for templates)'
+        }
+
+        prompt = `Generate exactly 1 coding challenge for a ${normRole} role, styled as used in technical hiring at ${normCompany}.
 Difficulty: ${category === 'service' ? 'medium' : 'hard'} level.
-The question should focus on core data structures/algorithms (such as graph traversals, heap, cache eviction, interval merge, rate limiting arrays, trees).
+The challenge must focus on: ${roleFocus}.
 Output JSON object containing key "codingProblem" matching exactly these short keys:
 - t: problem title
-- d: short problem statement/description (stdin/stdout behavior)
-- c: complexity/size constraints
+- d: short problem description (stdin/stdout behavior)
+- c: complexity constraints
 - if: input format
 - of: output format
 - si: sample input
 - so: sample output
-- tc: array of 3 test case objects, each with keys "i" (stdin) and "o" (expected stdout)
-- st: object containing starter template strings for python, javascript, cpp, java
-Do not use markdown. Keep descriptions extremely concise to save tokens.`
+- tc: array of 3 test case objects with keys "i" (stdin) and "o" (expected stdout)
+- st: object containing starter template strings (boilerplates only, handling standard input/output reading, leaving the logic body empty with a TODO comment) for python, javascript, cpp, java
+Constraint: Minify output. Keep descriptions extremely short. Do NOT include markdown code blocks or explanations outside JSON.`
       } else {
         // MCQ Rounds
         let roundScope = 'general programming screening'
@@ -428,19 +439,49 @@ Do not use markdown. Keep descriptions extremely concise to save tokens.`
         if (category === 'product') {
           if (normRound === 1) { roundScope = 'Quantitative aptitude, mathematical logic, reasoning puzzles, permutation combinations, probability, sequences'; isGeneralRound = true; }
           else if (normRound === 2) { roundScope = 'English & Verbal ability, sentence completion, reading comprehension, grammar corrections'; isGeneralRound = true; }
-          else if (normRound === 3) roundScope = 'Technical core topics and DSA concepts (Time complexity, search/sort algorithms, trees, array traversal, stack operations)'
-          else if (normRound === 5) roundScope = 'Advanced system architecture, distributed systems, microservices, scaling database replication, and system performance design'
-          else if (normRound === 6) roundScope = 'Tricky execution logic, code trace puzzles, pointer operations, bitwise logic, memory leak scenarios'
+          else if (normRound === 3) {
+            roundScope = normRole === 'AI/ML' ? 'AI/ML core machine learning, training algorithms, metrics, vector mathematics, activation functions'
+                      : normRole === 'DevOps' ? 'DevOps, CI/CD pipelines, Docker, Kubernetes, Linux operating system, bash basics'
+                      : normRole === 'MERN Stack' ? 'MERN stack web engineering, JavaScript engine, React component rendering lifecycle, NodeJS backend processes, MongoDB indexing'
+                      : 'Technical core topics and DSA concepts (Time complexity, search/sort algorithms, trees, array traversal, stack operations)'
+          }
+          else if (normRound === 5) {
+            roundScope = normRole === 'AI/ML' ? 'AI/ML System Design, feature stores, model latency optimization, distributed training scalability'
+                      : normRole === 'DevOps' ? 'Cloud Infrastructure, load balancing, multi-region high availability, VPC networking, infrastructure as code'
+                      : normRole === 'MERN Stack' ? 'Web App Scale Design, session caching, state synchronization, CDN caching, database replica shards'
+                      : 'Advanced system architecture, distributed systems, microservices, scaling database replication, and system performance design'
+          }
+          else if (normRound === 6) {
+            roundScope = normRole === 'AI/ML' ? 'Python ML debugging, pandas/numpy vector diagnostics, tensor shapes mismatches, numerical precision overflow'
+                      : normRole === 'DevOps' ? 'Bash scripts debugging, regex configurations, log trace files, Dockerfile errors, process termination flags'
+                      : normRole === 'MERN Stack' ? 'NodeJS event loop blocks, React state updates side-effects, async callback leaks, mongo db cursor queries'
+                      : 'Tricky execution logic, code trace puzzles, pointer operations, bitwise logic, memory leak scenarios'
+          }
           else if (normRound === 7) { roundScope = 'Behavioral workplace situational scenarios, cultural alignment, leadership logic'; isBehavioral = true; }
         } else if (category === 'service') {
           if (normRound === 1) { roundScope = 'Quantitative aptitude, basic arithmetic, logical reasoning, numerical series'; isGeneralRound = true; }
           else if (normRound === 2) { roundScope = 'English comprehension, grammar, vocabulary, sentence correction'; isGeneralRound = true; }
-          else if (normRound === 3) roundScope = 'Technical fundamentals, OOPs, database queries, basic arrays and strings memory complexity'
+          else if (normRound === 3) {
+            roundScope = normRole === 'AI/ML' ? 'AI/ML basics, Python collections, statistics concepts, regression models, classification metrics'
+                      : normRole === 'DevOps' ? 'Cloud foundations, basic command line shell utilities, Git workflow, CI jobs syntax'
+                      : normRole === 'MERN Stack' ? 'Web fundamentals, basic HTML DOM, CSS rules, JavaScript array methods, express route setup'
+                      : 'Technical fundamentals, OOPs, database queries, basic arrays and strings memory complexity'
+          }
           else if (normRound === 5) { roundScope = 'Technical interview review, project situational dilemmas, HR communication, client coordination'; isBehavioral = true; }
         } else { // startup
           if (normRound === 1) { roundScope = 'Aptitude logic, analytical puzzles, quick math, logical deduction under time pressure'; isGeneralRound = true; }
-          else if (normRound === 2) roundScope = 'Technical screening, programming language basics, asynchronous executions (JS callbacks/promises), basic algorithms'
-          else if (normRound === 4) roundScope = 'High-scale systems, database schema decisions, caching strategy, api scaling, and system execution logic'
+          else if (normRound === 2) {
+            roundScope = normRole === 'AI/ML' ? 'ML model setup, vector dot products, python functions, training loop checks'
+                      : normRole === 'DevOps' ? 'Git actions, bash scripts, container setup, process port monitoring'
+                      : normRole === 'MERN Stack' ? 'React component hooks, express REST handlers, asynchronous JS promises, mongo collections queries'
+                      : 'Technical screening, programming language basics, asynchronous executions (JS callbacks/promises), basic algorithms'
+          }
+          else if (normRound === 4) {
+            roundScope = normRole === 'AI/ML' ? 'Scalable data loading, vector databases queries indexing, inference server cache, batching data pipelines'
+                      : normRole === 'DevOps' ? 'Docker orchestration, kubernetes pods routing, configuration state maps, secrets management'
+                      : normRole === 'MERN Stack' ? 'MERN production deployment, reverse proxy caching, redis session stores, MongoDB performance aggregation'
+                      : 'High-scale systems, database schema decisions, caching strategy, api scaling, and system execution logic'
+          }
         }
 
         const compDiff = getCompanyDifficulty(normCompany)
@@ -450,7 +491,7 @@ Do not use markdown. Keep descriptions extremely concise to save tokens.`
         } else if (isGeneralRound) {
           roundFocus = `Generate questions on ${roundScope}. Focus purely on math, logic, verbal, or analytical reasoning. Do NOT include coding, software engineering terminology, or system architecture.`
         } else {
-          roundFocus = `Generate questions testing ${roundScope}. Include code debugging snippets, complexity, algorithms, and tech stack concepts.`
+          roundFocus = `Generate questions testing ${roundScope} tailored specifically for a ${normRole} position. Include code debugging snippets, complexity, algorithms, and tech stack concepts.`
         }
 
         prompt = `Generate 10 MCQ questions for Round ${normRound} of simulated recruitment at ${normCompany}.
@@ -553,14 +594,80 @@ Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all t
   }
 }
 
-function handleOfflineTestFallback(company: string, round: number) {
+function handleOfflineTestFallback(company: string, round: number, role: string = 'Software Engineer') {
   const category = getCompanyCategory(company)
   const isCoding = (category === 'product' && round === 4) ||
                    (category === 'service' && round === 4) ||
                    (category === 'startup' && round === 3)
   
   if (isCoding) {
-    const problem = OFFLINE_CODING_FALLBACKS[category] || OFFLINE_CODING_FALLBACKS.product
+    let problem = OFFLINE_CODING_FALLBACKS[category] || OFFLINE_CODING_FALLBACKS.product
+
+    if (role === 'AI/ML') {
+      problem = {
+        title: "Vector Distance Calculator",
+        description: "Calculate the Euclidean distance between two 1D numeric vectors representing array of floats.",
+        constraints: "Vector dimensions N <= 1000",
+        inputFormat: "The first line contains N. The next 2 lines contain space-separated floats.",
+        outputFormat: "Print the Euclidean distance rounded to 2 decimal places.",
+        sampleInput: "3\n1.0 2.0 3.0\n4.0 5.0 6.0",
+        sampleOutput: "5.20",
+        testCases: [
+          { input: "3\n1.0 2.0 3.0\n4.0 5.0 6.0", output: "5.20" },
+          { input: "2\n0.0 0.0\n3.0 4.0", output: "5.00" },
+          { input: "1\n10.5\n2.5", output: "8.00" }
+        ],
+        starterTemplates: {
+          python: `import sys\nimport math\n\ndef solve():\n    lines = sys.stdin.read().splitlines()\n    if len(lines) < 3:\n        return\n    n = int(lines[0])\n    # TODO: Parse vector 1 and vector 2, calculate Euclidean distance\n    \n    # Print output rounded to 2 decimal places\n    pass\n\nif __name__ == '__main__':\n    solve()`,
+          javascript: `const fs = require('fs');\n\nfunction solve() {\n    const input = fs.readFileSync(0, 'utf-8');\n    const lines = input.trim().split('\\n');\n    if (lines.length < 3) return;\n    const n = parseInt(lines[0]);\n    // TODO: Parse vector 1 and vector 2, calculate Euclidean distance\n    \n    // Print output rounded to 2 decimal places\n}\n\nsolve();`,
+          cpp: `#include <iostream>\n#include <vector>\n#include <cmath>\n#include <iomanip>\nusing namespace std;\n\nint main() {\n    int n;\n    if (!(cin >> n)) return 0;\n    // TODO: Parse vectors and calculate Euclidean distance\n    return 0;\n}`,
+          java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        // TODO: Parse vectors and calculate Euclidean distance\n    }\n}`
+        }
+      }
+    } else if (role === 'DevOps') {
+      problem = {
+        title: "Log Event Parser",
+        description: "Parse log events and extract count of lines that match 'ERROR' status.",
+        constraints: "Lines of log L <= 5000",
+        inputFormat: "The first line contains number of lines L. The next L lines contain log entries.",
+        outputFormat: "Print the total count of error lines.",
+        sampleInput: "3\n[INFO] User logged in\n[ERROR] Connection timeout\n[WARNING] Retry attempt 1",
+        sampleOutput: "1",
+        testCases: [
+          { input: "3\n[INFO] User logged in\n[ERROR] Connection timeout\n[WARNING] Retry attempt 1", output: "1" },
+          { input: "2\n[ERROR] Database down\n[ERROR] Write failed", output: "2" },
+          { input: "1\n[INFO] Healthy state", output: "0" }
+        ],
+        starterTemplates: {
+          python: `import sys\n\ndef solve():\n    lines = sys.stdin.read().splitlines()\n    if not lines:\n        return\n    l = int(lines[0])\n    # TODO: Count the number of error logs in lines[1...l]\n    pass\n\nif __name__ == '__main__':\n    solve()`,
+          javascript: `const fs = require('fs');\n\nfunction solve() {\n    const input = fs.readFileSync(0, 'utf-8');\n    const lines = input.trim().split('\\n');\n    if (lines.length === 0 || !lines[0]) return;\n    const l = parseInt(lines[0]);\n    // TODO: Count the number of error logs\n}\n\nsolve();`,
+          cpp: `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    int l;\n    if (!(cin >> l)) return 0;\n    // TODO: Count the number of error logs\n    return 0;\n}`,
+          java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        // TODO: Count the number of error logs\n    }\n}`
+        }
+      }
+    } else if (role === 'MERN Stack') {
+      problem = {
+        title: "Deep Merge Configurations",
+        description: "Given two flat dictionary/object structures in key=value format, deep merge them into a single sorted output list of key=value.",
+        constraints: "Keys count K <= 500",
+        inputFormat: "The first line contains N (number of lines of config 1). The next N lines contain key=value format. The next line contains M (number of lines of config 2). The next M lines contain key=value. Second config keys overwrite the first.",
+        outputFormat: "Print the sorted list of key=value lines representing the merged configuration.",
+        sampleInput: "2\nport=3000\nhost=localhost\n2\nport=8080\ndb=mongo",
+        sampleOutput: "db=mongo\nhost=localhost\nport=8080",
+        testCases: [
+          { input: "2\nport=3000\nhost=localhost\n2\nport=8080\ndb=mongo", output: "db=mongo\nhost=localhost\nport=8080" },
+          { input: "1\na=1\n1\nb=2", output: "a=1\nb=2" },
+          { input: "1\nx=hello\n1\nx=world", output: "x=world" }
+        ],
+        starterTemplates: {
+          python: `import sys\n\ndef solve():\n    lines = sys.stdin.read().splitlines()\n    # TODO: Deep merge config 1 and config 2, print sorted merged output\n    pass\n\nif __name__ == '__main__':\n    solve()`,
+          javascript: `const fs = require('fs');\n\nfunction solve() {\n    const input = fs.readFileSync(0, 'utf-8');\n    const lines = input.trim().split('\\n');\n    // TODO: Deep merge and print sorted output\n}\n\nsolve();`,
+          cpp: `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    // TODO: Deep merge and print sorted output\n    return 0;\n}`,
+          java: `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        // TODO: Deep merge and print sorted output\n    }\n}`
+        }
+      }
+    }
+
     return NextResponse.json({
       codingProblem: {
         ...problem,
