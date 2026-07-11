@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import { Sliders, Bell, Eye, ShieldAlert, Check, User, Save, Plus, Trash2 } from 'lucide-react'
+import { Sliders, Bell, Eye, ShieldAlert, Check, User, Save, Plus, Trash2, FileText, Pencil, X } from 'lucide-react'
 
 interface ProfileData {
   name: string
@@ -58,7 +58,15 @@ const Settings = () => {
   const [timetableTemplates, setTimetableTemplates] = useState<Timetable>({})
   const [activeDayTab, setActiveDayTab] = useState('Monday')
 
-
+  // Blog management states
+  const [blogsList, setBlogsList] = useState<any[]>([])
+  const [isBlogModalOpen, setIsBlogModalOpen] = useState(false)
+  const [editingBlogId, setEditingBlogId] = useState<string | null>(null)
+  const [blogTitle, setBlogTitle] = useState('')
+  const [blogContent, setBlogContent] = useState('')
+  const [blogAuthor, setBlogAuthor] = useState('')
+  const [blogTags, setBlogTags] = useState('')
+  const [isSavingBlog, setIsSavingBlog] = useState(false)
 
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -101,8 +109,21 @@ const Settings = () => {
       }
     }
 
+    const fetchBlogs = async () => {
+      try {
+        const res = await fetch('/api/blogs')
+        if (res.ok) {
+          const data = await res.json()
+          setBlogsList(data)
+        }
+      } catch (err) {
+        console.error('Error fetching blogs in Settings:', err)
+      }
+    }
+
     fetchProfile()
     fetchTimetable()
+    fetchBlogs()
   }, [])
 
   const handleSave = async () => {
@@ -220,6 +241,78 @@ const Settings = () => {
     if (parts.length !== 3) return dateStr
     const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  // Blog editor actions
+  const handleOpenCreateBlog = () => {
+    setEditingBlogId(null)
+    setBlogTitle('')
+    setBlogContent('')
+    setBlogAuthor(userName || 'Dharmendra Pandit')
+    setBlogTags('')
+    setIsBlogModalOpen(true)
+  }
+
+  const handleOpenEditBlog = (blog: any) => {
+    setEditingBlogId(blog._id)
+    setBlogTitle(blog.title)
+    setBlogContent(blog.content)
+    setBlogAuthor(blog.author)
+    setBlogTags(blog.tags ? blog.tags.join(', ') : '')
+    setIsBlogModalOpen(true)
+  }
+
+  const handleSaveBlog = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!blogTitle.trim() || !blogContent.trim() || !blogAuthor.trim()) return
+
+    setIsSavingBlog(true)
+    try {
+      const url = editingBlogId ? `/api/blogs/${editingBlogId}` : '/api/blogs'
+      const method = editingBlogId ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: blogTitle,
+          content: blogContent,
+          author: blogAuthor,
+          tags: blogTags
+        })
+      })
+
+      if (res.ok) {
+        setIsBlogModalOpen(false)
+        // Refresh local lists
+        const listRes = await fetch('/api/blogs')
+        if (listRes.ok) {
+          const data = await listRes.json()
+          setBlogsList(data)
+        }
+      } else {
+        alert('Failed to save blog post')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Error saving blog post')
+    } finally {
+      setIsSavingBlog(false)
+    }
+  }
+
+  const handleDeleteBlog = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this blog post?')) return
+    try {
+      const res = await fetch(`/api/blogs/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setBlogsList(prev => prev.filter(b => b._id !== id))
+      } else {
+        alert('Failed to delete blog post')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Error deleting blog post')
+    }
   }
 
 
@@ -432,6 +525,81 @@ const Settings = () => {
         </div>
       </div>
 
+      {/* Blog Post Manager Section */}
+      <div className="glass-card rounded-2xl p-6 border border-zinc-800 bg-zinc-900/10 space-y-4 mt-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <FileText size={16} />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-zinc-200">Blog Post Manager</h2>
+              <p className="text-[10px] text-zinc-500 mt-0.5 font-medium">Create, update, and manage all insights and articles on the site.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleOpenCreateBlog}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/10 border border-indigo-500/20 cursor-pointer"
+          >
+            <Plus size={13} /> New Blog Post
+          </button>
+        </div>
+
+        {/* Blogs List Table */}
+        <div className="overflow-x-auto border border-zinc-850 rounded-xl bg-zinc-950/20">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-zinc-850 text-zinc-500 font-bold uppercase tracking-wider text-[9px] bg-zinc-950/40">
+                <th className="p-3.5 pl-4">Title</th>
+                <th className="p-3.5">Author</th>
+                <th className="p-3.5">Date</th>
+                <th className="p-3.5">Reads / Likes</th>
+                <th className="p-3.5 pr-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-850/50 font-medium">
+              {blogsList.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-zinc-550 italic">
+                    No articles published yet. Click "New Blog Post" to publish the first one!
+                  </td>
+                </tr>
+              ) : (
+                blogsList.map((blog) => (
+                  <tr key={blog._id} className="hover:bg-zinc-900/30 text-zinc-300">
+                    <td className="p-3.5 pl-4 font-bold text-zinc-200 max-w-xs truncate">{blog.title}</td>
+                    <td className="p-3.5 text-zinc-400">{blog.author}</td>
+                    <td className="p-3.5 text-zinc-500">{formatReadableDate(blog.createdAt?.split('T')[0] || '')}</td>
+                    <td className="p-3.5 text-zinc-500 font-mono text-[11px]">{blog.reads || 0} reads / {blog.likes || 0} likes</td>
+                    <td className="p-3.5 pr-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditBlog(blog)}
+                          className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-indigo-400 border border-transparent rounded-lg transition-all cursor-pointer"
+                          title="Edit Blog"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBlog(blog._id)}
+                          className="p-2 hover:bg-rose-500/10 text-zinc-500 hover:text-rose-400 border border-transparent rounded-lg transition-all cursor-pointer"
+                          title="Delete Blog"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Save Button Footer bar */}
       <div className="pt-4 border-t border-zinc-900 flex justify-end">
         <button
@@ -442,6 +610,95 @@ const Settings = () => {
           Save Changes
         </button>
       </div>
+
+      {/* Blog Editor Modal */}
+      {isBlogModalOpen && (
+        <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <form 
+            onSubmit={handleSaveBlog}
+            className="glass-card w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 space-y-4 animate-fade-in"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="text-base font-bold text-zinc-100">
+                {editingBlogId ? 'Edit Blog Post' : 'Create New Blog Post'}
+              </h3>
+              <button 
+                type="button"
+                onClick={() => setIsBlogModalOpen(false)}
+                className="p-1.5 hover:bg-zinc-800 text-zinc-450 hover:text-zinc-200 rounded-lg cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Article Title</label>
+                <input
+                  type="text"
+                  required
+                  value={blogTitle}
+                  onChange={(e) => setBlogTitle(e.target.value)}
+                  placeholder="e.g. Master React in 10 Days"
+                  className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Author Display Name</label>
+                <input
+                  type="text"
+                  required
+                  value={blogAuthor}
+                  onChange={(e) => setBlogAuthor(e.target.value)}
+                  placeholder="e.g. Dharmendra Pandit"
+                  className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Tags (Comma-separated)</label>
+              <input
+                type="text"
+                value={blogTags}
+                onChange={(e) => setBlogTags(e.target.value)}
+                placeholder="e.g. React, Nextjs, Guide, Career"
+                className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Post Content</label>
+              <textarea
+                required
+                rows={8}
+                value={blogContent}
+                onChange={(e) => setBlogContent(e.target.value)}
+                placeholder="Write your article markdown/text content here..."
+                className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0 resize-none font-sans leading-relaxed text-zinc-200"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/80">
+              <button
+                type="button"
+                onClick={() => setIsBlogModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-950/20 hover:bg-zinc-800 text-xs font-bold text-zinc-400 hover:text-zinc-250 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSavingBlog}
+                className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/10 cursor-pointer border border-indigo-500/20"
+              >
+                {isSavingBlog ? 'Publishing...' : editingBlogId ? 'Save Changes' : 'Publish Article'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

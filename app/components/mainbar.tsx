@@ -4,6 +4,7 @@ import Profile from '../pages/profile'
 import Settings from '../pages/settings'
 import Test from '../pages/test'
 import Practice from '../pages/practice'
+import Blog from '../pages/blog'
 
 const MainBar = ({ selectedPage }: { selectedPage: string }) => {
   return (
@@ -13,6 +14,7 @@ const MainBar = ({ selectedPage }: { selectedPage: string }) => {
       {selectedPage === 'settings' && <Settings />}
       {selectedPage === 'tests' && <Test />}
       {selectedPage === 'practices' && <Practice />}
+      {selectedPage === 'blog' && <Blog />}
     </div>
   )
 }

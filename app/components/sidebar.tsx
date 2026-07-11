@@ -9,10 +9,11 @@ import {
   Settings, 
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileText
 } from 'lucide-react'
 
-type Page = 'home' | 'profile' | 'practices' | 'tests' | 'settings'
+type Page = 'home' | 'profile' | 'practices' | 'tests' | 'settings' | 'blog'
 
 interface SideBarProps {
   selectedPage?: string
@@ -34,6 +35,7 @@ const SideBar: React.FC<SideBarProps> = ({
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'practices', label: 'Practices', icon: BookOpen },
     { id: 'tests', label: 'Tests', icon: Award },
+    { id: 'blog', label: 'Blog', icon: FileText },
     { id: 'settings', label: 'Settings', icon: Settings },
   ] as const
 
