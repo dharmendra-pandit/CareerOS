@@ -189,175 +189,161 @@ const Blog = () => {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
-  return (
-    <div className="p-6 text-zinc-100 min-h-screen max-w-6xl mx-auto space-y-6 animate-fade-in">
-      
-      {/* Blog Detail Overlay View */}
-      {activeBlogId && (
-        <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-md z-50 flex justify-end transition-all duration-300">
-          <div className="w-full max-w-3xl bg-zinc-900 border-l border-zinc-800 h-full flex flex-col shadow-2xl relative animate-slide-in overflow-hidden">
+  if (activeBlogId) {
+    return (
+      <div className="p-6 text-zinc-100 min-h-screen max-w-4xl mx-auto space-y-6 animate-fade-in">
+        {/* Header Toolbar */}
+        <div className="flex items-center justify-between pb-4 border-b border-zinc-900">
+          <button 
+            onClick={() => {
+              setActiveBlogId(null)
+              setActiveBlog(null)
+            }}
+            className="flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60 px-4 py-2.5 rounded-xl border border-zinc-800 transition-all cursor-pointer"
+          >
+            <ArrowLeft size={14} /> Back to Articles
+          </button>
+          
+          {activeBlog && (
+            <button
+              onClick={(e) => handleLikeBlog(e, activeBlog._id)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-rose-500/10 border border-rose-500/20 text-rose-450 hover:bg-rose-500/20 transition-all cursor-pointer"
+            >
+              <Heart size={14} className="fill-rose-500/30 text-rose-500" />
+              <span>Like ({activeBlog.likes})</span>
+            </button>
+          )}
+        </div>
+
+        {/* Content Area */}
+        {loadingActive ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-3">
+            <div className="w-10 h-10 border-4 border-indigo-500/25 border-t-indigo-500 rounded-full animate-spin"></div>
+            <p className="text-xs text-zinc-500 font-semibold tracking-wider uppercase">Loading Article...</p>
+          </div>
+        ) : activeBlog ? (
+          <div className="space-y-6 max-w-3xl mx-auto">
             
-            {/* Header Toolbar */}
-            <div className="p-4 border-b border-zinc-800/80 bg-zinc-900/60 sticky top-0 flex items-center justify-between z-10">
-              <button 
-                onClick={() => {
-                  setActiveBlogId(null)
-                  setActiveBlog(null)
-                }}
-                className="flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 px-3.5 py-2 rounded-xl border border-zinc-800 transition-all cursor-pointer"
-              >
-                <ArrowLeft size={14} /> Back to Dashboard
-              </button>
-              
-              <div className="flex items-center gap-3">
-                {activeBlog && (
-                  <button
-                    onClick={(e) => handleLikeBlog(e, activeBlog._id)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 border border-rose-500/20 text-rose-450 hover:bg-rose-500/20 transition-all cursor-pointer"
+            {/* Meta details */}
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                {activeBlog.tags.map((tag, idx) => (
+                  <span 
+                    key={idx} 
+                    className="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"
                   >
-                    <Heart size={14} className="fill-rose-500/30" />
-                    <span>Like ({activeBlog.likes})</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    setActiveBlogId(null)
-                    setActiveBlog(null)
-                  }}
-                  className="p-2 rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              <h1 className="text-3xl md:text-4xl font-black text-zinc-100 tracking-tight leading-tight">
+                {activeBlog.title}
+              </h1>
+
+              <div className="flex flex-wrap items-center justify-between text-xs text-zinc-400 py-3 border-y border-zinc-900 gap-4">
+                <div className="flex items-center gap-5">
+                  <span className="flex items-center gap-1.5 font-semibold text-zinc-300">
+                    <User size={13} className="text-indigo-400" /> {activeBlog.author}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Calendar size={13} className="text-zinc-500" /> {formatDate(activeBlog.createdAt)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1.5 bg-zinc-900/30 border border-zinc-800 px-2.5 py-1 rounded-lg">
+                    <Eye size={13} className="text-zinc-500" /> {activeBlog.reads} reads
+                  </span>
+                  <span className="flex items-center gap-1.5 bg-zinc-900/30 border border-zinc-800 px-2.5 py-1 rounded-lg">
+                    <Heart size={13} className="text-rose-500" /> {activeBlog.likes} likes
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Content Area */}
-            {loadingActive ? (
-              <div className="flex-1 flex flex-col items-center justify-center space-y-3">
-                <div className="w-10 h-10 border-4 border-indigo-500/25 border-t-indigo-500 rounded-full animate-spin"></div>
-                <p className="text-xs text-zinc-500 font-semibold tracking-wider uppercase">Fetching Article...</p>
+            {/* Article body */}
+            <article className="text-base text-zinc-300 leading-relaxed whitespace-pre-wrap font-medium py-4">
+              {activeBlog.content}
+            </article>
+
+            {/* Comments Section */}
+            <div className="pt-8 border-t border-zinc-900 space-y-6">
+              <div className="flex items-center gap-2">
+                <MessageSquare size={16} className="text-indigo-400" />
+                <h3 className="text-sm font-bold text-zinc-200">
+                  Discussions ({activeBlog.comments.length})
+                </h3>
               </div>
-            ) : activeBlog ? (
-              <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
-                
-                {/* Meta details */}
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    {activeBlog.tags.map((tag, idx) => (
-                      <span 
-                        key={idx} 
-                        className="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
 
-                  <h1 className="text-2xl md:text-3xl font-black text-zinc-100 tracking-tight leading-tight">
-                    {activeBlog.title}
-                  </h1>
-
-                  <div className="flex flex-wrap items-center justify-between text-xs text-zinc-400 py-3 border-y border-zinc-850 gap-4">
-                    <div className="flex items-center gap-5">
-                      <span className="flex items-center gap-1.5 font-semibold text-zinc-350">
-                        <User size={13} className="text-indigo-400" /> {activeBlog.author}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Calendar size={13} className="text-zinc-500" /> {formatDate(activeBlog.createdAt)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1.5 bg-zinc-950/40 border border-zinc-850 px-2.5 py-1 rounded-lg">
-                        <Eye size={13} className="text-zinc-500" /> {activeBlog.reads} reads
-                      </span>
-                      <span className="flex items-center gap-1.5 bg-zinc-950/40 border border-zinc-850 px-2.5 py-1 rounded-lg">
-                        <Heart size={13} className="text-rose-500" /> {activeBlog.likes} likes
-                      </span>
-                    </div>
+              {/* Add comment Form */}
+              <form onSubmit={handlePostComment} className="glass-card p-4 rounded-2xl border border-zinc-800 bg-zinc-950/20 space-y-3">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider block mb-1">Your Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={commentAuthor}
+                      onChange={(e) => setCommentAuthor(e.target.value)}
+                      className="w-full text-xs font-semibold rounded-xl bg-zinc-950 border border-zinc-850 text-zinc-200 p-2.5 focus:border-indigo-500 focus:ring-0"
+                    />
                   </div>
                 </div>
+                <div>
+                  <label className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider block mb-1">Write Comment</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    placeholder="Share your thoughts on this article..."
+                    className="w-full text-xs font-semibold rounded-xl bg-zinc-950 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0 resize-none text-zinc-200"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/10 cursor-pointer"
+                  >
+                    <Send size={12} /> Post Comment
+                  </button>
+                </div>
+              </form>
 
-                {/* Article body */}
-                <article className="text-sm text-zinc-250 leading-relaxed whitespace-pre-wrap font-medium space-y-4">
-                  {activeBlog.content}
-                </article>
-
-                {/* Comments Section */}
-                <div className="pt-6 border-t border-zinc-800/80 space-y-5">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare size={16} className="text-indigo-400" />
-                    <h3 className="text-sm font-bold text-zinc-200">
-                      Discussions ({activeBlog.comments.length})
-                    </h3>
-                  </div>
-
-                  {/* Add comment Form */}
-                  <form onSubmit={handlePostComment} className="glass-card p-4 rounded-2xl border border-zinc-800 bg-zinc-950/20 space-y-3">
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider block mb-1">Your Name</label>
-                        <input
-                          type="text"
-                          required
-                          value={commentAuthor}
-                          onChange={(e) => setCommentAuthor(e.target.value)}
-                          className="w-full text-xs font-semibold rounded-xl bg-zinc-950 border border-zinc-850 text-zinc-200 p-2.5 focus:border-indigo-500 focus:ring-0"
-                        />
+              {/* Comments list */}
+              <div className="space-y-3">
+                {activeBlog.comments.length === 0 ? (
+                  <p className="text-xs text-zinc-500 italic py-4 text-center">No comments yet. Be the first to start a conversation!</p>
+                ) : (
+                  activeBlog.comments.map((comment) => (
+                    <div key={comment.id} className="p-3.5 rounded-xl border border-zinc-850 bg-zinc-950/20 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-indigo-400">{comment.author}</span>
+                        <span className="text-[10px] text-zinc-500">{formatDate(comment.createdAt)}</span>
                       </div>
+                      <p className="text-xs text-zinc-300 leading-relaxed font-medium">{comment.text}</p>
                     </div>
-                    <div>
-                      <label className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider block mb-1">Write Comment</label>
-                      <textarea
-                        required
-                        rows={3}
-                        value={newCommentText}
-                        onChange={(e) => setNewCommentText(e.target.value)}
-                        placeholder="Share your thoughts on this article..."
-                        className="w-full text-xs font-semibold rounded-xl bg-zinc-950 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0 resize-none"
-                      />
-                    </div>
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/10 cursor-pointer"
-                      >
-                        <Send size={12} /> Post Comment
-                      </button>
-                    </div>
-                  </form>
-
-                  {/* Comments list */}
-                  <div className="space-y-3">
-                    {activeBlog.comments.length === 0 ? (
-                      <p className="text-xs text-zinc-500 italic py-4 text-center">No comments yet. Be the first to start a conversation!</p>
-                    ) : (
-                      activeBlog.comments.map((comment) => (
-                        <div key={comment.id} className="p-3.5 rounded-xl border border-zinc-850 bg-zinc-950/20 space-y-1.5">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-indigo-400">{comment.author}</span>
-                            <span className="text-[10px] text-zinc-500">{formatDate(comment.createdAt)}</span>
-                          </div>
-                          <p className="text-xs text-zinc-300 leading-relaxed font-medium">{comment.text}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                </div>
-
+                  ))
+                )}
               </div>
-            ) : null}
+
+            </div>
 
           </div>
-        </div>
-      )}
+        ) : null}
+      </div>
+    )
+  }
 
+  return (
+    <div className="p-6 text-zinc-100 min-h-screen max-w-6xl mx-auto space-y-6 animate-fade-in">
+      
       {/* Main Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-900">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1">
-            <Sparkles size={12} /> Insights & Articles
+          <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+            Insights & Articles
           </span>
           <h1 className="text-3xl font-black tracking-tight mt-0.5">CareerOS Blog</h1>
           <p className="text-xs text-zinc-400 mt-1">Read guides, success stories, and domain knowledge shared by our community.</p>
