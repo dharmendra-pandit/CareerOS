@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
+import MarkdownRenderer from '../components/MarkdownRenderer'
 import { Sliders, Bell, Eye, ShieldAlert, Check, User, Save, Plus, Trash2, FileText, Pencil, X } from 'lucide-react'
 
 interface ProfileData {
@@ -67,6 +68,7 @@ const Settings = () => {
   const [blogAuthor, setBlogAuthor] = useState('')
   const [blogTags, setBlogTags] = useState('')
   const [isSavingBlog, setIsSavingBlog] = useState(false)
+  const [activeEditorTab, setActiveEditorTab] = useState<'write' | 'preview'>('write')
 
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -250,6 +252,7 @@ const Settings = () => {
     setBlogContent('')
     setBlogAuthor(userName || 'Dharmendra Pandit')
     setBlogTags('')
+    setActiveEditorTab('write')
     setIsBlogModalOpen(true)
   }
 
@@ -259,6 +262,7 @@ const Settings = () => {
     setBlogContent(blog.content)
     setBlogAuthor(blog.author)
     setBlogTags(blog.tags ? blog.tags.join(', ') : '')
+    setActiveEditorTab('write')
     setIsBlogModalOpen(true)
   }
 
@@ -669,15 +673,52 @@ const Settings = () => {
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Post Content</label>
-              <textarea
-                required
-                rows={8}
-                value={blogContent}
-                onChange={(e) => setBlogContent(e.target.value)}
-                placeholder="Write your article markdown/text content here..."
-                className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0 resize-none font-sans leading-relaxed text-zinc-200"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block">Post Content</label>
+                <div className="flex bg-zinc-950/80 p-0.5 rounded-lg border border-zinc-850">
+                  <button
+                    type="button"
+                    onClick={() => setActiveEditorTab('write')}
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                      activeEditorTab === 'write'
+                        ? 'bg-zinc-800 text-indigo-400'
+                        : 'text-zinc-500 hover:text-zinc-350'
+                    }`}
+                  >
+                    Write
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveEditorTab('preview')}
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                      activeEditorTab === 'preview'
+                        ? 'bg-zinc-800 text-indigo-400'
+                        : 'text-zinc-500 hover:text-zinc-350'
+                    }`}
+                  >
+                    Preview
+                  </button>
+                </div>
+              </div>
+
+              {activeEditorTab === 'write' ? (
+                <textarea
+                  required
+                  rows={8}
+                  value={blogContent}
+                  onChange={(e) => setBlogContent(e.target.value)}
+                  placeholder="Write your article markdown/text content here..."
+                  className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0 resize-none font-sans leading-relaxed text-zinc-200"
+                />
+              ) : (
+                <div className="w-full h-48 overflow-y-auto rounded-xl bg-zinc-950/60 border border-zinc-850 p-4 text-left">
+                  {blogContent.trim() ? (
+                    <MarkdownRenderer content={blogContent} />
+                  ) : (
+                    <p className="text-xs text-zinc-500 italic">Nothing to preview yet. Write some markdown content first!</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/80">

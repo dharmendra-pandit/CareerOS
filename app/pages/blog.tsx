@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
+import MarkdownRenderer, { stripMarkdown } from '../components/MarkdownRenderer'
 import { 
   Search, 
   Tag as TagIcon, 
@@ -263,8 +264,8 @@ const Blog = () => {
             </div>
 
             {/* Article body */}
-            <article className="text-base text-zinc-300 leading-relaxed whitespace-pre-wrap font-medium py-4">
-              {activeBlog.content}
+            <article className="text-base text-zinc-300 leading-relaxed font-medium py-4">
+              <MarkdownRenderer content={activeBlog.content} />
             </article>
 
             {/* Comments Section */}
@@ -464,7 +465,7 @@ const Blog = () => {
 
                 {/* Preview text */}
                 <p className="text-xs text-zinc-400 font-medium line-clamp-4 leading-relaxed">
-                  {blog.content}
+                  {stripMarkdown(blog.content)}
                 </p>
               </div>
 
