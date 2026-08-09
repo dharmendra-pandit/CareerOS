@@ -201,7 +201,7 @@ const Page = () => {
       {/* Main content area with scroll container */}
       <main className="flex-1 h-full overflow-y-auto bg-zinc-950/90">
         <div className="max-w-7xl mx-auto h-full">
-          <MainBar selectedPage={selectedPage} />
+          <MainBar selectedPage={selectedPage} setSelectedPage={(p: any) => setSelectedPage(p)} />
         </div>
       </main>
     </div>

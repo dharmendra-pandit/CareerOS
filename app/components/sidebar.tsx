@@ -10,10 +10,11 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  FileText
+  FileText,
+  Briefcase
 } from 'lucide-react'
 
-type Page = 'home' | 'profile' | 'practices' | 'tests' | 'settings' | 'blog'
+type Page = 'home' | 'profile' | 'practices' | 'tests' | 'settings' | 'blog' | 'careers'
 
 interface SideBarProps {
   selectedPage?: string
@@ -32,6 +33,7 @@ const SideBar: React.FC<SideBarProps> = ({
 }) => {
   const menuItems = [
     { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'careers', label: 'Careers', icon: Briefcase },
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'practices', label: 'Practices', icon: BookOpen },
     { id: 'tests', label: 'Tests', icon: Award },

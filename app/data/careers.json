@@ -1,0 +1,364 @@
+{
+    "title": "Top Companies in India - Careers Pages",
+    "last_verified": "2026-08-09",
+    "note": "Includes Indian conglomerates/IT services, global MNCs with India operations, and Indian startups/unicorns. URLs change periodically -- verify before mass-applying.",
+    "companies": [
+        {
+            "id": 1,
+            "name": "Tata Consultancy Services (TCS)",
+            "category": "Indian IT Services",
+            "sector": "IT Services",
+            "careers_url": "https://www.tcs.com/careers"
+        },
+        {
+            "id": 2,
+            "name": "Infosys",
+            "category": "Indian IT Services",
+            "sector": "IT Services",
+            "careers_url": "https://www.infosys.com/careers.html"
+        },
+        {
+            "id": 3,
+            "name": "Wipro",
+            "category": "Indian IT Services",
+            "sector": "IT Services",
+            "careers_url": "https://careers.wipro.com/"
+        },
+        {
+            "id": 4,
+            "name": "HCLTech",
+            "category": "Indian IT Services",
+            "sector": "IT Services",
+            "careers_url": "https://www.hcltech.com/careers"
+        },
+        {
+            "id": 5,
+            "name": "Tech Mahindra",
+            "category": "Indian IT Services",
+            "sector": "IT Services",
+            "careers_url": "https://careers.techmahindra.com/"
+        },
+        {
+            "id": 6,
+            "name": "Reliance Industries",
+            "category": "Indian Conglomerate",
+            "sector": "Diversified (Energy, Retail, Telecom)",
+            "careers_url": "https://www.ril.com/careers"
+        },
+        {
+            "id": 7,
+            "name": "Larsen & Toubro (L&T)",
+            "category": "Indian Conglomerate",
+            "sector": "Engineering & Construction",
+            "careers_url": "https://www.larsentoubro.com/corporate/careers/"
+        },
+        {
+            "id": 8,
+            "name": "Mahindra Group",
+            "category": "Indian Conglomerate",
+            "sector": "Diversified (Auto, Farm Equipment)",
+            "careers_url": "https://www.mahindra.com/careers"
+        },
+        {
+            "id": 9,
+            "name": "Tata Motors",
+            "category": "Indian Conglomerate",
+            "sector": "Automotive",
+            "careers_url": "https://careers.tatamotors.com/"
+        },
+        {
+            "id": 10,
+            "name": "Tata Steel",
+            "category": "Indian Conglomerate",
+            "sector": "Steel & Metals",
+            "careers_url": "https://www.tatasteel.com/careers/"
+        },
+        {
+            "id": 11,
+            "name": "Bajaj Finserv",
+            "category": "Indian Conglomerate",
+            "sector": "Financial Services",
+            "careers_url": "https://www.bajajfinserv.in/careers"
+        },
+        {
+            "id": 12,
+            "name": "ICICI Bank",
+            "category": "Indian Bank",
+            "sector": "Banking & Finance",
+            "careers_url": "https://www.icicibank.com/careers"
+        },
+        {
+            "id": 13,
+            "name": "HDFC Bank",
+            "category": "Indian Bank",
+            "sector": "Banking & Finance",
+            "careers_url": "https://www.hdfcbank.com/personal/about-us/careers"
+        },
+        {
+            "id": 14,
+            "name": "State Bank of India (SBI)",
+            "category": "Indian Bank (PSU)",
+            "sector": "Banking & Finance",
+            "careers_url": "https://bank.sbi/web/careers"
+        },
+        {
+            "id": 15,
+            "name": "Axis Bank",
+            "category": "Indian Bank",
+            "sector": "Banking & Finance",
+            "careers_url": "https://www.axisbank.com/careers"
+        },
+        {
+            "id": 16,
+            "name": "Aditya Birla Group",
+            "category": "Indian Conglomerate",
+            "sector": "Diversified",
+            "careers_url": "https://careers.adityabirla.com/"
+        },
+        {
+            "id": 17,
+            "name": "Hindustan Unilever (HUL)",
+            "category": "Indian MNC (FMCG)",
+            "sector": "FMCG",
+            "careers_url": "https://www.hul.co.in/careers/"
+        },
+        {
+            "id": 18,
+            "name": "ITC Limited",
+            "category": "Indian Conglomerate",
+            "sector": "FMCG & Diversified",
+            "careers_url": "https://www.itcportal.com/careers/"
+        },
+        {
+            "id": 19,
+            "name": "Asian Paints",
+            "category": "Indian MNC",
+            "sector": "Paints & Coatings",
+            "careers_url": "https://www.asianpaints.com/careers.html"
+        },
+        {
+            "id": 20,
+            "name": "Bharti Airtel",
+            "category": "Indian MNC",
+            "sector": "Telecom",
+            "careers_url": "https://www.airtel.in/careers"
+        },
+        {
+            "id": 21,
+            "name": "Adani Group",
+            "category": "Indian Conglomerate",
+            "sector": "Diversified (Ports, Energy, Infra)",
+            "careers_url": "https://careers.adani.com/"
+        },
+        {
+            "id": 22,
+            "name": "JSW Group",
+            "category": "Indian Conglomerate",
+            "sector": "Steel, Energy, Infra",
+            "careers_url": "https://www.jsw.in/careers"
+        },
+        {
+            "id": 23,
+            "name": "Godrej Group",
+            "category": "Indian Conglomerate",
+            "sector": "Diversified (Consumer, Real Estate)",
+            "careers_url": "https://www.godrejcareers.com/"
+        },
+        {
+            "id": 24,
+            "name": "Cipla",
+            "category": "Indian MNC",
+            "sector": "Pharmaceuticals",
+            "careers_url": "https://www.cipla.com/careers"
+        },
+        {
+            "id": 25,
+            "name": "Sun Pharma",
+            "category": "Indian MNC",
+            "sector": "Pharmaceuticals",
+            "careers_url": "https://sunpharma.com/careers/"
+        },
+        {
+            "id": 26,
+            "name": "Dr. Reddy's Laboratories",
+            "category": "Indian MNC",
+            "sector": "Pharmaceuticals",
+            "careers_url": "https://careers.drreddys.com/"
+        },
+        {
+            "id": 27,
+            "name": "Google India",
+            "category": "Global MNC",
+            "sector": "Technology",
+            "careers_url": "https://careers.google.com/locations/india/"
+        },
+        {
+            "id": 28,
+            "name": "Microsoft India",
+            "category": "Global MNC",
+            "sector": "Technology",
+            "careers_url": "https://careers.microsoft.com/"
+        },
+        {
+            "id": 29,
+            "name": "Amazon India",
+            "category": "Global MNC",
+            "sector": "E-commerce / Technology",
+            "careers_url": "https://www.amazon.jobs/en/locations/india"
+        },
+        {
+            "id": 30,
+            "name": "Accenture India",
+            "category": "Global MNC",
+            "sector": "IT Consulting",
+            "careers_url": "https://www.accenture.com/in-en/careers"
+        },
+        {
+            "id": 31,
+            "name": "IBM India",
+            "category": "Global MNC",
+            "sector": "Technology",
+            "careers_url": "https://www.ibm.com/in-en/careers"
+        },
+        {
+            "id": 32,
+            "name": "Deloitte India",
+            "category": "Global MNC",
+            "sector": "Consulting & Professional Services",
+            "careers_url": "https://www2.deloitte.com/in/en/careers.html"
+        },
+        {
+            "id": 33,
+            "name": "EY India",
+            "category": "Global MNC",
+            "sector": "Consulting & Professional Services",
+            "careers_url": "https://www.ey.com/en_in/careers"
+        },
+        {
+            "id": 34,
+            "name": "PwC India",
+            "category": "Global MNC",
+            "sector": "Consulting & Professional Services",
+            "careers_url": "https://www.pwc.in/careers.html"
+        },
+        {
+            "id": 35,
+            "name": "KPMG India",
+            "category": "Global MNC",
+            "sector": "Consulting & Professional Services",
+            "careers_url": "https://home.kpmg/in/en/home/careers.html"
+        },
+        {
+            "id": 36,
+            "name": "Capgemini India",
+            "category": "Global MNC",
+            "sector": "IT Consulting",
+            "careers_url": "https://www.capgemini.com/in-en/careers/"
+        },
+        {
+            "id": 37,
+            "name": "Cognizant",
+            "category": "Global MNC",
+            "sector": "IT Services",
+            "careers_url": "https://careers.cognizant.com/"
+        },
+        {
+            "id": 38,
+            "name": "Samsung India",
+            "category": "Global MNC",
+            "sector": "Electronics",
+            "careers_url": "https://www.samsung.com/in/careers/"
+        },
+        {
+            "id": 39,
+            "name": "JPMorgan Chase India",
+            "category": "Global MNC",
+            "sector": "Banking & Finance",
+            "careers_url": "https://careers.jpmorgan.com/"
+        },
+        {
+            "id": 40,
+            "name": "Goldman Sachs India",
+            "category": "Global MNC",
+            "sector": "Banking & Finance",
+            "careers_url": "https://www.goldmansachs.com/careers/"
+        },
+        {
+            "id": 41,
+            "name": "Flipkart",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "E-commerce",
+            "careers_url": "https://www.flipkartcareers.com/"
+        },
+        {
+            "id": 42,
+            "name": "Zomato (Eternal)",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "Food-tech",
+            "careers_url": "https://www.zomato.com/careers"
+        },
+        {
+            "id": 43,
+            "name": "Swiggy",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "Food-tech / Quick Commerce",
+            "careers_url": "https://careers.swiggy.com/"
+        },
+        {
+            "id": 44,
+            "name": "Paytm (One97 Communications)",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "FinTech",
+            "careers_url": "https://jobs.paytm.com/"
+        },
+        {
+            "id": 45,
+            "name": "Ola",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "Mobility",
+            "careers_url": "https://www.olacabs.com/careers"
+        },
+        {
+            "id": 46,
+            "name": "Nykaa",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "Beauty & E-commerce",
+            "careers_url": "https://www.nykaa.com/careers"
+        },
+        {
+            "id": 47,
+            "name": "PhonePe",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "FinTech",
+            "careers_url": "https://www.phonepe.com/careers/"
+        },
+        {
+            "id": 48,
+            "name": "Zerodha",
+            "category": "Indian Startup (Bootstrapped)",
+            "sector": "FinTech / Broking",
+            "careers_url": "https://careers.zerodha.com/"
+        },
+        {
+            "id": 49,
+            "name": "Razorpay",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "FinTech / Payments",
+            "careers_url": "https://razorpay.com/jobs/"
+        },
+        {
+            "id": 50,
+            "name": "Meesho",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "Social Commerce / E-commerce",
+            "careers_url": "https://www.meesho.io/jobs"
+        },
+        {
+            "id": 51,
+            "name": "CRED",
+            "category": "Indian Startup (Unicorn)",
+            "sector": "FinTech / Rewards",
+            "careers_url": "https://careers.cred.club/"
+        }
+    ]
+}
