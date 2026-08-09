@@ -13,14 +13,13 @@ import {
   Calendar,
   Send,
   X,
-  Sparkles,
   Clock,
   Bookmark,
   Share2,
   Check,
   TrendingUp,
   BookOpen,
-  ThumbsUp
+  FileText
 } from 'lucide-react'
 
 interface Comment {
@@ -57,7 +56,7 @@ export default function Blog() {
   const [loadingActive, setLoadingActive] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
 
-  // Local storage bookmarks & likes
+  // Local storage bookmarks
   const [bookmarkedBlogIds, setBookmarkedBlogIds] = useState<string[]>([])
   const [copiedShare, setCopiedShare] = useState(false)
 
@@ -91,7 +90,7 @@ export default function Blog() {
       }
     } catch (err) {
       console.error('Failed to fetch profile name for comments:', err)
-      setCommentAuthor('Dharmendra Pandit') // Fallback
+      setCommentAuthor('Dharmendra Pandit')
     }
   }
 
@@ -99,7 +98,6 @@ export default function Blog() {
     fetchBlogs()
     fetchProfileName()
 
-    // Read stored bookmarks
     try {
       const stored = localStorage.getItem('careeros_bookmarked_blogs')
       if (stored) setBookmarkedBlogIds(JSON.parse(stored))
@@ -239,7 +237,7 @@ export default function Blog() {
     })
   }, [blogs, searchQuery, selectedTag])
 
-  // Featured article (first or highest reads)
+  // Featured article
   const featuredBlog = useMemo(() => {
     if (blogs.length === 0) return null
     return [...blogs].sort((a, b) => b.reads - a.reads)[0]
@@ -268,20 +266,20 @@ export default function Blog() {
       <div className="relative min-h-screen text-zinc-100 animate-fade-in pb-16">
         {/* Top Reading Progress Bar */}
         <div
-          className="fixed top-0 left-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 z-50 transition-all duration-150"
+          className="fixed top-0 left-0 h-1 bg-white z-50 transition-all duration-150"
           style={{ width: `${scrollProgress}%` }}
         />
 
         <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-8">
           
-          {/* Top Floating Navigation Bar */}
-          <div className="sticky top-4 z-40 flex items-center justify-between p-3 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 backdrop-blur-md shadow-2xl">
+          {/* Top Floating Bar */}
+          <div className="sticky top-4 z-40 flex items-center justify-between p-3 rounded-xl bg-zinc-950 border border-zinc-800 shadow-xl">
             <button
               onClick={() => {
                 setActiveBlogId(null)
                 setActiveBlog(null)
               }}
-              className="flex items-center gap-2 text-xs font-bold text-zinc-300 hover:text-white bg-zinc-900/60 hover:bg-zinc-800 px-3.5 py-2 rounded-xl border border-zinc-800 transition-all cursor-pointer"
+              className="flex items-center gap-2 text-xs font-semibold text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 px-3.5 py-2 rounded-lg border border-zinc-800 transition-all cursor-pointer"
             >
               <ArrowLeft size={14} /> Back to Articles
             </button>
@@ -290,30 +288,30 @@ export default function Blog() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleShareArticle}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 transition-all cursor-pointer"
-                  title="Share Link"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 transition-all cursor-pointer"
+                  title="Share Article Link"
                 >
-                  {copiedShare ? <Check size={13} className="text-emerald-400" /> : <Share2 size={13} />}
-                  <span>{copiedShare ? 'Copied!' : 'Share'}</span>
+                  {copiedShare ? <Check size={13} className="text-zinc-100" /> : <Share2 size={13} />}
+                  <span>{copiedShare ? 'Copied' : 'Share'}</span>
                 </button>
 
                 <button
                   onClick={(e) => toggleBookmarkBlog(activeBlog._id, e)}
-                  className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                  className={`p-2 rounded-lg border transition-all cursor-pointer ${
                     bookmarkedBlogIds.includes(activeBlog._id)
-                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                      ? 'bg-zinc-100 text-zinc-950 border-white'
                       : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white'
                   }`}
                   title="Bookmark Article"
                 >
-                  <Bookmark size={14} className={bookmarkedBlogIds.includes(activeBlog._id) ? 'fill-rose-500' : ''} />
+                  <Bookmark size={14} className={bookmarkedBlogIds.includes(activeBlog._id) ? 'fill-zinc-950' : ''} />
                 </button>
 
                 <button
                   onClick={(e) => handleLikeBlog(e, activeBlog._id)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer shadow-sm shadow-rose-500/10"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-zinc-900 border border-zinc-800 text-zinc-200 hover:bg-zinc-800 transition-all cursor-pointer"
                 >
-                  <Heart size={14} className="fill-rose-500/40 text-rose-500" />
+                  <Heart size={14} className="text-zinc-300" />
                   <span>{activeBlog.likes}</span>
                 </button>
               </div>
@@ -323,70 +321,70 @@ export default function Blog() {
           {/* Article Loading State */}
           {loadingActive ? (
             <div className="flex flex-col items-center justify-center py-28 space-y-4">
-              <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-              <p className="text-xs font-bold text-zinc-400 tracking-wider uppercase animate-pulse">
-                Fetching Article Content...
+              <div className="w-10 h-10 border-2 border-zinc-700 border-t-white rounded-full animate-spin"></div>
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                Loading Article Content...
               </p>
             </div>
           ) : activeBlog ? (
             <div className="space-y-8 max-w-3xl mx-auto">
               
-              {/* Hero Header */}
-              <div className="space-y-5 border-b border-zinc-850 pb-8">
+              {/* Header */}
+              <div className="space-y-4 border-b border-zinc-850 pb-6">
                 
                 {/* Category Tags */}
                 <div className="flex flex-wrap items-center gap-2">
                   {activeBlog.tags.map((tag, idx) => (
                     <span
                       key={idx}
-                      className="px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"
+                      className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-zinc-900 border border-zinc-800 text-zinc-300"
                     >
-                      #{tag}
+                      {tag}
                     </span>
                   ))}
                 </div>
 
                 {/* Main Article Title */}
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-zinc-100 tracking-tight leading-tight">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-100 tracking-tight leading-tight">
                   {activeBlog.title}
                 </h1>
 
                 {/* Author & Meta Row */}
                 <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 border border-indigo-400/40 flex items-center justify-center font-black text-white text-sm shadow-md shadow-indigo-600/20">
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-zinc-200 text-xs">
                       {getAvatarInitials(activeBlog.author)}
                     </div>
                     <div>
                       <span className="block text-sm font-bold text-zinc-100">{activeBlog.author}</span>
-                      <span className="text-[11px] text-zinc-400 font-medium flex items-center gap-2 mt-0.5">
+                      <span className="text-[11px] text-zinc-400 font-normal flex items-center gap-2 mt-0.5">
                         <Calendar size={11} className="text-zinc-500" />
                         {formatDate(activeBlog.createdAt)}
                         <span>•</span>
-                        <Clock size={11} className="text-indigo-400" />
+                        <Clock size={11} className="text-zinc-500" />
                         {getReadTime(activeBlog.content)}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 text-xs text-zinc-400">
-                    <span className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl font-semibold">
-                      <Eye size={13} className="text-indigo-400" /> {activeBlog.reads} reads
+                    <span className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg font-medium">
+                      <Eye size={13} className="text-zinc-400" /> {activeBlog.reads} reads
                     </span>
-                    <span className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl font-semibold">
-                      <Heart size={13} className="text-rose-500" /> {activeBlog.likes} likes
+                    <span className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg font-medium">
+                      <Heart size={13} className="text-zinc-400" /> {activeBlog.likes} likes
                     </span>
                   </div>
                 </div>
 
               </div>
 
-              {/* Key Takeaways Box */}
-              <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-950/30 via-zinc-900/40 to-zinc-900/30 border border-indigo-500/20 space-y-2">
-                <div className="flex items-center gap-2 text-indigo-400 font-bold text-xs">
-                  <Sparkles size={14} /> Quick Summary / Key Highlights
+              {/* Key Summary Box */}
+              <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 space-y-1.5">
+                <div className="flex items-center gap-2 text-zinc-300 font-bold text-xs">
+                  <BookOpen size={14} /> Executive Summary
                 </div>
-                <p className="text-xs text-zinc-300 leading-relaxed font-medium">
+                <p className="text-xs text-zinc-400 leading-relaxed font-normal">
                   {stripMarkdown(activeBlog.content).slice(0, 220)}...
                 </p>
               </div>
@@ -397,82 +395,80 @@ export default function Blog() {
               </article>
 
               {/* Bottom Reaction Toolbar */}
-              <div className="p-6 rounded-3xl bg-zinc-900/40 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+              <div className="p-6 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
                 <div>
                   <h4 className="text-sm font-bold text-zinc-100">Did you find this article insightful?</h4>
-                  <p className="text-xs text-zinc-400 mt-0.5 font-medium">Give it a like to show support for the author.</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">Show support for the author or share it with colleagues.</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <button
                     onClick={(e) => handleLikeBlog(e, activeBlog._id)}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20 transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-white text-zinc-950 transition-colors cursor-pointer"
                   >
-                    <Heart size={15} className="fill-white" />
+                    <Heart size={14} className="fill-zinc-950 text-zinc-950" />
                     <span>Like ({activeBlog.likes})</span>
                   </button>
 
                   <button
                     onClick={handleShareArticle}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-all cursor-pointer border border-zinc-700"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors cursor-pointer"
                   >
-                    <Share2 size={15} />
-                    <span>{copiedShare ? 'Copied Link!' : 'Share'}</span>
+                    <Share2 size={14} />
+                    <span>{copiedShare ? 'Copied' : 'Share'}</span>
                   </button>
                 </div>
               </div>
 
-              {/* Comments / Discussion Section */}
+              {/* Discussion Section */}
               <div className="pt-8 border-t border-zinc-850 space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare size={18} className="text-indigo-400" />
-                    <h3 className="text-lg font-black text-zinc-100">
-                      Community Discussion ({activeBlog.comments?.length || 0})
-                    </h3>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={16} className="text-zinc-300" />
+                  <h3 className="text-base font-bold text-zinc-100">
+                    Discussion ({activeBlog.comments?.length || 0})
+                  </h3>
                 </div>
 
                 {/* Comment Form */}
                 <form
                   onSubmit={handlePostComment}
-                  className="glass-card p-5 rounded-2xl border border-zinc-800 bg-zinc-950/40 space-y-4 shadow-xl"
+                  className="p-5 rounded-2xl border border-zinc-800 bg-zinc-900 space-y-3"
                 >
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block mb-1">
-                        Your Name
+                      <label className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">
+                        Author Name
                       </label>
                       <input
                         type="text"
                         required
                         value={commentAuthor}
                         onChange={(e) => setCommentAuthor(e.target.value)}
-                        className="w-full text-xs font-semibold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 p-3 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 outline-none"
+                        className="w-full text-xs font-medium rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 p-2.5 focus:border-zinc-500 outline-none"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block mb-1">
-                      Add to the conversation
+                    <label className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">
+                      Comment
                     </label>
                     <textarea
                       required
                       rows={3}
                       value={newCommentText}
                       onChange={(e) => setNewCommentText(e.target.value)}
-                      placeholder="Share your thoughts, feedback or questions..."
-                      className="w-full text-xs font-medium rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 p-3.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 outline-none resize-none"
+                      placeholder="Share your technical perspective or feedback..."
+                      className="w-full text-xs font-normal rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 p-3 focus:border-zinc-500 outline-none resize-none"
                     />
                   </div>
 
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-white text-zinc-950 transition-colors cursor-pointer"
                     >
-                      <Send size={13} />
+                      <Send size={12} />
                       <span>Post Comment</span>
                     </button>
                   </div>
@@ -481,63 +477,34 @@ export default function Blog() {
                 {/* Comments List */}
                 <div className="space-y-3">
                   {!activeBlog.comments || activeBlog.comments.length === 0 ? (
-                    <div className="text-center py-8 p-4 rounded-2xl bg-zinc-900/20 border border-zinc-850">
-                      <p className="text-xs text-zinc-500 font-medium italic">
-                        No comments yet. Be the first to start the discussion!
+                    <div className="text-center py-6 p-4 rounded-xl bg-zinc-900 border border-zinc-850">
+                      <p className="text-xs text-zinc-500 font-normal">
+                        No comments yet. Start the conversation above.
                       </p>
                     </div>
                   ) : (
                     activeBlog.comments.map((comment) => (
                       <div
                         key={comment.id}
-                        className="p-4 rounded-2xl border border-zinc-850 bg-zinc-900/20 space-y-2"
+                        className="p-4 rounded-xl border border-zinc-850 bg-zinc-900 space-y-2"
                       >
                         <div className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-indigo-600/30 border border-indigo-400/30 flex items-center justify-center font-bold text-[10px] text-indigo-300">
+                            <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-[9px] text-zinc-300">
                               {getAvatarInitials(comment.author)}
                             </div>
-                            <span className="font-bold text-zinc-200">{comment.author}</span>
+                            <span className="font-semibold text-zinc-200">{comment.author}</span>
                           </div>
-                          <span className="text-[10px] text-zinc-500 font-medium">
+                          <span className="text-[10px] text-zinc-500">
                             {formatDate(comment.createdAt)}
                           </span>
                         </div>
-                        <p className="text-xs text-zinc-300 leading-relaxed font-medium pl-8">
+                        <p className="text-xs text-zinc-300 leading-relaxed font-normal pl-7">
                           {comment.text}
                         </p>
                       </div>
                     ))
                   )}
-                </div>
-              </div>
-
-              {/* Recommended Next Articles */}
-              <div className="pt-8 border-t border-zinc-850 space-y-4">
-                <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-                  <BookOpen size={16} className="text-indigo-400" /> More Recommended Reads
-                </h3>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {blogs
-                    .filter((b) => b._id !== activeBlog._id)
-                    .slice(0, 2)
-                    .map((rec) => (
-                      <div
-                        key={rec._id}
-                        onClick={() => handleOpenBlog(rec._id)}
-                        className="p-4 rounded-2xl border border-zinc-850 bg-zinc-900/30 hover:border-indigo-500/30 transition-all cursor-pointer space-y-2 group"
-                      >
-                        <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">
-                          {rec.tags[0] || 'Article'}
-                        </span>
-                        <h4 className="text-xs font-bold text-zinc-100 group-hover:text-indigo-300 line-clamp-1">
-                          {rec.title}
-                        </h4>
-                        <p className="text-[11px] text-zinc-400 line-clamp-2">
-                          {stripMarkdown(rec.content)}
-                        </p>
-                      </div>
-                    ))}
                 </div>
               </div>
 
@@ -550,36 +517,36 @@ export default function Blog() {
   }
 
   /* ========================================================================= */
-  /* BLOG LISTING DASHBOARD VIEW                                               */
+  /* BLOG LISTING VIEW                                                         */
   /* ========================================================================= */
   return (
-    <div className="p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto space-y-8 animate-fade-in">
+    <div className="p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto space-y-7 animate-fade-in">
       
-      {/* Hero Header Banner */}
-      <div className="relative rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-zinc-900 via-purple-950/30 to-zinc-900 border border-zinc-800/80 shadow-2xl overflow-hidden">
+      {/* Top Hero Banner */}
+      <div className="rounded-2xl p-6 sm:p-8 bg-zinc-900 border border-zinc-800 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-xl">
-            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center gap-1.5 w-fit">
-              <Sparkles size={12} /> Community Knowledge &amp; Insights
+            <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-zinc-800 border border-zinc-700 text-zinc-300 inline-flex items-center gap-1.5">
+              <FileText size={12} /> Engineering &amp; Industry Blog
             </span>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-100">
-              CareerOS Tech Chronicles
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">
+              CareerOS Technical Publications
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-medium">
-              Guides, technical roadmaps, interview prep strategies, and success stories written by top engineers.
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+              Technical guides, architecture breakdowns, interview prep strategies, and industry insights.
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-zinc-950/60 p-4 rounded-2xl border border-zinc-850">
+          <div className="flex items-center gap-4 bg-zinc-950 p-3.5 rounded-xl border border-zinc-850">
             <div className="text-center px-3">
-              <span className="block text-2xl font-black text-indigo-400">{blogs.length}</span>
-              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Articles</span>
+              <span className="block text-xl font-bold text-zinc-100">{blogs.length}</span>
+              <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Articles</span>
             </div>
             <div className="text-center px-3 border-l border-zinc-850">
-              <span className="block text-2xl font-black text-emerald-400">
+              <span className="block text-xl font-bold text-zinc-200">
                 {blogs.reduce((acc, b) => acc + (b.reads || 0), 0)}
               </span>
-              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Total Reads</span>
+              <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Total Reads</span>
             </div>
           </div>
         </div>
@@ -589,55 +556,55 @@ export default function Blog() {
       {featuredBlog && !searchQuery && !selectedTag && (
         <div
           onClick={() => handleOpenBlog(featuredBlog._id)}
-          className="relative rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-indigo-950/50 via-zinc-900/90 to-purple-950/30 border border-indigo-500/30 hover:border-indigo-500/60 transition-all duration-300 shadow-2xl cursor-pointer group space-y-4 overflow-hidden"
+          className="rounded-2xl p-6 sm:p-7 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-all duration-200 cursor-pointer group space-y-3"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center gap-1.5">
-                <TrendingUp size={12} /> Featured Article
+              <span className="px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-zinc-800 border border-zinc-700 text-zinc-200">
+                Featured Article
               </span>
-              <span className="text-xs text-zinc-400 font-medium">
+              <span className="text-xs text-zinc-400 font-normal">
                 {getReadTime(featuredBlog.content)}
               </span>
             </div>
 
             <button
               onClick={(e) => toggleBookmarkBlog(featuredBlog._id, e)}
-              className="text-zinc-500 hover:text-rose-400 p-1.5 rounded-lg transition-colors"
+              className="text-zinc-500 hover:text-zinc-200 p-1 rounded-md transition-colors"
             >
               <Bookmark
-                size={16}
-                className={bookmarkedBlogIds.includes(featuredBlog._id) ? 'fill-rose-400 text-rose-400' : ''}
+                size={15}
+                className={bookmarkedBlogIds.includes(featuredBlog._id) ? 'fill-zinc-100 text-zinc-100' : ''}
               />
             </button>
           </div>
 
-          <div className="space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-black text-zinc-100 group-hover:text-indigo-300 transition-colors leading-tight">
+          <div className="space-y-1.5">
+            <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 group-hover:text-white transition-colors">
               {featuredBlog.title}
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed line-clamp-3 max-w-4xl font-medium">
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed line-clamp-2 font-normal max-w-4xl">
               {stripMarkdown(featuredBlog.content)}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-zinc-850/80">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-600/30 border border-indigo-400/30 flex items-center justify-center font-bold text-xs text-indigo-300">
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-zinc-850 text-xs text-zinc-400 font-medium">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-[10px] text-zinc-300">
                 {getAvatarInitials(featuredBlog.author)}
               </div>
-              <span className="text-xs font-bold text-zinc-200">{featuredBlog.author}</span>
+              <span className="font-semibold text-zinc-200">{featuredBlog.author}</span>
             </div>
 
-            <div className="flex items-center gap-4 text-xs text-zinc-400 font-semibold">
+            <div className="flex items-center gap-4 text-xs text-zinc-400">
               <span className="flex items-center gap-1">
                 <Eye size={13} /> {featuredBlog.reads} reads
               </span>
               <span className="flex items-center gap-1">
-                <Heart size={13} className="text-rose-500" /> {featuredBlog.likes}
+                <Heart size={13} /> {featuredBlog.likes}
               </span>
-              <span className="flex items-center gap-1 text-indigo-400 font-bold group-hover:translate-x-1 transition-transform">
-                Read Article →
+              <span className="text-zinc-200 font-semibold group-hover:underline">
+                Read Publication →
               </span>
             </div>
           </div>
@@ -645,23 +612,23 @@ export default function Blog() {
       )}
 
       {/* Search & Tag Filter Toolbar */}
-      <div className="space-y-4">
-        <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+      <div className="space-y-3">
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
           
           {/* Search Bar */}
           <div className="relative flex-1 max-w-md">
-            <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
-              placeholder="Search by topic, keyword, or author..."
+              placeholder="Search articles by title, keyword, or author..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs font-semibold rounded-2xl bg-zinc-900/50 border border-zinc-800 text-zinc-100 pl-11 pr-4 py-3 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all outline-none"
+              className="w-full text-xs font-medium rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 pl-10 pr-4 py-2.5 focus:border-zinc-500 outline-none transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs font-bold"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs"
               >
                 Clear
               </button>
@@ -673,10 +640,10 @@ export default function Blog() {
             <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 max-w-full md:max-w-lg">
               <button
                 onClick={() => setSelectedTag(null)}
-                className={`px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer border ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
                   selectedTag === null
-                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20'
-                    : 'bg-zinc-900/40 text-zinc-400 border-zinc-800 hover:text-zinc-200'
+                    ? 'bg-zinc-100 text-zinc-950 border-white'
+                    : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200'
                 }`}
               >
                 All Topics
@@ -685,10 +652,10 @@ export default function Blog() {
                 <button
                   key={tag}
                   onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
-                  className={`px-3 py-1.5 rounded-xl text-[10px] font-bold tracking-wider uppercase transition-all cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
                     tag === selectedTag
-                      ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20'
-                      : 'bg-zinc-900/40 text-zinc-400 border-zinc-800 hover:text-zinc-200'
+                      ? 'bg-zinc-100 text-zinc-950 border-white'
+                      : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200'
                   }`}
                 >
                   {tag}
@@ -702,34 +669,34 @@ export default function Blog() {
 
       {/* Blog Cards Grid */}
       {loading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="glass-card rounded-2xl p-6 border border-zinc-800 bg-zinc-900/20 space-y-4 animate-pulse h-72"
+              className="rounded-2xl p-6 border border-zinc-800 bg-zinc-900 space-y-4 animate-pulse h-72"
             />
           ))}
         </div>
       ) : error ? (
-        <div className="text-center py-12 rounded-2xl border border-zinc-800 bg-zinc-900/20 space-y-3">
-          <p className="text-xs font-semibold text-rose-400">{error}</p>
+        <div className="text-center py-12 rounded-2xl border border-zinc-800 bg-zinc-900 space-y-3">
+          <p className="text-xs font-medium text-zinc-400">{error}</p>
           <button
             onClick={fetchBlogs}
-            className="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-800 hover:border-zinc-700 text-zinc-300"
+            className="px-4 py-2 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
           >
             Retry Connection
           </button>
         </div>
       ) : filteredBlogs.length === 0 ? (
-        <div className="text-center py-16 rounded-3xl border border-zinc-850 bg-zinc-900/10 space-y-3">
-          <BookOpen size={32} className="mx-auto text-zinc-600" />
-          <h3 className="text-base font-bold text-zinc-300">No blog posts match your search</h3>
+        <div className="text-center py-16 rounded-2xl border border-zinc-800 bg-zinc-900 space-y-3">
+          <FileText size={32} className="mx-auto text-zinc-600" />
+          <h3 className="text-sm font-semibold text-zinc-300">No articles match your search</h3>
           <p className="text-xs text-zinc-500 max-w-xs mx-auto">
-            Try adjusting your search terms or clearing the topic filter.
+            Try adjusting your search terms or resetting the selected topic filter.
           </p>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredBlogs.map((blog) => {
             const isBookmarked = bookmarkedBlogIds.includes(blog._id)
 
@@ -737,17 +704,17 @@ export default function Blog() {
               <div
                 key={blog._id}
                 onClick={() => handleOpenBlog(blog._id)}
-                className="glass-card rounded-3xl p-5 sm:p-6 border border-zinc-850 bg-zinc-900/20 hover:bg-zinc-900/50 hover:border-indigo-500/30 cursor-pointer flex flex-col justify-between h-80 transition-all duration-200 group relative"
+                className="rounded-2xl p-5 sm:p-6 border border-zinc-800 bg-zinc-900 hover:border-zinc-700 cursor-pointer flex flex-col justify-between h-72 transition-all duration-200 group relative"
               >
                 <div className="space-y-3">
                   
-                  {/* Top Meta: Tags & Bookmarks */}
+                  {/* Top Row: Tags & Read time */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap gap-1.5">
                       {blog.tags.slice(0, 2).map((tag, idx) => (
                         <span
                           key={idx}
-                          className="px-2.5 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"
+                          className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-zinc-800 border border-zinc-700 text-zinc-300"
                         >
                           {tag}
                         </span>
@@ -755,49 +722,49 @@ export default function Blog() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-zinc-500 font-semibold">
+                      <span className="text-[10px] text-zinc-500 font-medium">
                         {getReadTime(blog.content)}
                       </span>
                       <button
                         onClick={(e) => toggleBookmarkBlog(blog._id, e)}
-                        className={`p-1.5 rounded-lg transition-colors ${
-                          isBookmarked ? 'text-rose-400' : 'text-zinc-600 hover:text-zinc-300'
+                        className={`p-1 rounded transition-colors ${
+                          isBookmarked ? 'text-zinc-100' : 'text-zinc-600 hover:text-zinc-300'
                         }`}
                       >
-                        <Bookmark size={14} className={isBookmarked ? 'fill-rose-400' : ''} />
+                        <Bookmark size={13} className={isBookmarked ? 'fill-zinc-100' : ''} />
                       </button>
                     </div>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-base font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors line-clamp-2 leading-snug">
+                  <h3 className="text-sm font-bold text-zinc-100 group-hover:text-white transition-colors line-clamp-2 leading-snug">
                     {blog.title}
                   </h3>
 
-                  {/* Preview Content */}
-                  <p className="text-xs text-zinc-400 font-medium line-clamp-4 leading-relaxed">
+                  {/* Content Preview */}
+                  <p className="text-xs text-zinc-400 font-normal line-clamp-3 leading-relaxed">
                     {stripMarkdown(blog.content)}
                   </p>
                 </div>
 
                 {/* Card Footer */}
-                <div className="flex items-center justify-between border-t border-zinc-850/80 pt-3.5 mt-4 text-xs text-zinc-500">
+                <div className="flex items-center justify-between border-t border-zinc-850 pt-3 mt-4 text-xs text-zinc-500">
                   <div className="flex items-center gap-2 truncate max-w-[140px]">
-                    <div className="w-5 h-5 rounded-full bg-indigo-600/30 flex items-center justify-center text-[9px] font-bold text-indigo-300 flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-zinc-300 flex-shrink-0">
                       {getAvatarInitials(blog.author)}
                     </div>
                     <span className="font-semibold text-zinc-300 truncate">{blog.author}</span>
                   </div>
 
-                  <div className="flex items-center gap-3 flex-shrink-0 font-medium text-[11px]">
+                  <div className="flex items-center gap-3 flex-shrink-0 font-normal text-[11px]">
                     <span className="flex items-center gap-1 hover:text-zinc-300">
                       <Eye size={12} /> {blog.reads}
                     </span>
                     <button
                       onClick={(e) => handleLikeBlog(e, blog._id)}
-                      className="flex items-center gap-1 hover:text-rose-400 transition-colors cursor-pointer"
+                      className="flex items-center gap-1 hover:text-zinc-200 transition-colors cursor-pointer"
                     >
-                      <Heart size={12} className="hover:scale-110" /> {blog.likes}
+                      <Heart size={12} /> {blog.likes}
                     </button>
                     <span className="flex items-center gap-1 hover:text-zinc-300">
                       <MessageSquare size={12} /> {blog.comments?.length || 0}
