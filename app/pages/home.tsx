@@ -1,6 +1,13 @@
 'use client'
-import React, { useState, useEffect } from 'react'
-import { Calendar as CalendarIcon, Clock, Check, X, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+
+import React, { useState, useEffect, useMemo } from 'react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  X,
+  AlertCircle
+} from 'lucide-react'
 
 interface ScheduleItem {
   time: string
@@ -36,6 +43,15 @@ const Home = () => {
   const [schedule, setSchedule] = useState<ScheduleItem[]>([])
   const [loadingSchedule, setLoadingSchedule] = useState(false)
   const [allSchedules, setAllSchedules] = useState<{ date: string; completedTimes: string[] }[]>([])
+  const [errorMessage, setErrorMessage] = useState('')
+
+  // Format date helper: YYYY-MM-DD
+  const formatDateString = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
 
   const fetchAllSchedules = async () => {
     try {
@@ -53,6 +69,95 @@ const Home = () => {
     fetchAllSchedules()
   }, [])
 
+  // Calculate Streak & Highest Streak
+  const streakMetrics = useMemo(() => {
+    if (!allSchedules || allSchedules.length === 0) {
+      return { currentStreak: 0, highestStreak: 0, totalDaysLogged: 0 }
+    }
+
+    // Filter documents with a valid YYYY-MM-DD date string & at least 1 completed task
+    const activeDates = Array.from(
+      new Set(
+        allSchedules
+          .filter(
+            (s) =>
+              s &&
+              typeof s.date === 'string' &&
+              s.date.trim() !== '' &&
+              s.completedTimes &&
+              Array.isArray(s.completedTimes) &&
+              s.completedTimes.length > 0
+          )
+          .map((s) => s.date.trim())
+      )
+    )
+      .filter((d) => typeof d === 'string' && d.includes('-'))
+      .sort()
+
+    if (activeDates.length === 0) {
+      return { currentStreak: 0, highestStreak: 0, totalDaysLogged: 0 }
+    }
+
+    let highestStreak = 0
+    let tempStreak = 0
+    let lastDate: Date | null = null
+
+    activeDates.forEach((dateStr) => {
+      if (!dateStr || typeof dateStr !== 'string') return
+      const parts = dateStr.split('-').map(Number)
+      if (parts.length < 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) return
+
+      const currentDate = new Date(parts[0], parts[1] - 1, parts[2])
+
+      if (!lastDate) {
+        tempStreak = 1
+      } else {
+        const diffDays = Math.round((currentDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24))
+        if (diffDays === 1) {
+          tempStreak += 1
+        } else {
+          tempStreak = 1
+        }
+      }
+
+      if (tempStreak > highestStreak) {
+        highestStreak = tempStreak
+      }
+      lastDate = currentDate
+    })
+
+    // Calculate current streak relative to today/yesterday
+    const today = new Date()
+    const todayStr = formatDateString(today)
+    const yesterday = new Date()
+    yesterday.setDate(today.getDate() - 1)
+    const yesterdayStr = formatDateString(yesterday)
+
+    let currentStreak = 0
+    const hasToday = activeDates.includes(todayStr)
+    const hasYesterday = activeDates.includes(yesterdayStr)
+
+    if (hasToday || hasYesterday) {
+      const startCheckDate = hasToday ? today : yesterday
+      let checkDate = new Date(startCheckDate)
+      while (true) {
+        const checkStr = formatDateString(checkDate)
+        if (activeDates.includes(checkStr)) {
+          currentStreak++
+          checkDate.setDate(checkDate.getDate() - 1)
+        } else {
+          break
+        }
+      }
+    }
+
+    return {
+      currentStreak,
+      highestStreak,
+      totalDaysLogged: activeDates.length
+    }
+  }, [allSchedules])
+
   const getCompletionStatusForDate = (date: Date) => {
     const today = new Date()
     const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -63,12 +168,12 @@ const Home = () => {
     }
 
     const dateString = formatDateString(date)
-    const scheduleDoc = allSchedules.find(s => s.date === dateString)
+    const scheduleDoc = allSchedules.find((s) => s.date === dateString)
     const completedCount = scheduleDoc?.completedTimes?.length || 0
 
     if (completedCount >= 3) {
       return 'green'
-    } else if (completedCount === 2) {
+    } else if (completedCount >= 1) {
       return 'yellow'
     } else {
       return 'red'
@@ -100,18 +205,11 @@ const Home = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
   }
 
-  // Format date helper: YYYY-MM-DD
-  const formatDateString = (date: Date) => {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
   // Load schedule whenever selectedDate changes
   useEffect(() => {
     const fetchDateSchedule = async () => {
       setLoadingSchedule(true)
+      setErrorMessage('')
       const dateString = formatDateString(selectedDate)
       const dayName = daysOfWeek[selectedDate.getDay()]
 
@@ -125,8 +223,8 @@ const Home = () => {
 
         const res = await fetch(`/api/schedule?date=${dateString}`)
         if (res.ok) {
-          const { completedTimes } = await res.json() as { completedTimes: string[] }
-          const initialized = templateSchedule.map(item => ({
+          const { completedTimes } = (await res.json()) as { completedTimes: string[] }
+          const initialized = templateSchedule.map((item) => ({
             ...item,
             completed: completedTimes.includes(item.time)
           }))
@@ -147,7 +245,7 @@ const Home = () => {
 
   const toggleComplete = async (index: number, completed: boolean) => {
     const today = new Date()
-    const isTodaySelected = 
+    const isTodaySelected =
       selectedDate.getDate() === today.getDate() &&
       selectedDate.getMonth() === today.getMonth() &&
       selectedDate.getFullYear() === today.getFullYear()
@@ -161,7 +259,7 @@ const Home = () => {
       const res = await fetch('/api/schedule', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           date: dateString,
@@ -172,17 +270,15 @@ const Home = () => {
 
       if (res.ok) {
         setSchedule((prev) =>
-          prev.map((sItem, idx) =>
-            idx === index ? { ...sItem, completed } : sItem
-          )
+          prev.map((sItem, idx) => (idx === index ? { ...sItem, completed } : sItem))
         )
         fetchAllSchedules()
       } else {
-        alert('Failed to update task completion in database')
+        setErrorMessage('Could not save completion status.')
       }
     } catch (err) {
       console.error('Error toggling schedule completion:', err)
-      alert('Network error: Database connection offline')
+      setErrorMessage('Network connection error.')
     }
   }
 
@@ -191,20 +287,18 @@ const Home = () => {
     const cells = []
     const today = new Date()
 
-    // Add empty spacer cells for prefix days
     for (let i = 0; i < firstDayIndex; i++) {
       cells.push(<div key={`empty-${i}`} className="h-8 md:h-10" />)
     }
 
-      // Add actual days of month
     for (let day = 1; day <= daysInMonth; day++) {
       const cellDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
-      const isSelected = 
+      const isSelected =
         cellDate.getDate() === selectedDate.getDate() &&
         cellDate.getMonth() === selectedDate.getMonth() &&
         cellDate.getFullYear() === selectedDate.getFullYear()
 
-      const isToday = 
+      const isToday =
         cellDate.getDate() === today.getDate() &&
         cellDate.getMonth() === today.getMonth() &&
         cellDate.getFullYear() === today.getFullYear()
@@ -214,13 +308,13 @@ const Home = () => {
       let colorClass = ''
       if (isSelected) {
         if (status === 'green') {
-          colorClass = 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-400 shadow-md shadow-emerald-500/20 border border-emerald-500/20'
+          colorClass = 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-400 shadow-md border border-emerald-500/20'
         } else if (status === 'yellow') {
-          colorClass = 'bg-amber-500 text-black font-bold ring-2 ring-amber-400 shadow-md shadow-amber-500/20 border border-amber-500/20'
+          colorClass = 'bg-amber-500 text-black font-bold ring-2 ring-amber-400 shadow-md border border-amber-500/20'
         } else if (status === 'red') {
-          colorClass = 'bg-rose-600 text-white font-bold ring-2 ring-rose-400 shadow-md shadow-rose-500/20 border border-rose-500/20'
+          colorClass = 'bg-rose-600 text-white font-bold ring-2 ring-rose-400 shadow-md border border-rose-500/20'
         } else {
-          colorClass = 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/20 border border-indigo-500/20'
+          colorClass = 'bg-indigo-600 text-white font-bold shadow-md border border-indigo-500/20'
         }
       } else {
         if (status === 'green') {
@@ -253,209 +347,219 @@ const Home = () => {
     return cells
   }
 
-  const completedCount = schedule.filter(item => item.completed).length
+  const completedCount = schedule.filter((item) => item.completed).length
   const totalCount = schedule.length
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   const today = new Date()
-  const isTodaySelected = 
+  const isTodaySelected =
     selectedDate.getDate() === today.getDate() &&
     selectedDate.getMonth() === today.getMonth() &&
     selectedDate.getFullYear() === today.getFullYear()
 
   return (
-    <div className="p-6 text-zinc-100 min-h-screen animate-fade-in relative overflow-hidden">
-      {/* Flex Layout Container */}
-      <div className="flex w-full gap-0 lg:gap-6 relative">
-        {/* Dashboard Left Content */}
-        <div className="flex-1 min-w-0 space-y-6 transition-all duration-500">
-            {/* Overview Banner */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-900">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Timetable Logs</span>
-                <h1 className="text-3xl font-black tracking-tight mt-0.5">Scheduler &amp; History</h1>
-                <p className="text-xs text-zinc-400 mt-1">Select dates on the calendar to track and update task checklist logs.</p>
-              </div>
-
-              {/* Completion Gauge */}
-              <div className="glass-card p-4 rounded-2xl flex items-center gap-4 w-full md:w-64">
-                <div className="relative h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700">
-                  <span className="text-[10px] font-bold text-indigo-400">{progressPercent}%</span>
-                  <svg className="absolute -inset-0 h-full w-full rotate-270" viewBox="0 0 36 36">
-                    <path
-                      className="text-zinc-800"
-                      strokeWidth="2.5"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className="text-indigo-500 transition-all duration-500"
-                      strokeWidth="2.5"
-                      strokeDasharray={`${progressPercent}, 100`}
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-zinc-200">Date Progress</h4>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">{completedCount} of {totalCount} completed</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-3 gap-6 items-start">
-              {/* Left Side: Calendar Module */}
-              <div className="lg:col-span-1 glass-card rounded-2xl p-5 border border-zinc-800 bg-zinc-900/10 space-y-4">
-                <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                    <CalendarIcon className="h-3.5 w-3.5 text-indigo-400" />
-                    Calendar
-                  </h3>
-                  
-                  <div className="flex items-center gap-1">
-                    <button onClick={prevMonth} className="p-1 rounded-lg hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 cursor-pointer">
-                      <ChevronLeft size={16} />
-                    </button>
-                    <button onClick={nextMonth} className="p-1 rounded-lg hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 cursor-pointer">
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Month Indicator */}
-                <div className="text-center">
-                  <span className="text-xs font-bold text-zinc-200 tracking-wide">
-                    {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                  </span>
-                </div>
-
-                {/* Calendar Table Grid */}
-                <div className="space-y-2">
-                  <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-7 gap-1 justify-items-center">
-                    {renderCalendarCells()}
-                  </div>
-                </div>
-
-                {/* Selected Date Summary */}
-                <div className="pt-3 border-t border-zinc-850 text-center">
-                  <p className="text-[10px] font-semibold text-zinc-500">
-                    Selected: <span className="text-indigo-400">{formatDateString(selectedDate)}</span> ({daysOfWeek[selectedDate.getDay()]})
-                  </p>
-                </div>
-              </div>
-
-              {/* Right Side: Schedule Slot checklist */}
-              <div className="lg:col-span-2 space-y-4">
-                <div className="flex items-center gap-2 flex-wrap px-1">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                    Tasks Checklist ({daysOfWeek[selectedDate.getDay()]})
-                  </h3>
-                  {isTodaySelected && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full font-sans">
-                      Today
-                    </span>
-                  )}
-                </div>
-
-                {!isTodaySelected && (
-                  <div className="glass-card rounded-2xl p-4 bg-amber-500/5 border border-amber-500/20 flex items-center gap-2.5 text-xs text-amber-400 font-medium">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    <span>Task completion is allowed only for the current day.</span>
-                  </div>
-                )}
-
-                {loadingSchedule ? (
-                  <div className="glass-card rounded-2xl p-10 text-center text-zinc-500 text-xs font-semibold flex items-center justify-center gap-2">
-                    <div className="h-4 w-4 rounded-full border border-zinc-800 border-t-zinc-500 animate-spin" />
-                    Syncing Schedule...
-                  </div>
-                ) : schedule.length === 0 ? (
-                  <div className="glass-card rounded-2xl p-8 text-center flex flex-col items-center justify-center">
-                    <AlertCircle className="h-7 w-7 text-zinc-700 mb-2.5" />
-                    <p className="text-zinc-500 text-xs font-semibold">No slots allocated for {daysOfWeek[selectedDate.getDay()]}.</p>
-                  </div>
-                ) : (
-                  schedule.map((item, index) => (
-                    <div
-                      key={index}
-                      className={`glass-card rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 transition-all duration-200 ${
-                        item.completed
-                          ? 'border-l-emerald-500 bg-emerald-950/5'
-                          : 'border-l-indigo-500 bg-zinc-900/10'
-                      }`}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-850 text-center min-w-[95px] flex-shrink-0">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase block tracking-wider">
-                            {item.partsofday}
-                          </span>
-                          <span className="text-xs font-semibold text-zinc-350 mt-1 block flex items-center justify-center gap-1.5">
-                            <Clock className="h-3 w-3 text-zinc-500" />
-                            {item.time}
-                          </span>
-                        </div>
-
-                        <div>
-                          <h3 className="text-md font-bold text-zinc-200 mt-0.5">{item.subject}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span
-                              className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                item.completed
-                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                  : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                              }`}
-                            >
-                              {item.completed ? 'Completed' : 'Pending'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 self-end sm:self-center">
-                        {!item.completed ? (
-                          <button
-                            disabled={!isTodaySelected}
-                            onClick={() => toggleComplete(index, true)}
-                            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                              isTodaySelected
-                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/20 shadow-lg shadow-emerald-600/10'
-                                : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 opacity-40 cursor-not-allowed'
-                            }`}
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                            Complete
-                          </button>
-                        ) : (
-                          <button
-                            disabled={!isTodaySelected}
-                            onClick={() => toggleComplete(index, false)}
-                            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                              isTodaySelected
-                                ? 'bg-zinc-850 hover:bg-zinc-800 text-zinc-350 border-zinc-750'
-                                : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 opacity-40 cursor-not-allowed'
-                            }`}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                            Undo
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+    <div className="p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto space-y-6 animate-fade-in relative">
+      
+      {/* Clean Dashboard Banner */}
+      <div className="glass-card rounded-3xl p-6 sm:p-8 border border-zinc-800/80 bg-gradient-to-r from-indigo-950/40 via-zinc-900/60 to-zinc-900/40 shadow-2xl relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          
+          <div className="space-y-1.5 max-w-xl">
+            <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 inline-block">
+              Productivity Dashboard
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-100">
+              Study Scheduler &amp; Streak Metrics
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-400 font-normal">
+              Track daily timetable completions and view all-time study streak history.
+            </p>
           </div>
+
+          {/* Clean Metric Cards Grid (Highest Streak, Current Streak, Active Days, Today's Score) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-zinc-950/80 p-3.5 rounded-2xl border border-zinc-800/80 backdrop-blur-md">
+            
+            {/* Highest Streak */}
+            <div className="px-3 py-1.5 border-r border-zinc-850">
+              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Highest Streak</span>
+              <span className="text-lg font-black text-amber-400 mt-0.5 block">{streakMetrics.highestStreak} Days</span>
+            </div>
+
+            {/* Current Streak */}
+            <div className="px-3 py-1.5 border-r border-zinc-850">
+              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Current Streak</span>
+              <span className="text-lg font-black text-indigo-400 mt-0.5 block">{streakMetrics.currentStreak} Days</span>
+            </div>
+
+            {/* Total Days Logged */}
+            <div className="px-3 py-1.5 border-r border-zinc-850">
+              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Days Logged</span>
+              <span className="text-lg font-black text-emerald-400 mt-0.5 block">{streakMetrics.totalDaysLogged}</span>
+            </div>
+
+            {/* Today's Completed */}
+            <div className="px-3 py-1.5">
+              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">Today Completed</span>
+              <span className="text-lg font-black text-zinc-100 mt-0.5 block">{completedCount}/{totalCount} ({progressPercent}%)</span>
+            </div>
+
+          </div>
+
         </div>
       </div>
+
+      {/* Main Grid Content */}
+      <div className="grid lg:grid-cols-3 gap-6 items-start">
+        
+        {/* Left Column: Calendar Module */}
+        <div className="lg:col-span-1 glass-card rounded-2xl p-5 border border-zinc-800/80 bg-zinc-900/40 space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+              Calendar Navigator
+            </h3>
+            
+            <div className="flex items-center gap-1">
+              <button onClick={prevMonth} className="p-1.5 rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors">
+                <ChevronLeft size={16} />
+              </button>
+              <button onClick={nextMonth} className="p-1.5 rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors">
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <span className="text-xs font-bold text-zinc-100 tracking-wide">
+              {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1 justify-items-center">
+              {renderCalendarCells()}
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-zinc-850 text-center">
+            <p className="text-[11px] font-medium text-zinc-400">
+              Selected: <span className="text-indigo-400 font-bold">{formatDateString(selectedDate)}</span> ({daysOfWeek[selectedDate.getDay()]})
+            </p>
+          </div>
+        </div>
+
+        {/* Right Column: Schedule Task Checklist */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap px-1">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+              Tasks Checklist ({daysOfWeek[selectedDate.getDay()]})
+            </h3>
+            {isTodaySelected && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full">
+                Today
+              </span>
+            )}
+          </div>
+
+          {errorMessage && (
+            <div className="glass-card rounded-2xl p-4 bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 font-medium">
+              {errorMessage}
+            </div>
+          )}
+
+          {!isTodaySelected && (
+            <div className="glass-card rounded-2xl p-4 bg-amber-500/5 border border-amber-500/20 flex items-center gap-2.5 text-xs text-amber-400 font-medium">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>Task completion logging is active for current day. Select Today to check off items.</span>
+            </div>
+          )}
+
+          {loadingSchedule ? (
+            <div className="glass-card rounded-2xl p-10 text-center text-zinc-500 text-xs font-semibold flex items-center justify-center gap-2">
+              <div className="h-4 w-4 rounded-full border border-zinc-800 border-t-indigo-500 animate-spin" />
+              Syncing Timetable Tasks...
+            </div>
+          ) : schedule.length === 0 ? (
+            <div className="glass-card rounded-2xl p-10 text-center flex flex-col items-center justify-center space-y-2">
+              <AlertCircle className="h-8 w-8 text-zinc-700" />
+              <p className="text-zinc-400 text-xs font-bold">No tasks allocated for {daysOfWeek[selectedDate.getDay()]}.</p>
+              <p className="text-zinc-500 text-[11px]">Configure study slots in Settings to populate your schedule.</p>
+            </div>
+          ) : (
+            schedule.map((item, index) => (
+              <div
+                key={index}
+                className={`glass-card rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 transition-all duration-300 ${
+                  item.completed
+                    ? 'border-l-emerald-500 bg-emerald-950/10 border-zinc-800/80'
+                    : 'border-l-indigo-500 bg-zinc-900/40 border-zinc-800/80 hover:border-indigo-500/40'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800 text-center min-w-[95px] flex-shrink-0">
+                    <span className="text-[9px] font-bold text-zinc-500 uppercase block tracking-wider">
+                      {item.partsofday}
+                    </span>
+                    <span className="text-xs font-bold text-zinc-300 mt-1 block">
+                      {item.time}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-100 mt-0.5">{item.subject}</h3>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span
+                        className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                          item.completed
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                        }`}
+                      >
+                        {item.completed ? 'Completed' : 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-center">
+                  {!item.completed ? (
+                    <button
+                      disabled={!isTodaySelected}
+                      onClick={() => toggleComplete(index, true)}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                        isTodaySelected
+                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/20 shadow-md shadow-emerald-600/20'
+                          : 'bg-zinc-900 text-zinc-600 border-zinc-800 cursor-not-allowed opacity-40'
+                      }`}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      Complete
+                    </button>
+                  ) : (
+                    <button
+                      disabled={!isTodaySelected}
+                      onClick={() => toggleComplete(index, false)}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                        isTodaySelected
+                          ? 'bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border-zinc-750'
+                          : 'bg-zinc-900 text-zinc-600 border-zinc-800 cursor-not-allowed opacity-40'
+                      }`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Undo
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+      </div>
+    </div>
   )
 }
 

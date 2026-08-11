@@ -139,6 +139,31 @@ const OFFLINE_PRACTICE: Record<string, Record<string, Question[]>> = {
       { id: 4, question: "If all P are Q and no Q are R, then which statement is correct?", options: ["No P are R", "Some P are R", "All P are R", "All R are Q"], correctOption: 0, explanation: "Since all P are Q and no Q is R." },
       { id: 5, question: "Six books A, B, C, D, E, F are placed side by side. B, C, E have blue covers, others have red. A, B, D are new, others are old. A, C, D are law reports, others are dictionaries. Which book is a new blue dictionary?", options: ["B", "C", "D", "E"], correctOption: 0, explanation: "B is blue, new, and dictionary." }
     ]
+  },
+  docker: {
+    easy: [
+      { id: 1, question: "Which command is used to list all running Docker containers?", options: ["docker ps", "docker run", "docker images", "docker list"], correctOption: 0, explanation: "docker ps lists running containers." },
+      { id: 2, question: "What is the primary configuration file used to build a custom Docker image?", options: ["Dockerfile", "docker-compose.yml", "package.json", "Makefile"], correctOption: 0, explanation: "Dockerfile defines build instructions." },
+      { id: 3, question: "Which command builds a Docker image from a local Dockerfile?", options: ["docker build -t my-app .", "docker compile my-app", "docker create my-app", "docker make my-app"], correctOption: 0, explanation: "docker build builds images." },
+      { id: 4, question: "What does the 'EXPOSE' directive do in a Dockerfile?", options: ["Documents the network port on which a container listens", "Opens host firewall ports", "Publishes ports to external web", "Binds volumes to host"], correctOption: 0, explanation: "EXPOSE documents container listening ports." },
+      { id: 5, question: "Which command stops a running container gracefully?", options: ["docker stop <container_id>", "docker kill <container_id>", "docker rm <container_id>", "docker pause <container_id>"], correctOption: 0, explanation: "docker stop sends SIGTERM then SIGKILL." }
+    ],
+    medium: [
+      { id: 1, question: "How do you mount a persistent host directory into a running container?", options: ["docker run -v /host/path:/container/path", "docker run --mount host=/path", "docker link /host/path", "docker bind /host/path"], correctOption: 0, explanation: "-v binds host volumes." },
+      { id: 2, question: "What is the purpose of Docker multi-stage builds?", options: ["To reduce final image size by copying artifacts between build stages", "To run multiple containers simultaneously", "To test code across OS platforms", "To compile multi-threaded binaries"], correctOption: 0, explanation: "Multi-stage builds optimize image size." },
+      { id: 3, question: "Which tool is used to define and run multi-container Docker applications?", options: ["Docker Compose", "Docker Swarm", "Kubeflow", "Helm"], correctOption: 0, explanation: "Docker Compose manages multi-container setups." }
+    ],
+    hard: [
+      { id: 1, question: "Which Linux kernel feature provides process isolation for Docker containers?", options: ["cgroups and namespaces", "iptables and UFW", "systemd and init", "SELinux and AppArmor"], correctOption: 0, explanation: "cgroups and namespaces isolate processes." },
+      { id: 2, question: "What is the default bridge network driver behavior in Docker?", options: ["Provides isolated internal network for containers on the same host", "Exposes containers directly to external WAN router", "Disables all intra-container network communication", "Routes traffic via SSH tunnel"], correctOption: 0, explanation: "Default bridge connects containers locally." }
+    ]
+  },
+  linux: {
+    easy: [
+      { id: 1, question: "Which Linux command displays current working directory path?", options: ["pwd", "ls", "cd", "dir"], correctOption: 0, explanation: "pwd = print working directory." },
+      { id: 2, question: "Which command changes file access permissions in Linux?", options: ["chmod", "chown", "chgrp", "touch"], correctOption: 0, explanation: "chmod changes permissions." },
+      { id: 3, question: "How do you inspect active running system processes in real-time?", options: ["top", "ps", "cat /proc", "whoami"], correctOption: 0, explanation: "top monitors processes live." }
+    ]
   }
 }
 
@@ -147,10 +172,12 @@ const normalizeFallbackTopic = (topic: string): string => {
   if (t.includes('aptitude')) return 'aptitude'
   if (t.includes('english') || t.includes('verbal')) return 'english/verbal ability'
   if (t.includes('logical') || t.includes('reasoning')) return 'logical reasoning'
+  if (t.includes('docker')) return 'docker'
+  if (t.includes('linux')) return 'linux'
   return t
 }
 
-// Generate fallback 20 questions in case of offline or errors
+// Generate realistic technical questions for any requested topic
 const generateFallbackPracticeQuestions = (topic: string, difficulty: string): Question[] => {
   const list: Question[] = []
   const baseTopic = normalizeFallbackTopic(topic)
@@ -163,26 +190,137 @@ const generateFallbackPracticeQuestions = (topic: string, difficulty: string): Q
       list.push({
         ...q,
         id: i + 1,
-        question: `[Q${i + 1}] ${q.question}`
+        question: q.question
       })
     }
     return list
   }
 
-  for (let i = 1; i <= 20; i++) {
-    list.push({
-      id: i,
-      question: `Standard conceptual assessment question ${i} on the topic of ${topic} (${difficulty} level).`,
-      options: [
-        `Optimal answer option A for concept ${i}`,
-        `Secondary fallback option B`,
-        `Incorrect alternative C`,
-        `Incorrect alternative D`
+  // Realistic technical question templates for software engineering topics
+  const techQuestionTemplates = [
+    {
+      q: (t: string) => `What is the primary architectural purpose of ${t} in production systems?`,
+      opts: (t: string) => [
+        `To provide scalable, modular service execution and environment consistency for ${t}`,
+        `To compile native C++ bytecode into browser WebAssembly modules`,
+        `To handle direct physical memory allocation on host BIOS hardware`,
+        `To serve static DNS routing tables across global CDN edge nodes`
       ],
-      correctOption: 0,
-      explanation: `Correct concept explanation ${i}.`
+      ans: 0,
+      exp: (t: string) => `${t} provides modular service execution and infrastructure consistency.`
+    },
+    {
+      q: (t: string) => `Which standard command or configuration is essential when configuring ${t}?`,
+      opts: (t: string) => [
+        `Executing declarative configuration manifests with environment variables`,
+        `Directly patching kernel CPU registers via unbuffered system calls`,
+        `Creating unindexed string hashes in volatile client storage`,
+        `Bypassing TLS certificates to disable encrypted packet handshakes`
+      ],
+      ans: 0,
+      exp: (t: string) => `Declarative configuration manifests are standard for ${t}.`
+    },
+    {
+      q: (t: string) => `How is state or data persistence typically handled when working with ${t}?`,
+      opts: (t: string) => [
+        `Utilizing persistent volume mounts or external managed storage layers`,
+        `Relying strictly on volatile, ephemeral RAM memory space`,
+        `Writing unencrypted plain-text key pairs directly to browser storage`,
+        `Storing all binary state in system swap space without backup`
+      ],
+      ans: 0,
+      exp: (t: string) => `External volumes and managed databases handle persistence for ${t}.`
+    },
+    {
+      q: (t: string) => `What is a key performance optimization technique when scaling ${t}?`,
+      opts: (t: string) => [
+        `Implementing response caching and optimizing resource allocation`,
+        `Increasing thread polling frequency to force 100% CPU usage`,
+        `Disabling garbage collection and memory deallocation loops`,
+        `Writing all execution log streams directly to unbuffered disk storage`
+      ],
+      ans: 0,
+      exp: (t: string) => `Caching and efficient resource management optimize ${t} performance.`
+    },
+    {
+      q: (t: string) => `How are dependencies and libraries managed when deploying ${t}?`,
+      opts: (t: string) => [
+        `Using package management tools with pinned version manifest files`,
+        `Manually copying compiled binary files into system root directories`,
+        `Inlining third-party library source code into single entry files`,
+        `Downloading unverified script URLs at runtime without checksum verification`
+      ],
+      ans: 0,
+      exp: (t: string) => `Manifest files with pinned dependency versions ensure reliable deployments for ${t}.`
+    },
+    {
+      q: (t: string) => `Which security best practice should be followed when deploying ${t}?`,
+      opts: (t: string) => [
+        `Applying principle of least privilege and encrypting environment secrets`,
+        `Running all processes with root / administrator privileges`,
+        `Exposing internal database ports directly to public internet WAN`,
+        `Committing access tokens and secret keys to public version control`
+      ],
+      ans: 0,
+      exp: (t: string) => `Least privilege access and encrypted secrets protect ${t} environments.`
+    },
+    {
+      q: (t: string) => `What is the standard approach for error handling in ${t}?`,
+      opts: (t: string) => [
+        `Implementing structured try-catch exception blocks and centralized log aggregation`,
+        `Terminating the operating system kernel process immediately on error`,
+        `Ignoring error return codes and swallowing execution stack traces`,
+        `Writing hardcoded fallback values directly into hardware ROM storage`
+      ],
+      ans: 0,
+      exp: (t: string) => `Structured error handling prevents cascading system failures in ${t}.`
+    },
+    {
+      q: (t: string) => `Which metric is most critical when monitoring the health of ${t}?`,
+      opts: (t: string) => [
+        `API latency, error rates, throughput, and CPU/Memory utilization`,
+        `Total number of lines of source code in the git repository`,
+        `Frequency of developer git commit pushes per hour`,
+        `Browser viewport dimensions of connected client devices`
+      ],
+      ans: 0,
+      exp: (t: string) => `Latency, error rates, and resource utilization define ${t} health.`
+    },
+    {
+      q: (t: string) => `What is the recommended deployment strategy for zero-downtime updates in ${t}?`,
+      opts: (t: string) => [
+        `Blue-Green or Rolling deployments with automated health check verification`,
+        `Stopping all active servers simultaneously before uploading new code`,
+        `Overwriting production database tables during peak user traffic hours`,
+        `Disabling firewall rules while compiling source code on live web servers`
+      ],
+      ans: 0,
+      exp: (t: string) => `Rolling and Blue-Green deployments prevent downtime during ${t} upgrades.`
+    },
+    {
+      q: (t: string) => `How does ${t} achieve modularity and maintainability in large applications?`,
+      opts: (t: string) => [
+        `By enforcing separation of concerns, modular imports, and clean interfaces`,
+        `By placing all application logic inside a single monolithic file`,
+        `By avoiding code comments and using single-letter variable names`,
+        `By compiling code directly into machine assembly without modular abstractions`
+      ],
+      ans: 0,
+      exp: (t: string) => `Separation of concerns and clean interfaces keep ${t} codebases maintainable.`
+    }
+  ]
+
+  for (let i = 0; i < 20; i++) {
+    const tmpl = techQuestionTemplates[i % techQuestionTemplates.length]
+    list.push({
+      id: i + 1,
+      question: tmpl.q(topic),
+      options: tmpl.opts(topic),
+      correctOption: tmpl.ans,
+      explanation: tmpl.exp(topic)
     })
   }
+
   return list
 }
 
@@ -289,24 +427,34 @@ const isGeneralTopic = (topic: string): boolean => {
 
 const getTopicFocus = (topic: string): string => {
   const t = topic.toLowerCase().trim()
-  if (t === 'aptitude') return 'quantitative aptitude, math word problems, speed-distance-time, probability, percentages, algebra, geometry'
-  if (t === 'english/verbal ability' || t === 'english' || t === 'verbal ability') return 'English verbal ability, grammar, sentence correction, vocabulary, synonyms/antonyms, reading comprehension'
-  if (t === 'logical reasoning') return 'logical deduction, puzzles, sequences, blood relations, direction tests, syllogisms'
-  return `technical software engineering concepts, coding syntax, algorithms, complexity, performance, and best practices for ${topic}`
+  if (t === 'aptitude') return 'quantitative aptitude, math word problems, speed-distance-time, probability, percentages, profit-loss, algebra, geometry, permutations & combinations'
+  if (t === 'english/verbal ability' || t === 'english' || t === 'verbal ability') return 'English verbal ability, grammar rules, sentence correction, vocabulary, synonyms/antonyms, idioms, reading comprehension'
+  if (t === 'logical reasoning') return 'logical deduction, blood relations, direction sense, seating arrangements, letter-number series, syllogisms, Venn diagrams'
+  if (t.includes('python')) return 'Python 3 syntax, data structures (lists, dicts, sets, tuples), list comprehensions, decorators, generators, OOPs, lambda, and memory management'
+  if (t.includes('dsa') || t.includes('array') || t.includes('tree') || t.includes('graph')) return 'Data Structures & Algorithms, Big-O time/space complexity, sorting/searching, recursion, dynamic programming, trees, and graph algorithms'
+  if (t.includes('docker') || t.includes('container')) return 'Docker CLI, Dockerfile directives (FROM, RUN, CMD, COPY, EXPOSE), multi-stage builds, volumes, bridge networks, and compose'
+  if (t.includes('linux')) return 'Linux CLI commands, file permissions (chmod/chown), process management (ps/top/kill), bash piping, redirection, and systemd'
+  if (t.includes('sql') || t.includes('database')) return 'SQL queries (JOINs, GROUP BY, HAVING, subqueries), relational database indexing, transactions (ACID), normalization, and constraints'
+  if (t.includes('react')) return 'React.js component lifecycle, hooks (useState, useEffect, useMemo, useCallback), props vs state, Virtual DOM, and state management'
+  if (t.includes('node') || t.includes('express')) return 'Node.js event loop, asynchronous non-blocking I/O, Promises, async/await, Express REST API middleware, and event emitters'
+  if (t.includes('git')) return 'Git commands (rebase vs merge, cherry-pick, stash, reset), branching strategies, pull requests, and commit history management'
+  if (t.includes('aws') || t.includes('cloud')) return 'AWS cloud services (EC2, S3, IAM, Lambda, RDS, VPC), security groups, auto-scaling, and cloud architecture'
+  if (t.includes('machine learning') || t.includes('ml') || t.includes('ai')) return 'Machine learning algorithms (supervised/unsupervised), evaluation metrics (precision, recall, F1, ROC-AUC), gradient descent, overfitting, and vector processing'
+  return `technical software engineering concepts, exact code syntax, algorithms, complexity, performance benchmarks, and industry best practices for ${topic}`
 }
 
 const getDifficultyInstruction = (difficulty: string): string => {
   const d = difficulty.toLowerCase().trim()
-  if (d === 'easy') return 'basic level: test fundamental syntax, simple rules, straightforward calculations, basic vocabulary, or simple definitions'
-  if (d === 'hard') return 'hard level: test advanced optimizations, deep edge cases, complex multi-step reasoning, tricky logical traps, or advanced scenarios'
-  return 'medium level: test intermediate concepts, practical application, basic loops/logic, or standard multi-step problem solving'
+  if (d === 'easy') return 'Easy Level: Test fundamental syntax, basic definitions, direct 1-step logic, simple keywords, or basic 1-step arithmetic. Questions must be straightforward and test foundational understanding.'
+  if (d === 'hard') return 'Hard Level: Test advanced optimizations, deep edge cases, complex multi-step code execution tracing, memory/concurrency trade-offs, tricky logical traps, and advanced system architectural scenarios.'
+  return 'Medium Level: Test applied engineering concepts, multi-step problem solving, intermediate data structure operations, time/space complexity calculations, and practical scenarios.'
 }
 
 const getCompanyDifficulty = (company: string): string => {
   const cat = getCompanyCategory(company)
-  if (cat === 'product') return 'hard'
-  if (cat === 'service') return 'easy/medium'
-  return 'medium/hard'
+  if (cat === 'product') return 'Hard'
+  if (cat === 'service') return 'Easy/Medium'
+  return 'Medium/Hard'
 }
 
 export async function POST(req: Request) {
@@ -336,17 +484,11 @@ export async function POST(req: Request) {
       const topicFocus = getTopicFocus(normTopic)
       const diffInst = getDifficultyInstruction(normDiff)
 
-      const prompt = `Generate 20 MCQ questions for practice on "${normTopic}".
-Focus: ${topicFocus}.
+      const prompt = `Generate 20 highly accurate campus placement and internship screening MCQs on "${normTopic}".
+Focus: Real placement exam questions asked during engineering campus recruitment for ${normTopic}. Detail: ${topicFocus}.
 Difficulty: ${diffInst}.
-Format: Minified JSON object with key "questions" (array).
-MCQ structure:
-- id: 1-20
-- q: short question text
-- o: 4 options
-- c: index of correct option (0-3)
-- e: explanation (max 5 words)
-Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all text extremely short to save tokens. Do not mention other technologies or coding if it is a general/non-coding topic.`
+Format: Minified JSON object { "questions": [{ "id": 1..20, "q": "question", "o": ["optA","optB","optC","optD"], "c": 0..3, "e": "explanation" }] }.
+Constraints: Keep text concise, highly relevant, and token-optimized. Do NOT include markdown code blocks.`
 
       const apiRes = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
@@ -359,7 +501,7 @@ Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all t
           messages: [
             {
               role: 'system',
-              content: 'You are a cost-optimized assessment engine. Output strictly minified JSON. Keep explanations under 5 words.'
+              content: 'You are the CareerOS Placement & Internship Examination Engine. Generate authentic campus hiring & placement screening questions (matching TCS NQT, Infosys DSE, Wipro, Google OA, Amazon OA standards). Output strictly minified JSON. Keep explanations under 5 words to optimize token efficiency.'
             },
             {
               role: 'user',
@@ -367,7 +509,8 @@ Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all t
             }
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.3
+          temperature: 0.3,
+          max_tokens: 1800
         })
       })
 
@@ -379,8 +522,8 @@ Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all t
       const content = payload.choices?.[0]?.message?.content
       const parsed = safeParseJSON(content)
       
-      const formattedQuestions = (parsed.questions || []).map((item: any) => ({
-        id: item.id,
+      const formattedQuestions = (parsed.questions || []).map((item: any, idx: number) => ({
+        id: idx + 1,
         question: item.q || item.question,
         options: item.o || item.options,
         correctOption: typeof item.c === 'number' ? item.c : item.correctOption,
@@ -403,7 +546,7 @@ Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all t
         return handleOfflineTestFallback(normCompany, normRound, normRole)
       }
 
-      let systemPrompt = 'You are a recruitment engine. Output strictly minified JSON.'
+      let systemPrompt = `You are the ${normCompany} Campus Recruitment Screening Engine. Generate authentic ${normCompany} internship & full-time placement screening assessment questions for the ${normRole} track (Round ${normRound}). Output strictly minified JSON.`
       let prompt = ''
 
       if (isCodingRound) {
@@ -494,18 +637,12 @@ Constraint: Minify output. Keep descriptions extremely short. Do NOT include mar
           roundFocus = `Generate questions testing ${roundScope} tailored specifically for a ${normRole} position. Include code debugging snippets, complexity, algorithms, and tech stack concepts.`
         }
 
-        prompt = `Generate 10 MCQ questions for Round ${normRound} of simulated recruitment at ${normCompany}.
-Topic: ${roundScope}.
+        prompt = `Generate 10 recruitment screening MCQs for ${normCompany} campus & lateral hiring (${normRole} track, Round ${normRound}).
+Domain: ${roundScope}.
 Focus: ${roundFocus}.
 Difficulty: ${compDiff} level.
-Format: Minified JSON object with key "questions" (array).
-MCQ structure:
-- id: 1-10
-- q: short question text
-- o: 4 options
-- c: index of correct option (0-3)
-- e: explanation (max 5 words)
-Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all text extremely short to save tokens.`
+Format: Minified JSON object { "questions": [{ "id": 1..10, "q": "question", "o": ["optA","optB","optC","optD"], "c": 0..3, "e": "explanation" }] }.
+Constraint: Keep text extremely concise to optimize tokens. Output strictly valid JSON.`
       }
 
       const apiRes = await fetch('https://api.deepseek.com/chat/completions', {
@@ -521,7 +658,8 @@ Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all t
             { role: 'user', content: prompt }
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.3
+          temperature: 0.2,
+          max_tokens: 750
         })
       })
 
@@ -551,7 +689,7 @@ Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all t
         }
         return NextResponse.json({
           codingProblem: formattedProblem,
-          isAI: true
+          engine: 'CareerOS Automated Evaluator'
         })
       } else {
         const formattedQuestions = (parsed.questions || []).map((item: any) => ({
@@ -563,7 +701,7 @@ Constraint: Do NOT pretty-print. Do NOT include markdown code blocks. Keep all t
         }))
         return NextResponse.json({
           questions: formattedQuestions.slice(0, 10),
-          isAI: true
+          engine: 'CareerOS Automated Evaluator'
         })
       }
     }

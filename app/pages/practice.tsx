@@ -1,28 +1,7 @@
 'use client'
-import React, { useState, useEffect } from 'react'
-import { 
-  Code2, 
-  Database, 
-  Cpu, 
-  Brain, 
-  Cloud, 
-  Calculator, 
-  ArrowLeft, 
-  Loader2, 
-  CheckCircle, 
-  XCircle, 
-  RefreshCw, 
-  Sliders,
-  ChevronRight,
-  ChevronLeft,
-  Clock,
-  Zap,
-  Award,
-  TrendingUp,
-  BookOpen,
-  HelpCircle,
-  Check
-} from 'lucide-react'
+
+import React, { useState, useEffect, useRef } from 'react'
+import { ArrowLeft, ChevronRight, ChevronLeft } from 'lucide-react'
 
 interface Question {
   id: number
@@ -32,16 +11,9 @@ interface Question {
   explanation: string
 }
 
-interface GenerationResponse {
-  questions: Question[]
-  isAI: boolean
-  error?: boolean
-}
-
 const roadmaps = [
   {
     title: 'AI & ML',
-    icon: <Brain size={20} />,
     topics: [
       'Python', 'Maths', 'NumPy', 'Pandas', 'Visualization', 
       'ML', 'Scikit-Learn', 'SQL', 'Deep Learning', 'NLP', 
@@ -50,7 +22,6 @@ const roadmaps = [
   },
   {
     title: 'DevOps',
-    icon: <Cloud size={20} />,
     topics: [
       'Linux', 'Networking', 'Git/GitHub', 'Docker', 'CI/CD', 
       'AWS', 'Nginx', 'Databases', 'Kubernetes', 'Terraform', 
@@ -59,7 +30,6 @@ const roadmaps = [
   },
   {
     title: 'Basic DSA',
-    icon: <Code2 size={20} />,
     topics: [
       'Time & Space Complexity', 'Arrays & 2D Arrays', 'Strings', 
       'Python Collections (List, Set, Dict, deque, Counter, heapq)', 
@@ -70,7 +40,6 @@ const roadmaps = [
   },
   {
     title: 'Advanced DSA',
-    icon: <Cpu size={20} />,
     topics: [
       'Heaps (Priority Queue)', 'HashMaps & HashSets', 'Greedy Algorithms', 
       'Graphs', 'Dynamic Programming', 'Tries', 'Segment Trees'
@@ -78,7 +47,6 @@ const roadmaps = [
   },
   {
     title: 'Core MERN',
-    icon: <Database size={20} />,
     topics: [
       'HTML', 'CSS', 'JavaScript', 'React.js', 'Node.js', 
       'Express.js', 'MongoDB', 'Mongoose', 'REST APIs', 
@@ -87,7 +55,6 @@ const roadmaps = [
   },
   {
     title: 'Advanced MERN',
-    icon: <Sliders size={20} />,
     topics: [
       'React Query', 'Redux Toolkit', 'Next.js', 'WebSockets', 
       'Docker', 'AWS', 'CI/CD', 'Microservices', 'System Design'
@@ -95,7 +62,6 @@ const roadmaps = [
   },
   {
     title: 'General',
-    icon: <Calculator size={20} />,
     topics: [
       'Aptitude', 'English/Verbal Ability', 'Logical Reasoning'
     ]
@@ -106,7 +72,7 @@ const Practice = () => {
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60)
     const sec = seconds % 60
-    return `${min}:${sec < 10 ? '0' : ''}${sec}`
+    return `${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`
   }
 
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
@@ -114,19 +80,20 @@ const Practice = () => {
   const [showDifficultyScreen, setShowDifficultyScreen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [questions, setQuestions] = useState<Question[]>([])
-  const [isAI, setIsAI] = useState(false)
-  
-  // Navigation & Timer states
-  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({}) // questionId -> selectedIndex
-  const [isFinished, setIsFinished] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(900) // 15 minutes
-  const timerRef = React.useRef<NodeJS.Timeout | null>(null)
 
-  // Overall user stats
+  // CBT Exam State Management
+  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0)
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({}) // qId -> optionIndex
+  const [markedForReview, setMarkedForReview] = useState<Record<number, boolean>>({}) // qId -> boolean
+  const [visitedQuestions, setVisitedQuestions] = useState<Record<number, boolean>>({}) // qId -> boolean
+  const [isFinished, setIsFinished] = useState(false)
+  const [showSubmitModal, setShowSubmitModal] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(900) // 15 minutes
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // User Stats
   const [stats, setStats] = useState({ practiceCount: 0, avgAccuracy: 0, history: [] as any[] })
 
-  // Load progress history on mount
   useEffect(() => {
     const loadStats = async () => {
       try {
@@ -149,567 +116,668 @@ const Practice = () => {
       }
     }
     loadStats()
-  }, [selectedTopic, isFinished])
+  }, [])
 
-  // Timer logic for Practice Arena
+  // Timer Effect
   useEffect(() => {
-    if (selectedTopic && questions.length > 0 && !isFinished && timeLeft > 0) {
+    if (questions.length > 0 && !isFinished && !loading) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            clearInterval(timerRef.current!)
-            submitPractice()
+            if (timerRef.current) clearInterval(timerRef.current)
+            handleFinishQuiz()
             return 0
           }
           return prev - 1
         })
       }, 1000)
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
     }
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [selectedTopic, questions, isFinished, timeLeft])
+  }, [questions, isFinished, loading])
+
+  // Track Visited Question
+  useEffect(() => {
+    if (questions.length > 0 && questions[currentQuestionIdx]) {
+      const qId = questions[currentQuestionIdx].id
+      setVisitedQuestions((prev) => ({ ...prev, [qId]: true }))
+    }
+  }, [currentQuestionIdx, questions])
 
   const handleSelectTopic = (topic: string) => {
     setSelectedTopic(topic)
     setShowDifficultyScreen(true)
   }
 
-  const handleStartPractice = async (difficulty: string) => {
+  const handleSelectDifficulty = async (difficulty: string) => {
     setSelectedDifficulty(difficulty)
-    setShowDifficultyScreen(false)
     setLoading(true)
-    setQuestions([])
-    setCurrentQuestionIdx(0)
-    setSelectedAnswers({})
-    setTimeLeft(900)
-    setIsFinished(false)
 
     try {
-      const response = await fetch('/api/generate', {
+      const res = await fetch('/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'practice',
           topic: selectedTopic,
-          difficulty,
-        }),
+          difficulty: difficulty.toLowerCase(),
+          timestamp: Date.now()
+        })
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to generate practice questions')
+      const data = await res.json()
+      if (data.questions && data.questions.length > 0) {
+        setQuestions(data.questions)
+      } else {
+        setQuestions([])
       }
-
-      const data = (await response.json()) as GenerationResponse
-      setQuestions(data.questions)
-      setIsAI(data.isAI)
     } catch (err) {
-      console.error(err)
+      console.error('Error fetching questions:', err)
     } finally {
       setLoading(false)
+      setCurrentQuestionIdx(0)
+      setSelectedAnswers({})
+      setMarkedForReview({})
+      setVisitedQuestions({})
+      setIsFinished(false)
+      setShowSubmitModal(false)
+      setTimeLeft(900)
     }
   }
 
-  const handleSelectOption = (optionIndex: number) => {
-    const qId = questions[currentQuestionIdx].id
-    setSelectedAnswers(prev => ({ ...prev, [qId]: optionIndex }))
+  const handleOptionSelect = (qId: number, optionIdx: number) => {
+    if (isFinished) return
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [qId]: optionIdx
+    }))
   }
 
-  const submitPractice = async () => {
+  const handleClearResponse = () => {
+    if (questions[currentQuestionIdx]) {
+      const qId = questions[currentQuestionIdx].id
+      setSelectedAnswers((prev) => {
+        const next = { ...prev }
+        delete next[qId]
+        return next
+      })
+    }
+  }
+
+  const handleMarkForReview = () => {
+    if (questions[currentQuestionIdx]) {
+      const qId = questions[currentQuestionIdx].id
+      setMarkedForReview((prev) => ({
+        ...prev,
+        [qId]: !prev[qId]
+      }))
+      if (currentQuestionIdx < questions.length - 1) {
+        setCurrentQuestionIdx((prev) => prev + 1)
+      }
+    }
+  }
+
+  const handleSaveAndNext = () => {
+    if (currentQuestionIdx < questions.length - 1) {
+      setCurrentQuestionIdx((prev) => prev + 1)
+    }
+  }
+
+  const handleFinishQuiz = async () => {
     setIsFinished(true)
+    setShowSubmitModal(false)
     if (timerRef.current) clearInterval(timerRef.current)
 
     let score = 0
-    questions.forEach(q => {
+    questions.forEach((q) => {
       if (selectedAnswers[q.id] === q.correctOption) {
-        score++
+        score += 1
       }
     })
-    const total = questions.length
 
     try {
       await fetch('/api/progress', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          type: 'practice',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           topic: selectedTopic,
-          difficulty: selectedDifficulty,
           score,
-          total
-        }),
+          total: questions.length,
+          difficulty: selectedDifficulty,
+          type: 'practice'
+        })
       })
-      window.dispatchEvent(new Event('storage'))
+
+      const res = await fetch('/api/progress')
+      if (res.ok) {
+        const data = await res.json()
+        const history = data.history || []
+        const practices = history.filter((h: any) => h.type === 'practice')
+        const avgAcc = practices.length > 0
+          ? Math.round((practices.reduce((acc: number, cur: any) => acc + (cur.score / (cur.total || 20)), 0) / practices.length) * 100)
+          : 0
+        setStats({
+          practiceCount: data.practiceCount || 0,
+          avgAccuracy: avgAcc,
+          history: practices.reverse()
+        })
+      }
     } catch (err) {
-      console.error('Error saving practice progress:', err)
+      console.error('Error saving progress:', err)
     }
   }
 
-  const calculateScore = () => {
-    let correct = 0
-    questions.forEach(q => {
-      if (selectedAnswers[q.id] === q.correctOption) {
-        correct++
-      }
-    })
-    return correct
-  }
-
-  const resetArena = () => {
+  const handleReset = () => {
     setSelectedTopic(null)
     setSelectedDifficulty(null)
     setShowDifficultyScreen(false)
     setQuestions([])
     setIsFinished(false)
-    if (timerRef.current) clearInterval(timerRef.current)
+    setShowSubmitModal(false)
+    setSelectedAnswers({})
+    setMarkedForReview({})
+    setVisitedQuestions({})
+    setCurrentQuestionIdx(0)
   }
 
-  // Loading Screen
   if (loading) {
     return (
-      <div className="min-h-screen text-zinc-100 flex flex-col items-center justify-center p-6 animate-fade-in">
-        <div className="text-center max-w-md space-y-6">
-          <div className="relative w-20 h-20 mx-auto">
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-500/20 animate-pulse" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-indigo-500 animate-spin" />
-            <Brain className="absolute inset-0 m-auto h-8 w-8 text-indigo-400 animate-pulse" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-bold tracking-tight">Generating Arena</h3>
-            <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
-              Synthesizing exactly 20 premium questions on <span className="text-indigo-400 font-semibold">{selectedTopic}</span> ({selectedDifficulty} level) using DeepSeek AI models...
-            </p>
-          </div>
-          <div className="w-full bg-zinc-900 border border-zinc-800 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full w-2/3 rounded-full animate-infinite-scroll" />
-          </div>
-        </div>
+      <div className="p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto flex flex-col items-center justify-center space-y-4 animate-fade-in font-mono">
+        <div className="w-10 h-10 border-2 border-zinc-800 border-t-indigo-500 rounded-full animate-spin" />
+        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+          INITIALIZING COMPUTER-BASED ASSESSMENT SYSTEM...
+        </p>
       </div>
     )
   }
 
-  // Difficulty Selection Screen
-  if (showDifficultyScreen && selectedTopic) {
-    const levels = [
-      { id: 'easy', label: 'Easy Target', desc: 'Focuses on syntax basics and simple key terms', icon: <Zap className="text-amber-400" size={24} /> },
-      { id: 'medium', label: 'Medium Target', desc: 'Practical implementation, algorithmic branches, and logical loops', icon: <Cpu className="text-indigo-400" size={24} /> },
-      { id: 'hard', label: 'Hard Target', desc: 'Deep compiler optimization, scale patterns, and memory complexity', icon: <Brain className="text-rose-400" size={24} /> },
-    ]
+  // Active Formal Examination CBT Screen
+  if (questions.length > 0) {
+    const currentQ = questions[currentQuestionIdx]
+    const answeredCount = Object.keys(selectedAnswers).length
+    const reviewCount = Object.values(markedForReview).filter(Boolean).length
+    const notVisitedCount = questions.length - Object.keys(visitedQuestions).length
+    const notAnsweredCount = questions.length - answeredCount
 
-    return (
-      <div className="min-h-screen text-zinc-100 p-6 max-w-2xl mx-auto flex flex-col justify-center animate-fade-in">
-        <button
-          onClick={resetArena}
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 font-semibold mb-6 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Return to Arena
-        </button>
-
-        <div className="mb-8">
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">Aptitude & Skill Quiz</span>
-          <h1 className="text-2xl font-black mt-3">Select Difficulty - {selectedTopic}</h1>
-          <p className="text-xs text-zinc-400 mt-1">Choose a target difficulty matching your expertise to begin.</p>
-        </div>
-
-        <div className="space-y-4">
-          {levels.map(lvl => (
-            <button
-              key={lvl.id}
-              onClick={() => handleStartPractice(lvl.id)}
-              className="w-full glass-card text-left rounded-2xl p-5 border border-zinc-800/80 hover:border-indigo-500 bg-zinc-900/40 hover:bg-zinc-800/30 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300 flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-zinc-950/65 border border-zinc-800 group-hover:border-indigo-500/30 transition-all">
-                  {lvl.icon}
-                </div>
-                <div>
-                  <h3 className="font-bold text-zinc-200 text-sm group-hover:text-indigo-400 transition-colors">{lvl.label}</h3>
-                  <p className="text-xs text-zinc-450 mt-1 font-medium leading-relaxed max-w-md">{lvl.desc}</p>
-                </div>
-              </div>
-              <ChevronRight className="text-zinc-500 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" size={18} />
-            </button>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  // Quiz active/completed dashboard
-  if (selectedTopic && questions.length > 0) {
-    const currentQuestion = questions[currentQuestionIdx]
-    const qId = currentQuestion.id
-    const hasChosen = selectedAnswers[qId] !== undefined
-    const userChoice = selectedAnswers[qId]
-
+    let calculatedScore = 0
     if (isFinished) {
-      const score = calculateScore()
-      const total = questions.length
-      const percentage = Math.round((score / total) * 100)
-
-      return (
-        <div className="min-h-screen text-zinc-100 p-6 max-w-5xl mx-auto animate-fade-in space-y-6">
-          {/* Results summary header */}
-          <div className="glass-card rounded-3xl p-8 border border-zinc-800 bg-zinc-900/20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl" />
-            
-            <div className="relative z-10 text-center space-y-4">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Practice Completed</span>
-              <h1 className="text-3xl font-black mt-2 bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">Assessment Performance</h1>
-              <p className="text-zinc-400 text-xs mt-1">Topic: <span className="text-zinc-200 font-semibold">{selectedTopic}</span> ({selectedDifficulty} Level)</p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 max-w-2xl mx-auto">
-                <div className="bg-zinc-950/60 rounded-2xl p-5 border border-zinc-850 flex flex-col justify-center">
-                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Correct Answers</span>
-                  <p className="text-3xl font-black text-zinc-100 mt-2">{score} <span className="text-zinc-500 text-sm">/ {total}</span></p>
-                </div>
-                <div className="bg-zinc-950/60 rounded-2xl p-5 border border-zinc-850 flex flex-col justify-center">
-                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Overall Accuracy</span>
-                  <p className="text-3xl font-black text-indigo-400 mt-2">{percentage}%</p>
-                </div>
-                <div className="bg-zinc-950/60 rounded-2xl p-5 border border-zinc-850 flex flex-col justify-center">
-                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Hiring Match</span>
-                  <p className={`text-3xl font-black mt-2 ${percentage >= 80 ? 'text-emerald-400' : percentage >= 60 ? 'text-amber-400' : 'text-zinc-400'}`}>
-                    {percentage >= 80 ? 'Optimal' : percentage >= 60 ? 'Competitive' : 'Practice'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-8 flex justify-center gap-3">
-                <button
-                  onClick={() => handleStartPractice(selectedDifficulty!)}
-                  className="flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-xs transition-all border border-indigo-500/20 cursor-pointer shadow-lg shadow-indigo-600/10"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Practice Again
-                </button>
-                <button
-                  onClick={resetArena}
-                  className="flex items-center gap-2 px-5 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-zinc-300 font-bold text-xs transition-all border border-zinc-800 cursor-pointer"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Return to Arena
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Deep-dive Questions Review list */}
-          <div className="space-y-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1 flex items-center gap-2">
-              <BookOpen size={14} /> Questions Review & Explanation ({questions.length})
-            </h3>
-            <div className="space-y-4">
-              {questions.map((q, idx) => {
-                const uAns = selectedAnswers[q.id]
-                const isCorrect = uAns === q.correctOption
-                const hasSkipped = uAns === undefined
-
-                return (
-                  <div key={q.id} className={`glass-card rounded-2xl p-6 border ${isCorrect ? 'border-emerald-500/20 bg-emerald-950/5' : hasSkipped ? 'border-zinc-800 bg-zinc-900/10' : 'border-rose-500/20 bg-rose-950/5'}`}>
-                    <div className="flex items-start justify-between gap-4">
-                      <h4 className="font-bold text-sm text-zinc-200 leading-relaxed">{idx + 1}. {q.question}</h4>
-                      {isCorrect ? (
-                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                          <CheckCircle className="h-3.5 w-3.5" /> Correct
-                        </span>
-                      ) : hasSkipped ? (
-                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold text-zinc-400 bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-700">
-                          Skipped
-                        </span>
-                      ) : (
-                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
-                          <XCircle className="h-3.5 w-3.5" /> Incorrect
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-3 mt-5">
-                      {q.options.map((opt, oIdx) => {
-                        const isCorrectOpt = oIdx === q.correctOption
-                        const isUserChoice = oIdx === uAns
-                        
-                        let optStyle = 'bg-zinc-950/30 text-zinc-400 border border-zinc-850'
-                        if (isCorrectOpt) optStyle = 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-semibold'
-                        else if (isUserChoice) optStyle = 'bg-rose-500/10 text-rose-300 border border-rose-500/30 font-semibold'
-
-                        const optLabel = String.fromCharCode(65 + oIdx) // A, B, C, D
-
-                        return (
-                          <div key={oIdx} className={`px-4 py-3 rounded-xl text-xs font-medium flex items-center gap-3 transition-all ${optStyle}`}>
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                              isCorrectOpt ? 'bg-emerald-500/25 text-emerald-300' : isUserChoice ? 'bg-rose-500/25 text-rose-300' : 'bg-zinc-800 text-zinc-550'
-                            }`}>{optLabel}</span>
-                            <span>{opt}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    {q.explanation && (
-                      <div className="mt-4 pt-4 border-t border-zinc-850 text-xs text-zinc-400 leading-relaxed bg-zinc-950/20 p-4 rounded-xl">
-                        <span className="font-bold text-zinc-300 flex items-center gap-1.5 mb-1.5">
-                          <HelpCircle size={14} className="text-indigo-400" /> Explanation
-                        </span>
-                        {q.explanation}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    // Dynamic timer coloring & alert states
-    let timerBadgeColor = 'text-emerald-450 bg-emerald-500/10 border-emerald-550/20'
-    if (timeLeft < 180) { // < 3 mins
-      timerBadgeColor = 'text-amber-450 bg-amber-500/10 border-amber-500/20 animate-pulse'
-    }
-    if (timeLeft < 60) { // < 1 min
-      timerBadgeColor = 'text-rose-450 bg-rose-500/15 border-rose-500/30 animate-pulse font-black'
+      questions.forEach((q) => {
+        if (selectedAnswers[q.id] === q.correctOption) {
+          calculatedScore += 1
+        }
+      })
     }
 
     return (
-      <div className="min-h-screen text-zinc-100 p-6 max-w-7xl mx-auto animate-fade-in flex flex-col space-y-6">
-        {/* Navigation Indicator & Quit trigger */}
-        <div className="flex items-center justify-between border-b border-zinc-900 pb-4 flex-shrink-0">
-          <button
-            onClick={resetArena}
-            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-all font-bold cursor-pointer"
-          >
-            <ArrowLeft className="h-4 w-4" /> Quit Practice
-          </button>
-          
-          <div className="flex items-center gap-3">
-            <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-colors duration-300 ${timerBadgeColor}`}>
-              <Clock className="h-3.5 w-3.5" />
-              {formatTime(timeLeft)}
-            </span>
-            <span className="text-[10px] text-indigo-400 font-bold bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full uppercase tracking-wider">
-              {selectedTopic} • {selectedDifficulty}
-            </span>
+      <div className="p-4 sm:p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto space-y-4 animate-fade-in font-sans">
+        
+        {/* Formal Examination Paper Header */}
+        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-indigo-950 text-indigo-300 border border-indigo-800">
+                OFFICIAL CBT PAPER
+              </span>
+              <span className="text-[10px] text-zinc-500 font-mono font-bold uppercase">
+                CODE: EXAM-2026-{selectedTopic?.toUpperCase()}
+              </span>
+            </div>
+            <h1 className="text-base sm:text-lg font-black uppercase tracking-tight text-zinc-100">
+              NATIONAL TECHNICAL ASSESSMENT • {selectedTopic} ({selectedDifficulty})
+            </h1>
+          </div>
+
+          {/* Clock Timer */}
+          <div className="flex items-center gap-4 self-end md:self-auto">
+            <div className="text-right bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl font-mono">
+              <span className="text-[9px] uppercase font-bold text-zinc-500 block tracking-wider">TIME REMAINING</span>
+              <span className="text-base sm:text-lg font-black text-emerald-400 tracking-wider">
+                {formatTime(timeLeft)}
+              </span>
+            </div>
+
+            {!isFinished && (
+              <button
+                onClick={() => setShowSubmitModal(true)}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold font-mono uppercase bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+              >
+                SUBMIT TEST
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: 1-20 Question Navigation & Stats */}
-          <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
-            <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Question List</span>
-                <span className="text-[10px] font-semibold text-indigo-400">
-                  {Object.keys(selectedAnswers).length} / {questions.length} Answered
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-5 gap-2">
+        {/* Finished Result Screen */}
+        {isFinished ? (
+          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 text-center shadow-xl">
+            <div className="space-y-2 border-b border-zinc-850 pb-6">
+              <span className="text-[10px] font-bold font-mono uppercase px-3 py-1 rounded bg-emerald-950 border border-emerald-800 text-emerald-300">
+                EXAMINATION EVALUATION COMPLETE
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-zinc-100 uppercase tracking-tight">
+                FINAL SCORE: {calculatedScore} / {questions.length}
+              </h2>
+              <p className="text-xs text-zinc-400 font-mono">
+                OVERALL PERCENTAGE ACCURACY: {Math.round((calculatedScore / questions.length) * 100)}%
+              </p>
+            </div>
+
+            {/* Answer Sheet Table */}
+            <div className="space-y-4 text-left">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">
+                OFFICIAL QUESTION EVALUATION SHEET
+              </h3>
+
+              <div className="space-y-3 max-h-[450px] overflow-y-auto pr-1">
                 {questions.map((q, idx) => {
-                  const uChoice = selectedAnswers[q.id]
-                  const isCurrent = currentQuestionIdx === idx
-                  
-                  let statusStyle = 'bg-zinc-950/40 border-zinc-850 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300'
-                  if (isCurrent) {
-                    statusStyle = 'border-indigo-500 text-indigo-400 bg-indigo-500/10 font-bold shadow-md shadow-indigo-500/5'
-                  } else if (uChoice !== undefined) {
-                    statusStyle = 'bg-indigo-650 text-white border-indigo-600 shadow-sm shadow-indigo-650/10'
-                  }
+                  const userAns = selectedAnswers[q.id]
+                  const isCorrect = userAns === q.correctOption
 
                   return (
-                    <button
+                    <div
                       key={q.id}
-                      onClick={() => setCurrentQuestionIdx(idx)}
-                      className={`w-10 h-10 text-xs font-bold rounded-xl border flex items-center justify-center transition-all cursor-pointer ${statusStyle}`}
+                      className={`p-4 rounded-2xl border space-y-2 text-xs font-sans ${
+                        isCorrect
+                          ? 'bg-emerald-950/20 border-emerald-800/60'
+                          : 'bg-rose-950/20 border-rose-800/60'
+                      }`}
                     >
-                      {idx + 1}
-                    </button>
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-bold text-zinc-200">
+                          Q{idx + 1}. {q.question}
+                        </span>
+                        <span
+                          className={`text-[9px] font-bold font-mono uppercase px-2 py-0.5 rounded flex-shrink-0 ${
+                            isCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                          }`}
+                        >
+                          {isCorrect ? 'CORRECT' : 'INCORRECT'}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 text-[11px] font-mono">
+                        <p className="text-zinc-400">
+                          SELECTED OPTION:{' '}
+                          <span className={isCorrect ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                            {userAns !== undefined ? `${String.fromCharCode(65 + userAns)}. ${q.options[userAns]}` : 'NOT ANSWERED'}
+                          </span>
+                        </p>
+                        {!isCorrect && (
+                          <p className="text-zinc-400">
+                            CORRECT OPTION:{' '}
+                            <span className="text-emerald-400 font-bold">{String.fromCharCode(65 + q.correctOption)}. {q.options[q.correctOption]}</span>
+                          </p>
+                        )}
+                        <p className="text-zinc-400 pt-1 font-sans text-xs font-normal leading-relaxed">
+                          EXPLANATION: {q.explanation}
+                        </p>
+                      </div>
+                    </div>
                   )
                 })}
               </div>
+            </div>
 
-              <div className="mt-5 pt-4 border-t border-zinc-850 flex justify-between text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-md bg-indigo-600" /> Answered
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-md border border-indigo-500 bg-indigo-500/10" /> Active
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-md bg-zinc-950/40 border border-zinc-850" /> Empty
-                </div>
-              </div>
+            <div className="pt-4 border-t border-zinc-850">
+              <button
+                onClick={handleReset}
+                className="px-6 py-3 rounded-xl text-xs font-bold font-mono uppercase bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
+              >
+                RETURN TO EXAMINATION DIRECTORY
+              </button>
             </div>
           </div>
+        ) : (
+          /* CBT Dual-Pane Examination Layout */
+          <div className="grid lg:grid-cols-4 gap-4 items-start">
+            
+            {/* Main Question Paper Area (3 Columns) */}
+            <div className="lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-6 shadow-xl flex flex-col justify-between min-h-[500px]">
+              
+              <div className="space-y-5">
+                {/* Question Info Header */}
+                <div className="flex items-center justify-between border-b border-zinc-850 pb-3">
+                  <span className="text-xs font-bold font-mono uppercase text-indigo-400">
+                    QUESTION NO. {currentQuestionIdx + 1} OF {questions.length}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded">
+                      SINGLE CHOICE (+1.0 MARKS, 0.0 NEGATIVE)
+                    </span>
+                  </div>
+                </div>
 
-          {/* Right Column: Question Panel */}
-          <div className="lg:col-span-8 space-y-6">
-            <div className="glass-card rounded-2xl p-6 md:p-8 border border-zinc-800 bg-zinc-900/10 min-h-[380px] flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-zinc-550 tracking-wider">Question {currentQuestionIdx + 1} of {questions.length}</span>
-                <h2 className="text-base font-bold text-zinc-150 leading-relaxed mt-3">{currentQuestion.question}</h2>
+                {/* Formal Question Text */}
+                <div className="bg-zinc-900/60 border border-zinc-800 p-4 rounded-xl">
+                  <p className="text-sm sm:text-base font-bold text-zinc-100 leading-relaxed">
+                    {currentQ.question}
+                  </p>
+                </div>
 
-                <div className="space-y-3 mt-6">
-                  {currentQuestion.options.map((option, index) => {
-                    const isSelected = userChoice === index
-                    const optionLetter = String.fromCharCode(65 + index) // A, B, C, D
-
-                    let cardStyle = 'bg-zinc-950/35 hover:bg-zinc-900/60 border-zinc-850 text-zinc-355 hover:text-zinc-200'
-                    if (isSelected) {
-                      cardStyle = 'bg-indigo-500/10 border-indigo-500 text-indigo-300 font-bold shadow-md shadow-indigo-500/5'
-                    }
-
+                {/* Multiple Choice Radio Options */}
+                <div className="space-y-3">
+                  {currentQ.options.map((opt, optIdx) => {
+                    const isSelected = selectedAnswers[currentQ.id] === optIdx
                     return (
                       <button
-                        key={index}
-                        onClick={() => handleSelectOption(index)}
-                        className={`w-full text-left px-5 py-4 rounded-xl text-xs font-semibold border transition-all flex items-center gap-4 group cursor-pointer ${cardStyle}`}
+                        key={optIdx}
+                        onClick={() => handleOptionSelect(currentQ.id, optIdx)}
+                        className={`w-full text-left p-4 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer border flex items-center gap-3 ${
+                          isSelected
+                            ? 'bg-indigo-950/60 border-indigo-500 text-white font-bold shadow-md'
+                            : 'bg-zinc-900/40 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900'
+                        }`}
                       >
-                        <span className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center text-[10px] font-extrabold border transition-all ${
-                          isSelected ? 'bg-indigo-500 text-white border-indigo-400' : 'bg-zinc-900 text-zinc-500 border-zinc-800 group-hover:border-zinc-700'
-                        }`}>{optionLetter}</span>
-                        <span className="flex-1">{option}</span>
-                        {isSelected && <Check size={14} className="text-indigo-400" />}
+                        <div
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold font-mono flex-shrink-0 ${
+                            isSelected ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-zinc-700 text-zinc-500'
+                          }`}
+                        >
+                          {String.fromCharCode(65 + optIdx)}
+                        </div>
+                        <span className="leading-relaxed flex-1">{opt}</span>
                       </button>
                     )
                   })}
                 </div>
               </div>
 
-              {/* Next/Prev Navigation bars & Submit Practice button */}
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-zinc-900">
-                <div className="flex gap-2">
+              {/* Bottom Examination Action Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-850 font-mono text-xs">
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => currentQuestionIdx > 0 && setCurrentQuestionIdx(prev => prev - 1)}
-                    disabled={currentQuestionIdx === 0}
-                    className={`px-4 py-2.5 rounded-xl border flex items-center justify-center gap-1.5 transition-all text-xs font-bold ${
-                      currentQuestionIdx > 0 
-                        ? 'bg-zinc-950/50 border-zinc-800 hover:bg-zinc-850 text-zinc-450 hover:text-zinc-205 cursor-pointer' 
-                        : 'border-zinc-855 text-zinc-700 cursor-not-allowed'
+                    onClick={handleMarkForReview}
+                    className={`px-4 py-2 rounded-xl font-bold uppercase transition-all cursor-pointer border ${
+                      markedForReview[currentQ.id]
+                        ? 'bg-purple-950 text-purple-300 border-purple-800'
+                        : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-850'
                     }`}
                   >
-                    <ChevronLeft size={16} /> Prev
+                    {markedForReview[currentQ.id] ? 'UNMARK REVIEW' : 'MARK FOR REVIEW & NEXT'}
                   </button>
+
                   <button
-                    onClick={() => currentQuestionIdx < questions.length - 1 && setCurrentQuestionIdx(prev => prev + 1)}
-                    disabled={currentQuestionIdx === questions.length - 1}
-                    className={`px-4 py-2.5 rounded-xl border flex items-center justify-center gap-1.5 transition-all text-xs font-bold ${
-                      currentQuestionIdx < questions.length - 1 
-                        ? 'bg-zinc-950/50 border-zinc-800 hover:bg-zinc-850 text-zinc-450 hover:text-zinc-205 cursor-pointer' 
-                        : 'border-zinc-855 text-zinc-700 cursor-not-allowed'
-                    }`}
+                    onClick={handleClearResponse}
+                    className="px-4 py-2 rounded-xl font-bold uppercase bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition-all cursor-pointer"
                   >
-                    Next <ChevronRight size={16} />
+                    CLEAR RESPONSE
                   </button>
                 </div>
 
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={currentQuestionIdx === 0}
+                    onClick={() => setCurrentQuestionIdx((prev) => prev - 1)}
+                    className={`px-4 py-2 rounded-xl font-bold uppercase transition-all cursor-pointer border ${
+                      currentQuestionIdx === 0
+                        ? 'bg-zinc-900 text-zinc-700 border-zinc-850 cursor-not-allowed opacity-40'
+                        : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-850'
+                    }`}
+                  >
+                    PREVIOUS
+                  </button>
+
+                  <button
+                    onClick={handleSaveAndNext}
+                    className="px-5 py-2 rounded-xl font-bold uppercase bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+                  >
+                    SAVE &amp; NEXT
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Question Palette Sidebar (1 Column) */}
+            <div className="lg:col-span-1 bg-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-4 shadow-xl font-mono">
+              <span className="text-[10px] font-bold uppercase text-zinc-400 block tracking-wider border-b border-zinc-850 pb-2">
+                QUESTION PALETTE
+              </span>
+
+              {/* Status Legend */}
+              <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-emerald-600 inline-block" />
+                  <span className="text-zinc-300">ANSWERED ({answeredCount})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-amber-600 inline-block" />
+                  <span className="text-zinc-300">NOT ANSWERED ({notAnsweredCount})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-purple-600 inline-block" />
+                  <span className="text-zinc-300">REVIEW ({reviewCount})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-zinc-800 inline-block" />
+                  <span className="text-zinc-300">NOT VISITED ({notVisitedCount})</span>
+                </div>
+              </div>
+
+              {/* Number Grid Selector */}
+              <div className="pt-2 border-t border-zinc-850">
+                <span className="text-[9px] uppercase font-bold text-zinc-500 block mb-2">CHOOSE A QUESTION</span>
+                <div className="grid grid-cols-5 gap-2">
+                  {questions.map((q, idx) => {
+                    const qId = q.id
+                    const isAns = selectedAnswers[qId] !== undefined
+                    const isRev = markedForReview[qId]
+                    const isVis = visitedQuestions[qId]
+                    const isCurr = idx === currentQuestionIdx
+
+                    let colorClass = 'bg-zinc-900 border-zinc-800 text-zinc-400'
+                    if (isAns) colorClass = 'bg-emerald-600 border-emerald-500 text-white font-bold'
+                    else if (isRev) colorClass = 'bg-purple-600 border-purple-500 text-white font-bold'
+                    else if (isVis) colorClass = 'bg-amber-600 border-amber-500 text-white font-bold'
+
+                    return (
+                      <button
+                        key={qId}
+                        onClick={() => setCurrentQuestionIdx(idx)}
+                        className={`h-9 rounded-lg text-xs font-bold transition-all cursor-pointer border flex items-center justify-center ${colorClass} ${
+                          isCurr ? 'ring-2 ring-indigo-400 ring-offset-2 ring-offset-zinc-950 scale-105' : ''
+                        }`}
+                      >
+                        {idx + 1}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-zinc-850">
                 <button
-                  onClick={submitPractice}
-                  className="px-6 py-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all border border-indigo-500/20 cursor-pointer shadow-lg shadow-indigo-650/10 hover:shadow-indigo-600/20"
+                  onClick={() => setShowSubmitModal(true)}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold uppercase bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-md shadow-indigo-600/20"
                 >
-                  Submit Practice
+                  SUBMIT FINAL PAPER
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* Submit Confirmation Modal */}
+        {showSubmitModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl font-sans">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold uppercase text-indigo-400 tracking-wider">
+                  SUBMISSION CONFIRMATION
+                </span>
+                <h3 className="text-lg font-bold text-zinc-100">
+                  Submit Examination Paper?
+                </h3>
+              </div>
+
+              <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 space-y-2 text-xs font-mono text-zinc-300">
+                <div className="flex justify-between py-1 border-b border-zinc-850">
+                  <span>Total Questions:</span>
+                  <span className="font-bold text-zinc-100">{questions.length}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-zinc-850">
+                  <span>Answered:</span>
+                  <span className="font-bold text-emerald-400">{answeredCount}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-zinc-850">
+                  <span>Marked for Review:</span>
+                  <span className="font-bold text-purple-400">{reviewCount}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span>Unanswered:</span>
+                  <span className="font-bold text-amber-400">{notAnsweredCount}</span>
+                </div>
+              </div>
+
+              <p className="text-xs text-zinc-400">
+                Are you sure you want to finish and submit your examination paper?
+              </p>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setShowSubmitModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold font-mono uppercase bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-850 cursor-pointer"
+                >
+                  CONTINUE TEST
+                </button>
+                <button
+                  onClick={handleFinishQuiz}
+                  className="px-5 py-2 rounded-xl text-xs font-bold font-mono uppercase bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 cursor-pointer"
+                >
+                  CONFIRM SUBMIT
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+      </div>
+    )
+  }
+
+  // Difficulty Selection Screen
+  if (showDifficultyScreen && selectedTopic) {
+    return (
+      <div className="p-6 text-zinc-100 min-h-screen max-w-4xl mx-auto space-y-6 animate-fade-in font-sans">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+          <div className="flex items-center gap-3 border-b border-zinc-850 pb-4">
+            <button
+              onClick={() => setShowDifficultyScreen(false)}
+              className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <div>
+              <span className="text-[10px] font-mono uppercase font-bold text-indigo-400 tracking-wider">
+                SELECTED SUBJECT: {selectedTopic}
+              </span>
+              <h2 className="text-lg font-bold text-zinc-100 mt-0.5">
+                SELECT EXAMINATION LEVEL
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-4">
+            {['Easy', 'Medium', 'Hard'].map((diff) => (
+              <button
+                key={diff}
+                onClick={() => handleSelectDifficulty(diff)}
+                className="bg-zinc-900/60 rounded-2xl p-6 border border-zinc-800 hover:border-indigo-500/50 text-left transition-all duration-200 cursor-pointer space-y-2 group"
+              >
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-400 block">
+                  {diff} LEVEL
+                </span>
+                <h3 className="text-base font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors">
+                  {diff === 'Easy' ? 'FOUNDATIONAL' : diff === 'Medium' ? 'APPLIED ENGINE' : 'ADVANCED HARD'}
+                </h3>
+                <p className="text-[11px] text-zinc-400 font-normal leading-relaxed">
+                  {diff === 'Easy'
+                    ? '10 foundational questions to verify syntax and logic.'
+                    : diff === 'Medium'
+                    ? '10 real-world scenario questions and core algorithms.'
+                    : '10 high-complexity optimization and architecture questions.'}
+                </p>
+              </button>
+            ))}
           </div>
         </div>
       </div>
     )
   }
 
-  // Landing Categories Grid
+  // Topic Selection Main Dashboard View
   return (
-    <div className="p-6 text-zinc-100 min-h-screen animate-fade-in space-y-6">
-      {/* Page Header */}
-      <div className="pb-4 border-b border-zinc-900 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">Skill Testing</span>
-          <h1 className="text-3xl font-black tracking-tight mt-2.5 bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">Practice Arena</h1>
-          <p className="text-zinc-450 text-xs mt-1.5 max-w-xl">
-            Select standard core modules to generate cost-optimized MCQ tests of 20 questions mapping to actual assessment frameworks.
+    <div className="p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto space-y-6 animate-fade-in relative font-sans">
+      
+      {/* Top Banner */}
+      <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="space-y-1.5 max-w-xl z-10">
+          <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-950 border border-indigo-800 text-indigo-300 inline-block">
+            COMPUTER-BASED EXAMINATION ENGINE
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-100 uppercase">
+            TECHNICAL PRACTICE DIRECTORY
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-400 font-normal">
+            Select a subject domain to launch the formal computer-based examination interface.
           </p>
         </div>
-      </div>
 
-      {/* Stats Summary Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <Award size={20} />
+        <div className="grid grid-cols-2 gap-3 bg-zinc-900/80 p-3.5 rounded-2xl border border-zinc-800 font-mono z-10">
+          <div className="px-4 py-2 border-r border-zinc-850">
+            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">PAPERS LOGGED</span>
+            <span className="text-lg font-black text-indigo-400 mt-0.5 block">{stats.practiceCount}</span>
           </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase text-zinc-550 tracking-wider">Completed Practices</span>
-            <p className="text-xl font-black text-zinc-200 mt-1">{stats.practiceCount} Attempts</p>
-          </div>
-        </div>
-        <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <TrendingUp size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase text-zinc-550 tracking-wider">Average Score</span>
-            <p className="text-xl font-black text-emerald-400 mt-1">{stats.avgAccuracy}% Accuracy</p>
-          </div>
-        </div>
-        <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            <Cpu size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase text-zinc-550 tracking-wider">Performance Index</span>
-            <p className="text-xl font-black text-purple-400 mt-1">
-              {stats.avgAccuracy >= 85 ? 'Grandmaster' : stats.avgAccuracy >= 70 ? 'Expert' : stats.avgAccuracy >= 50 ? 'Specialist' : 'Learner'}
-            </p>
+          <div className="px-4 py-2">
+            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider block">AVG ACCURACY</span>
+            <span className="text-lg font-black text-emerald-400 mt-0.5 block">{stats.avgAccuracy}%</span>
           </div>
         </div>
       </div>
 
-      {/* Main Categories Section */}
-      <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        {roadmaps.map((roadmap) => (
-          <div
-            key={roadmap.title}
-            className="glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-900/5 flex flex-col justify-between hover:border-zinc-700/60 hover:shadow-lg transition-all duration-300 group"
-          >
-            <div>
-              <div className="flex items-center gap-3.5 mb-5">
-                <div className="p-3 rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 group-hover:border-indigo-500/40 group-hover:bg-indigo-500/20 transition-all duration-300">
-                  {roadmap.icon}
-                </div>
-                <div>
-                  <h2 className="text-md font-bold tracking-tight text-zinc-200">{roadmap.title}</h2>
-                  <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest">
-                    {roadmap.topics.length} Subjects
+      {/* Roadmaps Grid */}
+      <div className="space-y-6">
+        <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
+          EXAMINATION SUBJECT DIRECTORY
+        </h2>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {roadmaps.map((map, idx) => (
+            <div
+              key={idx}
+              className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 space-y-4 flex flex-col justify-between shadow-xl"
+            >
+              <div className="space-y-3">
+                <div className="border-b border-zinc-850 pb-3">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-400 block">
+                    ROADMAP MODULE
                   </span>
+                  <h3 className="text-base font-bold text-zinc-100 mt-0.5">{map.title}</h3>
                 </div>
-              </div>
 
-              <div className="flex flex-wrap items-center gap-y-3 gap-x-2 pb-2">
-                {roadmap.topics.map((topic, tIdx) => (
-                  <React.Fragment key={topic}>
+                <div className="flex flex-wrap gap-1.5">
+                  {map.topics.map((t) => (
                     <button
-                      onClick={() => handleSelectTopic(topic)}
-                      className="text-left px-3.5 py-2 rounded-xl border border-zinc-850 bg-zinc-950/20 hover:bg-indigo-650 hover:border-indigo-550 hover:shadow-sm text-[11px] font-semibold text-zinc-400 hover:text-white transition-all cursor-pointer hover:-translate-y-0.5 duration-200"
+                      key={t}
+                      onClick={() => handleSelectTopic(t)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-zinc-900 border border-zinc-800 hover:border-indigo-500 text-zinc-300 hover:text-indigo-300 transition-all cursor-pointer"
                     >
-                      {topic}
+                      {t}
                     </button>
-                    {tIdx < roadmap.topics.length - 1 && (
-                      <ChevronRight size={12} className="text-zinc-800 flex-shrink-0" />
-                    )}
-                  </React.Fragment>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
+
     </div>
   )
 }

@@ -1,7 +1,16 @@
 'use client'
+
 import React, { useState, useEffect } from 'react'
 import MarkdownRenderer from '../components/MarkdownRenderer'
-import { Sliders, Bell, Eye, ShieldAlert, Check, User, Save, Plus, Trash2, FileText, Pencil, X } from 'lucide-react'
+import {
+  Save,
+  Plus,
+  Trash2,
+  FileText,
+  Pencil,
+  X,
+  Download
+} from 'lucide-react'
 
 interface ProfileData {
   name: string
@@ -26,8 +35,6 @@ interface ScheduleItem {
 
 type Timetable = Record<string, ScheduleItem[]>
 
-
-
 const daysOfWeek = [
   'Sunday',
   'Monday',
@@ -38,7 +45,12 @@ const daysOfWeek = [
   'Saturday',
 ]
 
+type SectionTab = 'profile' | 'timetable' | 'preferences' | 'data' | 'blogs'
+
 const Settings = () => {
+  // Navigation Section State
+  const [activeSection, setActiveSection] = useState<SectionTab>('profile')
+
   // Profile settings
   const [userName, setUserName] = useState('Dharmendra Pandit')
   const [userRole, setUserRole] = useState('Software Engineer')
@@ -71,6 +83,7 @@ const Settings = () => {
   const [activeEditorTab, setActiveEditorTab] = useState<'write' | 'preview'>('write')
 
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [feedbackMessage, setFeedbackMessage] = useState('')
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -103,7 +116,7 @@ const Settings = () => {
       try {
         const res = await fetch('/api/timetable')
         if (res.ok) {
-          const data = await res.json() as { templates: Timetable }
+          const data = (await res.json()) as { templates: Timetable }
           setTimetableTemplates(data.templates || {})
         }
       } catch (err) {
@@ -134,7 +147,7 @@ const Settings = () => {
       const profileRes = await fetch('/api/profile', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           name: userName,
@@ -146,37 +159,40 @@ const Settings = () => {
           notifyDaily,
           notifyWeekly,
           notifyAlerts,
-          theme,
-        }),
+          theme
+        })
       })
 
-      // 2. Save timetable templates
+      // 2. Save timetable template edits
       const timetableRes = await fetch('/api/timetable', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ templates: timetableTemplates }),
+        body: JSON.stringify({
+          templates: timetableTemplates
+        })
       })
 
       if (profileRes.ok && timetableRes.ok) {
         setSaveSuccess(true)
-        setTimeout(() => setSaveSuccess(false), 3000)
-
-        // Dispatch storage event to alert dashboard and other widgets
-        window.dispatchEvent(new Event('storage'))
+        setFeedbackMessage('Settings saved successfully.')
+        setTimeout(() => {
+          setSaveSuccess(false)
+          setFeedbackMessage('')
+        }, 3000)
       } else {
-        alert('Failed to save settings data to MongoDB')
+        setFeedbackMessage('Failed to save settings to server.')
       }
     } catch (err) {
-      console.error('Error saving configurations:', err)
-      alert('Network error: Database connection offline')
+      console.error('Error saving settings:', err)
+      setFeedbackMessage('Network connection error while saving.')
     }
   }
 
-  // Edit Timetable actions
+  // Timetable Slot Handlers
   const handleSlotChange = (day: string, index: number, field: keyof ScheduleItem, value: string) => {
-    setTimetableTemplates(prev => {
+    setTimetableTemplates((prev) => {
       const daySlots = [...(prev[day] || [])]
       daySlots[index] = {
         ...daySlots[index],
@@ -189,9 +205,16 @@ const Settings = () => {
     })
   }
 
-  const handleDeleteSlot = (day: string, index: number) => {
-    setTimetableTemplates(prev => {
-      const daySlots = (prev[day] || []).filter((_, idx) => idx !== index)
+  const handleAddSlot = (day: string) => {
+    setTimetableTemplates((prev) => {
+      const daySlots = [...(prev[day] || [])]
+      daySlots.push({
+        time: '18:00 - 19:30',
+        subject: 'New Task Subject',
+        partsofday: 'Evening',
+        completed: false,
+        color: 'blue'
+      })
       return {
         ...prev,
         [day]: daySlots
@@ -199,547 +222,628 @@ const Settings = () => {
     })
   }
 
-  const handleAddSlot = (day: string) => {
-    const newSlot: ScheduleItem = {
-      time: '09:00 - 10:00',
-      subject: 'New Study Task',
-      partsofday: 'Morning',
-      completed: false,
-      color: '#6366f1'
-    }
-
-    setTimetableTemplates(prev => ({
-      ...prev,
-      [day]: [...(prev[day] || []), newSlot]
-    }))
-  }
-
-  const handleResetProgress = async () => {
-    if (confirm('Are you sure you want to reset all test scores and practice completion history in the database?')) {
-      try {
-        const response = await fetch('/api/progress', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ type: 'reset' }),
-        })
-
-        if (response.ok) {
-          alert('Progress metrics reset completed.')
-          window.dispatchEvent(new Event('storage'))
-        }
-      } catch (err) {
-        console.error('Error resetting progress:', err)
-        alert('Network error')
+  const handleDeleteSlot = (day: string, index: number) => {
+    setTimetableTemplates((prev) => {
+      const daySlots = [...(prev[day] || [])]
+      daySlots.splice(index, 1)
+      return {
+        ...prev,
+        [day]: daySlots
       }
+    })
+  }
+
+  // Export JSON backup
+  const handleExportData = () => {
+    const backupData = {
+      profile: { userName, userRole, userEmail, prepInternship, prepPlacement, prepGovt, theme },
+      timetable: timetableTemplates,
+      exportedAt: new Date().toISOString()
     }
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2))
+    const downloadAnchor = document.createElement('a')
+    downloadAnchor.setAttribute('href', dataStr)
+    downloadAnchor.setAttribute('download', `CareerOS_Backup_${new Date().toISOString().split('T')[0]}.json`)
+    document.body.appendChild(downloadAnchor)
+    downloadAnchor.click()
+    downloadAnchor.remove()
+    setFeedbackMessage('Backup JSON downloaded successfully.')
+    setTimeout(() => setFeedbackMessage(''), 3000)
   }
 
-  // Format YYYY-MM-DD to readable (e.g., June 15, 2026)
-  const formatReadableDate = (dateStr: string) => {
-    if (!dateStr || typeof dateStr !== 'string') return 'Unknown Date'
-    const parts = dateStr.split('-')
-    if (parts.length !== 3) return dateStr
-    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
-
-  // Blog editor actions
-  const handleOpenCreateBlog = () => {
+  // Blog Publishing Handlers
+  const handleOpenNewBlogModal = () => {
     setEditingBlogId(null)
     setBlogTitle('')
     setBlogContent('')
     setBlogAuthor(userName || 'Dharmendra Pandit')
-    setBlogTags('')
-    setActiveEditorTab('write')
+    setBlogTags('Guide, Career')
     setIsBlogModalOpen(true)
   }
 
-  const handleOpenEditBlog = (blog: any) => {
+  const handleOpenEditBlogModal = (blog: any) => {
     setEditingBlogId(blog._id)
-    setBlogTitle(blog.title)
-    setBlogContent(blog.content)
-    setBlogAuthor(blog.author)
+    setBlogTitle(blog.title || '')
+    setBlogContent(blog.content || '')
+    setBlogAuthor(blog.author || userName)
     setBlogTags(blog.tags ? blog.tags.join(', ') : '')
-    setActiveEditorTab('write')
     setIsBlogModalOpen(true)
   }
 
   const handleSaveBlog = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!blogTitle.trim() || !blogContent.trim() || !blogAuthor.trim()) return
+    if (!blogTitle.trim() || !blogContent.trim()) return
 
     setIsSavingBlog(true)
+    const tagsArray = blogTags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+
+    const payload = {
+      title: blogTitle,
+      content: blogContent,
+      author: blogAuthor || userName,
+      tags: tagsArray
+    }
+
     try {
       const url = editingBlogId ? `/api/blogs/${editingBlogId}` : '/api/blogs'
       const method = editingBlogId ? 'PUT' : 'POST'
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: blogTitle,
-          content: blogContent,
-          author: blogAuthor,
-          tags: blogTags
-        })
+        body: JSON.stringify(payload)
       })
 
       if (res.ok) {
         setIsBlogModalOpen(false)
-        // Refresh local lists
-        const listRes = await fetch('/api/blogs')
-        if (listRes.ok) {
-          const data = await listRes.json()
-          setBlogsList(data)
+        const updatedRes = await fetch('/api/blogs')
+        if (updatedRes.ok) {
+          const list = await updatedRes.json()
+          setBlogsList(list)
         }
       } else {
-        alert('Failed to save blog post')
+        setFeedbackMessage('Failed to save blog post.')
       }
     } catch (err) {
-      console.error(err)
-      alert('Error saving blog post')
+      console.error('Error saving blog:', err)
+      setFeedbackMessage('Error saving blog post.')
     } finally {
       setIsSavingBlog(false)
     }
   }
 
   const handleDeleteBlog = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this blog post?')) return
+    if (!confirm('Are you sure you want to delete this publication?')) return
+
     try {
       const res = await fetch(`/api/blogs/${id}`, { method: 'DELETE' })
       if (res.ok) {
-        setBlogsList(prev => prev.filter(b => b._id !== id))
-      } else {
-        alert('Failed to delete blog post')
+        setBlogsList((prev) => prev.filter((b) => b._id !== id))
       }
     } catch (err) {
-      console.error(err)
-      alert('Error deleting blog post')
+      console.error('Error deleting blog:', err)
     }
   }
 
-
-
   if (!isMounted) {
-    return <div className="min-h-screen bg-zinc-950" />
+    return <div className="p-6 text-zinc-100 max-w-7xl mx-auto space-y-6" />
   }
 
   return (
-    <div className="p-6 text-zinc-100 min-h-screen max-w-4xl mx-auto animate-fade-in space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-900">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Control Center</span>
-          <h1 className="text-3xl font-black tracking-tight mt-0.5">Settings</h1>
-          <p className="text-xs text-zinc-400 mt-1">Configure profile details, alert targets, custom weekly timetables, and logs history.</p>
+    <div className="p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto space-y-6 animate-fade-in relative">
+      
+      {/* Top Header Banner */}
+      <div className="glass-card rounded-3xl p-6 sm:p-8 border border-zinc-800/80 bg-gradient-to-r from-indigo-950/40 via-zinc-900/60 to-zinc-900/40 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="space-y-1.5 z-10">
+          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 inline-block">
+            Control Center
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-100">
+            Account &amp; System Preferences
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-400 font-normal">
+            Manage your personal profile, custom weekly timetables, study preferences, and published articles.
+          </p>
         </div>
 
-        {saveSuccess && (
-          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-4 py-2.5 rounded-xl border border-emerald-500/20 shadow-lg shadow-emerald-500/5 transition-all duration-200">
-            <Check className="h-4 w-4" />
-            Preferences updated
-          </div>
-        )}
-      </div>
+        <div className="flex items-center gap-3 z-10">
+          {feedbackMessage && (
+            <span className="text-xs font-bold text-indigo-300 bg-indigo-500/10 px-3 py-2 rounded-xl border border-indigo-500/20">
+              {feedbackMessage}
+            </span>
+          )}
 
-      <div className="grid lg:grid-cols-3 gap-6 items-start">
-        {/* Left Form: Personal details and preferences */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Personal Profile Details Card */}
-          <div className="glass-card rounded-2xl p-6 border border-zinc-800 bg-zinc-900/10 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                <User size={16} />
-              </div>
-              <h2 className="text-sm font-bold text-zinc-200">Personal Profile</h2>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Full Name</label>
-                <input
-                  type="text"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-800 text-zinc-200 p-3.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                />
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Title / Role</label>
-                  <input
-                    type="text"
-                    value={userRole}
-                    onChange={(e) => setUserRole(e.target.value)}
-                    className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-800 text-zinc-200 p-3.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Email Address</label>
-                  <input
-                    type="email"
-                    value={userEmail}
-                    onChange={(e) => setUserEmail(e.target.value)}
-                    className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-800 text-zinc-200 p-3.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Timetable Slot Editor Dashboard */}
-          <div className="glass-card rounded-2xl p-6 border border-zinc-800 bg-zinc-900/10 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                <Sliders size={16} />
-              </div>
-              <h2 className="text-sm font-bold text-zinc-200">Weekly Timetable Manager</h2>
-            </div>
-
-            {/* Timetable Tab Bar */}
-            <div className="flex gap-1 overflow-x-auto pb-1 border-b border-zinc-850">
-              {daysOfWeek.map((day) => (
-                <button
-                  key={day}
-                  type="button"
-                  onClick={() => setActiveDayTab(day)}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase flex-shrink-0 transition-all cursor-pointer ${
-                    activeDayTab === day
-                      ? 'bg-zinc-850 text-indigo-400 border border-zinc-800'
-                      : 'text-zinc-500 hover:text-zinc-350'
-                  }`}
-                >
-                  {day.substring(0, 3)}
-                </button>
-              ))}
-            </div>
-
-            {/* Active Day Slots List */}
-            <div className="space-y-3 pt-2">
-              {!(timetableTemplates[activeDayTab]) || timetableTemplates[activeDayTab].length === 0 ? (
-                <div className="text-center py-6">
-                  <p className="text-xs text-zinc-550 font-semibold">No timetable tasks configured for {activeDayTab}.</p>
-                </div>
-              ) : (
-                timetableTemplates[activeDayTab].map((slot, index) => (
-                  <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3.5 rounded-xl bg-zinc-950/40 border border-zinc-850 group relative">
-                    <input
-                      type="text"
-                      value={slot.time}
-                      onChange={(e) => handleSlotChange(activeDayTab, index, 'time', e.target.value)}
-                      placeholder="08:00 - 12:00"
-                      className="text-[11px] font-mono font-bold rounded-lg bg-zinc-950 border border-zinc-850 text-zinc-300 p-2 sm:w-1/4 focus:border-indigo-500 focus:ring-0"
-                    />
-
-                    <input
-                      type="text"
-                      value={slot.subject}
-                      onChange={(e) => handleSlotChange(activeDayTab, index, 'subject', e.target.value)}
-                      placeholder="Subject Name"
-                      className="text-xs font-semibold rounded-lg bg-zinc-950 border border-zinc-850 text-zinc-200 p-2 flex-grow focus:border-indigo-500 focus:ring-0"
-                    />
-
-                    <select
-                      value={slot.partsofday}
-                      onChange={(e) => handleSlotChange(activeDayTab, index, 'partsofday', e.target.value)}
-                      className="text-xs font-semibold rounded-lg bg-zinc-950 border border-zinc-850 text-zinc-350 p-2 sm:w-1/4 focus:border-indigo-500 focus:ring-0"
-                    >
-                      <option value="Morning">Morning</option>
-                      <option value="Afternoon">Afternoon</option>
-                      <option value="Evening">Evening</option>
-                      <option value="Night">Night</option>
-                    </select>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSlot(activeDayTab, index)}
-                      className="p-2 bg-zinc-900 border border-zinc-850 hover:bg-rose-500/10 text-zinc-500 hover:text-rose-400 rounded-lg transition-all self-end sm:self-center cursor-pointer"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))
-              )}
-
-              <button
-                type="button"
-                onClick={() => handleAddSlot(activeDayTab)}
-                className="w-full py-2.5 rounded-xl border border-dashed border-zinc-800 bg-zinc-950/20 hover:bg-zinc-900 text-xs font-bold text-zinc-450 hover:text-zinc-300 flex items-center justify-center gap-1.5 transition-all cursor-pointer mt-1"
-              >
-                <Plus size={13} /> Add Study Slot
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Form: Preferences and History Logs */}
-        <div className="space-y-6">
-          {/* Visual Theme Selector */}
-          <div className="glass-card rounded-2xl p-6 border border-zinc-800 bg-zinc-900/10 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                <Eye size={16} />
-              </div>
-              <h2 className="text-sm font-bold text-zinc-200">Theme Preference</h2>
-            </div>
-
-            <div className="space-y-1">
-              <select
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-                className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-800 text-zinc-300 p-3.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all cursor-pointer"
-                aria-label="Visual Theme"
-              >
-                <option value="System">System Match</option>
-                <option value="Light">Light Classic</option>
-                <option value="Dark">Developer Dark</option>
-              </select>
-            </div>
-          </div>
-
-
-
-          {/* Reset Metrics */}
-          <div className="glass-card rounded-2xl p-6 border border-zinc-800 bg-zinc-900/10 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-450 border border-rose-500/20">
-                <ShieldAlert size={16} />
-              </div>
-              <h2 className="text-sm font-bold text-zinc-200">Data Management</h2>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={() => alert('Progress data exported to CareerOS_Backup.json')}
-                className="w-full border border-zinc-800 bg-zinc-950/20 hover:bg-zinc-800/80 px-4 py-3 rounded-xl text-xs font-bold text-zinc-300 transition-all text-center cursor-pointer"
-              >
-                Export Progress
-              </button>
-
-              <button
-                onClick={handleResetProgress}
-                className="w-full border border-rose-950/60 bg-rose-500/5 hover:bg-rose-500/10 hover:border-rose-900/50 px-4 py-3 rounded-xl text-xs font-bold text-rose-455 transition-all text-center cursor-pointer"
-              >
-                Reset Progress Stats
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Blog Post Manager Section */}
-      <div className="glass-card rounded-2xl p-6 border border-zinc-800 bg-zinc-900/10 space-y-4 mt-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <FileText size={16} />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-zinc-200">Blog Post Manager</h2>
-              <p className="text-[10px] text-zinc-500 mt-0.5 font-medium">Create, update, and manage all insights and articles on the site.</p>
-            </div>
-          </div>
           <button
-            type="button"
-            onClick={handleOpenCreateBlog}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/10 border border-indigo-500/20 cursor-pointer"
+            onClick={handleSave}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/20 cursor-pointer border border-indigo-500/30"
           >
-            <Plus size={13} /> New Blog Post
+            <Save size={14} />
+            <span>Save Preferences</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Settings Navigation & Content Layout */}
+      <div className="grid lg:grid-cols-4 gap-6 items-start">
+        
+        {/* Left Column: Section Tab Menu */}
+        <div className="lg:col-span-1 glass-card rounded-2xl p-3 border border-zinc-800/80 bg-zinc-900/40 space-y-1.5">
+          <button
+            onClick={() => setActiveSection('profile')}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+              activeSection === 'profile'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200'
+            }`}
+          >
+            Personal Profile
+          </button>
+
+          <button
+            onClick={() => setActiveSection('timetable')}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+              activeSection === 'timetable'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200'
+            }`}
+          >
+            Weekly Timetable
+          </button>
+
+          <button
+            onClick={() => setActiveSection('preferences')}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+              activeSection === 'preferences'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200'
+            }`}
+          >
+            Preferences &amp; Alerts
+          </button>
+
+          <button
+            onClick={() => setActiveSection('data')}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+              activeSection === 'data'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200'
+            }`}
+          >
+            Data &amp; Backup
+          </button>
+
+          <button
+            onClick={() => setActiveSection('blogs')}
+            className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+              activeSection === 'blogs'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200'
+            }`}
+          >
+            Publications Manager
           </button>
         </div>
 
-        {/* Blogs List Table */}
-        <div className="overflow-x-auto border border-zinc-850 rounded-xl bg-zinc-950/20">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-zinc-850 text-zinc-500 font-bold uppercase tracking-wider text-[9px] bg-zinc-950/40">
-                <th className="p-3.5 pl-4">Title</th>
-                <th className="p-3.5">Author</th>
-                <th className="p-3.5">Date</th>
-                <th className="p-3.5">Reads / Likes</th>
-                <th className="p-3.5 pr-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-850/50 font-medium">
-              {blogsList.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-6 text-center text-zinc-550 italic">
-                    No articles published yet. Click "New Blog Post" to publish the first one!
-                  </td>
-                </tr>
-              ) : (
-                blogsList.map((blog) => (
-                  <tr key={blog._id} className="hover:bg-zinc-900/30 text-zinc-300">
-                    <td className="p-3.5 pl-4 font-bold text-zinc-200 max-w-xs truncate">{blog.title}</td>
-                    <td className="p-3.5 text-zinc-400">{blog.author}</td>
-                    <td className="p-3.5 text-zinc-500">{formatReadableDate(blog.createdAt?.split('T')[0] || '')}</td>
-                    <td className="p-3.5 text-zinc-500 font-mono text-[11px]">{blog.reads || 0} reads / {blog.likes || 0} likes</td>
-                    <td className="p-3.5 pr-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+        {/* Right Column: Active Tab Content Panel */}
+        <div className="lg:col-span-3 space-y-6">
+          
+          {/* SECTION 1: PERSONAL PROFILE */}
+          {activeSection === 'profile' && (
+            <div className="glass-card rounded-3xl p-6 sm:p-7 border border-zinc-800/80 bg-zinc-900/40 space-y-6">
+              <div className="border-b border-zinc-850 pb-4">
+                <h2 className="text-base font-bold text-zinc-100">Personal Information</h2>
+                <p className="text-xs text-zinc-400 font-normal">Update your display name, professional role, and contact email.</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block mb-1.5">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className="w-full text-xs font-semibold rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-100 p-3.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block mb-1.5">
+                      Professional Role / Designation
+                    </label>
+                    <input
+                      type="text"
+                      value={userRole}
+                      onChange={(e) => setUserRole(e.target.value)}
+                      className="w-full text-xs font-semibold rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-100 p-3.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block mb-1.5">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={userEmail}
+                      onChange={(e) => setUserEmail(e.target.value)}
+                      className="w-full text-xs font-semibold rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-100 p-3.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 2: WEEKLY TIMETABLE MANAGER */}
+          {activeSection === 'timetable' && (
+            <div className="glass-card rounded-3xl p-6 sm:p-7 border border-zinc-800/80 bg-zinc-900/40 space-y-6">
+              <div className="border-b border-zinc-850 pb-4">
+                <h2 className="text-base font-bold text-zinc-100">Weekly Timetable Configurator</h2>
+                <p className="text-xs text-zinc-400 font-normal">Define time slots and study topics allocated for each day of the week.</p>
+              </div>
+
+              {/* Day Selection Tabs */}
+              <div className="flex gap-1.5 overflow-x-auto pb-1 border-b border-zinc-850">
+                {daysOfWeek.map((day) => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setActiveDayTab(day)}
+                    className={`px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                      activeDayTab === day
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                        : 'bg-zinc-950/60 text-zinc-400 border border-zinc-800 hover:text-zinc-200'
+                    }`}
+                  >
+                    {day.substring(0, 3)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Active Day Timetable Slot List */}
+              <div className="space-y-3 pt-2">
+                {!timetableTemplates[activeDayTab] || timetableTemplates[activeDayTab].length === 0 ? (
+                  <div className="text-center py-8 p-4 rounded-2xl bg-zinc-950/40 border border-zinc-800">
+                    <p className="text-xs text-zinc-400 font-medium">No study slots configured for {activeDayTab}.</p>
+                  </div>
+                ) : (
+                  timetableTemplates[activeDayTab].map((slot, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 group relative">
+                      <input
+                        type="text"
+                        value={slot.time}
+                        onChange={(e) => handleSlotChange(activeDayTab, index, 'time', e.target.value)}
+                        placeholder="08:00 - 12:00"
+                        className="text-xs font-mono font-bold rounded-xl bg-zinc-900 border border-zinc-800 text-indigo-300 p-2.5 sm:w-1/4 focus:border-indigo-500 outline-none"
+                      />
+
+                      <input
+                        type="text"
+                        value={slot.subject}
+                        onChange={(e) => handleSlotChange(activeDayTab, index, 'subject', e.target.value)}
+                        placeholder="Subject Name"
+                        className="text-xs font-bold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 p-2.5 flex-grow focus:border-indigo-500 outline-none"
+                      />
+
+                      <select
+                        value={slot.partsofday}
+                        onChange={(e) => handleSlotChange(activeDayTab, index, 'partsofday', e.target.value)}
+                        className="text-xs font-bold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 p-2.5 sm:w-1/4 focus:border-indigo-500 outline-none cursor-pointer"
+                      >
+                        <option value="Morning">Morning</option>
+                        <option value="Afternoon">Afternoon</option>
+                        <option value="Evening">Evening</option>
+                        <option value="Night">Night</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSlot(activeDayTab, index)}
+                        className="p-2.5 bg-zinc-900 border border-zinc-800 hover:bg-rose-500/10 text-zinc-500 hover:text-rose-400 rounded-xl transition-all cursor-pointer self-end sm:self-center"
+                        title="Delete Slot"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handleAddSlot(activeDayTab)}
+                  className="w-full py-3 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/40 hover:bg-zinc-850 text-xs font-bold text-indigo-400 flex items-center justify-center gap-2 transition-all cursor-pointer mt-2"
+                >
+                  <Plus size={14} />
+                  <span>Add Study Slot ({activeDayTab})</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 3: PREFERENCES & ALERTS */}
+          {activeSection === 'preferences' && (
+            <div className="glass-card rounded-3xl p-6 sm:p-7 border border-zinc-800/80 bg-zinc-900/40 space-y-6">
+              <div className="border-b border-zinc-850 pb-4">
+                <h2 className="text-base font-bold text-zinc-100">Preferences &amp; Notification Targets</h2>
+                <p className="text-xs text-zinc-400 font-normal">Configure preparation tracks, system theme, and alert notifications.</p>
+              </div>
+
+              {/* Theme Preference Selector */}
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider block">Visual Theme</label>
+                <select
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  className="w-full text-xs font-bold rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-200 p-3.5 focus:border-indigo-500 outline-none cursor-pointer"
+                >
+                  <option value="Dark">Developer Dark (Default)</option>
+                  <option value="System">System Match</option>
+                  <option value="Light">Light Classic</option>
+                </select>
+              </div>
+
+              {/* Preparation Goals Toggle Switches */}
+              <div className="space-y-4 pt-2 border-t border-zinc-850">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300">Target Preparation Tracks</h3>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800">
+                    <div>
+                      <span className="block text-xs font-bold text-zinc-200">Internship Preparation</span>
+                      <span className="text-[11px] text-zinc-400 font-normal">Receive updates tailored for internship openings.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={prepInternship}
+                      onChange={(e) => setPrepInternship(e.target.checked)}
+                      className="w-4 h-4 rounded accent-indigo-600 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800">
+                    <div>
+                      <span className="block text-xs font-bold text-zinc-200">Full-Time Placement</span>
+                      <span className="text-[11px] text-zinc-400 font-normal">Include software engineering placement tracks.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={prepPlacement}
+                      onChange={(e) => setPrepPlacement(e.target.checked)}
+                      className="w-4 h-4 rounded accent-indigo-600 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800">
+                    <div>
+                      <span className="block text-xs font-bold text-zinc-200">Government Exam Track</span>
+                      <span className="text-[11px] text-zinc-400 font-normal">Include public sector technical notifications.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={prepGovt}
+                      onChange={(e) => setPrepGovt(e.target.checked)}
+                      className="w-4 h-4 rounded accent-indigo-600 cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 4: DATA & BACKUP */}
+          {activeSection === 'data' && (
+            <div className="glass-card rounded-3xl p-6 sm:p-7 border border-zinc-800/80 bg-zinc-900/40 space-y-6">
+              <div className="border-b border-zinc-850 pb-4">
+                <h2 className="text-base font-bold text-zinc-100">Data Management &amp; Backups</h2>
+                <p className="text-xs text-zinc-400 font-normal">Export your configuration data or download local schedule backups.</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-5 rounded-2xl bg-zinc-950/60 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h4 className="text-xs font-bold text-zinc-100">Export Complete Configuration</h4>
+                    <p className="text-[11px] text-zinc-400 mt-0.5">Download a JSON backup containing profile and timetable settings.</p>
+                  </div>
+
+                  <button
+                    onClick={handleExportData}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/20 cursor-pointer border border-indigo-500/30 flex-shrink-0"
+                  >
+                    <Download size={14} />
+                    <span>Download JSON Backup</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 5: PUBLICATIONS & BLOGS MANAGER */}
+          {activeSection === 'blogs' && (
+            <div className="glass-card rounded-3xl p-6 sm:p-7 border border-zinc-800/80 bg-zinc-900/40 space-y-6">
+              <div className="flex items-center justify-between border-b border-zinc-850 pb-4">
+                <div>
+                  <h2 className="text-base font-bold text-zinc-100">Publications &amp; Articles Manager</h2>
+                  <p className="text-xs text-zinc-400 font-normal">Create, edit, or publish engineering articles to the Blog section.</p>
+                </div>
+
+                <button
+                  onClick={handleOpenNewBlogModal}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/20 cursor-pointer border border-indigo-500/30"
+                >
+                  <Plus size={14} />
+                  <span>Publish New Article</span>
+                </button>
+              </div>
+
+              {/* Published Articles List */}
+              <div className="space-y-3">
+                {blogsList.length === 0 ? (
+                  <div className="text-center py-10 p-4 rounded-2xl bg-zinc-950/40 border border-zinc-800">
+                    <FileText size={32} className="mx-auto text-zinc-600 mb-2" />
+                    <p className="text-xs text-zinc-400 font-medium">No published articles found.</p>
+                  </div>
+                ) : (
+                  blogsList.map((blog) => (
+                    <div
+                      key={blog._id}
+                      className="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 flex items-center justify-between gap-4"
+                    >
+                      <div>
+                        <h4 className="text-sm font-bold text-zinc-100">{blog.title}</h4>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">Author: {blog.author} • {blog.reads || 0} reads • {blog.likes || 0} likes</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
                         <button
-                          type="button"
-                          onClick={() => handleOpenEditBlog(blog)}
-                          className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-indigo-400 border border-transparent rounded-lg transition-all cursor-pointer"
-                          title="Edit Blog"
+                          onClick={() => handleOpenEditBlogModal(blog)}
+                          className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-indigo-400 transition-colors cursor-pointer"
+                          title="Edit Article"
                         >
-                          <Pencil size={12} />
+                          <Pencil size={14} />
                         </button>
                         <button
-                          type="button"
                           onClick={() => handleDeleteBlog(blog._id)}
-                          className="p-2 hover:bg-rose-500/10 text-zinc-500 hover:text-rose-400 border border-transparent rounded-lg transition-all cursor-pointer"
-                          title="Delete Blog"
+                          className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-rose-400 transition-colors cursor-pointer"
+                          title="Delete Article"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 
-      {/* Save Button Footer bar */}
-      <div className="pt-4 border-t border-zinc-900 flex justify-end">
-        <button
-          onClick={handleSave}
-          className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg shadow-indigo-600/15 border border-indigo-500/20 cursor-pointer"
-        >
-          <Save size={14} />
-          Save Changes
-        </button>
-      </div>
-
-      {/* Blog Editor Modal */}
+      {/* ARTICLE EDITOR MODAL */}
       {isBlogModalOpen && (
-        <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <form 
-            onSubmit={handleSaveBlog}
-            className="glass-card w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 space-y-4 animate-fade-in"
-          >
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="glass-panel rounded-3xl p-6 sm:p-7 border border-zinc-800/90 bg-zinc-950/95 max-w-3xl w-full space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-4">
               <h3 className="text-base font-bold text-zinc-100">
-                {editingBlogId ? 'Edit Blog Post' : 'Create New Blog Post'}
+                {editingBlogId ? 'Edit Article' : 'New Publication'}
               </h3>
-              <button 
-                type="button"
+              <button
                 onClick={() => setIsBlogModalOpen(false)}
-                className="p-1.5 hover:bg-zinc-800 text-zinc-450 hover:text-zinc-200 rounded-lg cursor-pointer"
+                className="p-1.5 rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 transition-colors cursor-pointer"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
+            <form onSubmit={handleSaveBlog} className="space-y-4">
               <div>
-                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Article Title</label>
+                <label className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Article Title</label>
                 <input
                   type="text"
                   required
                   value={blogTitle}
                   onChange={(e) => setBlogTitle(e.target.value)}
-                  placeholder="e.g. Master React in 10 Days"
-                  className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0"
+                  placeholder="e.g. Distributed Systems Architecture & Rate Limiting"
+                  className="w-full text-xs font-bold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 p-3 focus:border-indigo-500 outline-none"
                 />
               </div>
 
-              <div>
-                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Author Display Name</label>
-                <input
-                  type="text"
-                  required
-                  value={blogAuthor}
-                  onChange={(e) => setBlogAuthor(e.target.value)}
-                  placeholder="e.g. Dharmendra Pandit"
-                  className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0"
-                />
-              </div>
-            </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Author Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={blogAuthor}
+                    onChange={(e) => setBlogAuthor(e.target.value)}
+                    className="w-full text-xs font-semibold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 p-3 focus:border-indigo-500 outline-none"
+                  />
+                </div>
 
-            <div>
-              <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block mb-1.5">Tags (Comma-separated)</label>
-              <input
-                type="text"
-                value={blogTags}
-                onChange={(e) => setBlogTags(e.target.value)}
-                placeholder="e.g. React, Nextjs, Guide, Career"
-                className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider block">Post Content</label>
-                <div className="flex bg-zinc-950/80 p-0.5 rounded-lg border border-zinc-850">
-                  <button
-                    type="button"
-                    onClick={() => setActiveEditorTab('write')}
-                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                      activeEditorTab === 'write'
-                        ? 'bg-zinc-800 text-indigo-400'
-                        : 'text-zinc-500 hover:text-zinc-350'
-                    }`}
-                  >
-                    Write
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveEditorTab('preview')}
-                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                      activeEditorTab === 'preview'
-                        ? 'bg-zinc-800 text-indigo-400'
-                        : 'text-zinc-500 hover:text-zinc-350'
-                    }`}
-                  >
-                    Preview
-                  </button>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Topic Tags (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={blogTags}
+                    onChange={(e) => setBlogTags(e.target.value)}
+                    placeholder="React, Architecture, System Design"
+                    className="w-full text-xs font-semibold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 p-3 focus:border-indigo-500 outline-none"
+                  />
                 </div>
               </div>
 
-              {activeEditorTab === 'write' ? (
-                <textarea
-                  required
-                  rows={8}
-                  value={blogContent}
-                  onChange={(e) => setBlogContent(e.target.value)}
-                  placeholder="Write your article markdown/text content here..."
-                  className="w-full text-xs font-semibold rounded-xl bg-zinc-950/60 border border-zinc-850 text-zinc-200 p-3 focus:border-indigo-500 focus:ring-0 resize-none font-sans leading-relaxed text-zinc-200"
-                />
-              ) : (
-                <div className="w-full h-48 overflow-y-auto rounded-xl bg-zinc-950/60 border border-zinc-850 p-4 text-left">
-                  {blogContent.trim() ? (
-                    <MarkdownRenderer content={blogContent} />
-                  ) : (
-                    <p className="text-xs text-zinc-500 italic">Nothing to preview yet. Write some markdown content first!</p>
-                  )}
+              {/* Editor / Preview Tab Toggle */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between border-b border-zinc-850 pb-2">
+                  <span className="text-[10px] uppercase font-bold text-zinc-400">Content (Markdown Supported)</span>
+                  <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setActiveEditorTab('write')}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-colors cursor-pointer ${
+                        activeEditorTab === 'write' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      Write
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveEditorTab('preview')}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-colors cursor-pointer ${
+                        activeEditorTab === 'preview' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      Live Preview
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/80">
-              <button
-                type="button"
-                onClick={() => setIsBlogModalOpen(false)}
-                className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-950/20 hover:bg-zinc-800 text-xs font-bold text-zinc-400 hover:text-zinc-250 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSavingBlog}
-                className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/10 cursor-pointer border border-indigo-500/20"
-              >
-                {isSavingBlog ? 'Publishing...' : editingBlogId ? 'Save Changes' : 'Publish Article'}
-              </button>
-            </div>
-          </form>
+                {activeEditorTab === 'write' ? (
+                  <textarea
+                    rows={12}
+                    required
+                    value={blogContent}
+                    onChange={(e) => setBlogContent(e.target.value)}
+                    placeholder="# Article Heading&#10;&#10;Write your markdown content here..."
+                    className="w-full text-xs font-mono rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 p-4 focus:border-indigo-500 outline-none resize-none leading-relaxed"
+                  />
+                ) : (
+                  <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 max-h-72 overflow-y-auto prose prose-invert max-w-none text-xs">
+                    <MarkdownRenderer content={blogContent || '_Nothing to preview yet._'} />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-850">
+                <button
+                  type="button"
+                  onClick={() => setIsBlogModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSavingBlog}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+                >
+                  {isSavingBlog ? 'Saving...' : editingBlogId ? 'Update Article' : 'Publish Article'}
+                </button>
+              </div>
+            </form>
+
+          </div>
         </div>
       )}
+
     </div>
   )
 }

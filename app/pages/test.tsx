@@ -1,32 +1,7 @@
 'use client'
+
 import React, { useState, useEffect, useRef } from 'react'
-import { 
-  Clock, 
-  ArrowLeft, 
-  Loader2, 
-  CheckCircle, 
-  XCircle, 
-  Award, 
-  AlertCircle, 
-  RefreshCw,
-  Building,
-  Cpu,
-  Zap,
-  Lock,
-  ChevronRight,
-  ThumbsUp,
-  UserCheck,
-  Play,
-  Terminal,
-  Code,
-  ShieldAlert,
-  Check,
-  BookOpen,
-  HelpCircle,
-  TrendingUp,
-  Brain,
-  Globe
-} from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
 interface Question {
   id: number
@@ -51,13 +26,6 @@ interface CodingProblem {
   sampleOutput: string
   testCases: TestCase[]
   starterTemplates: Record<string, string>
-}
-
-interface GenerationResponse {
-  questions?: Question[]
-  codingProblem?: CodingProblem
-  isAI: boolean
-  error?: boolean
 }
 
 const productCompanies = [
@@ -110,7 +78,6 @@ const Test = () => {
         { id: 5, name: 'Round 5: Technical & HR Fit', type: 'HR MCQ', desc: '10 project-handling, client relation, and workplace policy queries. Passing: 60%' },
       ]
     }
-    // startup
     return [
       { id: 1, name: 'Round 1: Aptitude Assessment', type: 'Aptitude MCQ', desc: '10 analytical puzzles, quick math, and logical reasoning under pressure. Passing: 60%' },
       { id: 2, name: `Round 2: ${activeRole} Technical Core`, type: 'Technical MCQ', desc: `10 specialized questions on language variables, loops, async logic, and algorithms. Passing: 60%` },
@@ -118,8 +85,8 @@ const Test = () => {
       { id: 4, name: `Round 4: ${activeRole === 'Software Engineer' ? 'High-Scale Systems' : activeRole === 'AI/ML' ? 'Large-Scale Data Engineering' : activeRole === 'DevOps' ? 'Kubernetes & Scaling' : 'Web & Caching Scaling'}`, type: 'Systems MCQ', desc: '10 database schema design, request handling, and caching decision queries. Passing: 60%' },
     ]
   }
-  
-  // Roadmap Funnel state: dynamic map
+
+  // Funnel state
   const [currentRound, setCurrentRound] = useState<number>(1)
   const [unlockedRounds, setUnlockedRounds] = useState<Record<number, boolean>>({ 1: true })
   const [completedRounds, setCompletedRounds] = useState<Record<number, boolean>>({})
@@ -128,16 +95,16 @@ const Test = () => {
   const [loading, setLoading] = useState(false)
   const [activeQuizQuestions, setActiveQuizQuestions] = useState<Question[]>([])
   const [activeCodingProblem, setActiveCodingProblem] = useState<CodingProblem | null>(null)
-  const [isAI, setIsAI] = useState(false)
 
-  // Active round state
+  // CBT Examination States
   const [isRoundActive, setIsRoundActive] = useState(false)
   const [roundFinished, setRoundFinished] = useState(false)
-  
-  // MCQ state
+  const [showSubmitModal, setShowSubmitModal] = useState(false)
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0)
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({}) // qId -> optionIndex
-  const [timeLeft, setTimeLeft] = useState(360) // 6 minutes for MCQ, 20 minutes for coding
+  const [markedForReview, setMarkedForReview] = useState<Record<number, boolean>>({}) // qId -> boolean
+  const [visitedQuestions, setVisitedQuestions] = useState<Record<number, boolean>>({}) // qId -> boolean
+  const [timeLeft, setTimeLeft] = useState(360)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Code Editor states
@@ -147,1572 +114,909 @@ const Test = () => {
   const [compiling, setCompiling] = useState(false)
   const [testCaseResults, setTestCaseResults] = useState<any[]>([])
   const [codingSolvedVerified, setCodingSolvedVerified] = useState(false)
-  const [useCustomInput, setUseCustomInput] = useState(false)
-  const [customInput, setCustomInput] = useState('')
-  const [activeTestTab, setActiveTestTab] = useState(0)
 
-  // Overall test stats
-  const [stats, setStats] = useState({ mockTestsCount: 0, clearedCount: 0 })
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const res = await fetch('/api/progress')
-        if (res.ok) {
-          const data = await res.json()
-          const history = data.history || []
-          const mockTests = history.filter((h: any) => h.type === 'test' || h.type === 'mocktest')
-          setStats({
-            mockTestsCount: data.mockTestsCount || 0,
-            clearedCount: mockTests.length
-          })
-        }
-      } catch (err) {
-        console.error('Error loading progress stats:', err)
-      }
-    }
-    loadStats()
-  }, [selectedCompany])
-
-  // Proctoring security states
-  const [violationsCount, setViolationsCount] = useState(0)
-  const [suspiciousActivities, setSuspiciousActivities] = useState<{ timestamp: string; activity: string }[]>([])
-  const [showWarningModal, setShowWarningModal] = useState(false)
-  const [warningMessage, setWarningMessage] = useState('')
-  const inactivityTimeoutRef = useRef<any>(null)
-
-  const activeCodingProblemRef = useRef(activeCodingProblem)
-  const codeTextRef = useRef(codeText)
-  const selectedLanguageRef = useRef(selectedLanguage)
-  const selectedCompanyRef = useRef(selectedCompany)
-  const selectedRoleRef = useRef(selectedRole)
-  const currentRoundRef = useRef(currentRound)
-  const logSuspiciousActivityRef = useRef<any>(null)
-
-  useEffect(() => {
-    activeCodingProblemRef.current = activeCodingProblem
-  }, [activeCodingProblem])
-
-  useEffect(() => {
-    codeTextRef.current = codeText
-  }, [codeText])
-
-  useEffect(() => {
-    selectedLanguageRef.current = selectedLanguage
-  }, [selectedLanguage])
-
-  useEffect(() => {
-    selectedCompanyRef.current = selectedCompany
-  }, [selectedCompany])
-
-  useEffect(() => {
-    selectedRoleRef.current = selectedRole
-  }, [selectedRole])
-
-  useEffect(() => {
-    currentRoundRef.current = currentRound
-  }, [currentRound])
-
-  const handleViolationAutoSubmit = async () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(err => console.error(err))
-    }
-    
-    if (activeCodingProblemRef.current) {
-      if (timerRef.current) clearInterval(timerRef.current)
-      setCompiling(true)
-      setConsoleOutput('Disqualified: 3 Proctoring Violations. Auto-submitting to OnlineCompiler evaluation system...')
-      
-      try {
-        const res = await fetch('/api/compile', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            source_code: codeTextRef.current,
-            language_id: getLanguageId(selectedLanguageRef.current),
-            test_cases: activeCodingProblemRef.current.testCases
-          })
-        })
-
-        if (!res.ok) throw new Error('Auto-submit compilation error')
-        
-        const data = await res.json()
-        const results = data.results || []
-        const allPassed = results.length > 0 && results.every((r: any) => r.passed)
-
-        const companyRounds = getCompanyRounds(selectedCompanyRef.current!, selectedRoleRef.current)
-        const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRoundRef.current)
-
-        if (allPassed) {
-          setCompletedRounds(prev => ({ ...prev, [currentRoundRef.current]: true }))
-          if (activeRoundIdx < companyRounds.length - 1) {
-            const nextRound = companyRounds[activeRoundIdx + 1]
-            setUnlockedRounds(prev => ({ ...prev, [nextRound.id]: true }))
-          }
-          setCodingSolvedVerified(true)
-          setIsRoundActive(false)
-          setRoundFinished(true)
-        } else {
-          setCodingSolvedVerified(false)
-          setIsRoundActive(true)
-          setRoundFinished(true)
-        }
-      } catch (err) {
-        console.error(err)
-        setCodingSolvedVerified(false)
-        setIsRoundActive(true)
-        setRoundFinished(true)
-      } finally {
-        setCompiling(false)
-      }
-    } else {
-      handleFinishMCQRound()
-    }
+  // Format Timer
+  const formatTime = (seconds: number) => {
+    const min = Math.floor(seconds / 60)
+    const sec = seconds % 60
+    return `${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`
   }
 
-  const logSuspiciousActivity = (activity: string) => {
-    const time = new Date().toLocaleTimeString()
-    setSuspiciousActivities(prev => [...prev, { timestamp: time, activity }])
-    
-    setViolationsCount(prev => {
-      const nextCount = prev + 1
-      if (nextCount >= 3) {
-        handleViolationAutoSubmit()
-      } else {
-        setWarningMessage(activity)
-        setShowWarningModal(true)
-      }
-      return nextCount
-    })
-  }
-
+  // Timer Effect
   useEffect(() => {
-    logSuspiciousActivityRef.current = logSuspiciousActivity
-  })
-
-  // Proctoring event listeners registration
-  useEffect(() => {
-    if (!isRoundActive || roundFinished) {
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current)
-      return
-    }
-
-    // Force fullscreen
-    const enterFullscreen = async () => {
-      try {
-        if (!document.fullscreenElement) {
-          await document.documentElement.requestFullscreen()
-        }
-      } catch (err) {
-        console.error('Error forcing fullscreen:', err)
-      }
-    }
-    enterFullscreen()
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        logSuspiciousActivityRef.current?.('Tab switched or minimized / Page hidden')
-      }
-    }
-
-    const handleWindowBlur = () => {
-      logSuspiciousActivityRef.current?.('Window lost focus / Blur event detected')
-    }
-
-    const handleFullscreenChange = () => {
-      if (!document.fullscreenElement && isRoundActive && !roundFinished) {
-        logSuspiciousActivityRef.current?.('Exited fullscreen mode')
-      }
-    }
-
-    const handleOffline = () => {
-      logSuspiciousActivityRef.current?.('Network disconnected (Offline)')
-    }
-
-    const handleOnline = () => {
-      const time = new Date().toLocaleTimeString()
-      setSuspiciousActivities(prev => [...prev, { timestamp: time, activity: 'Network reconnected (Online)' }])
-    }
-
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault()
-      logSuspiciousActivityRef.current?.('Attempted to right-click')
-    }
-
-    const handleCopy = (e: ClipboardEvent) => {
-      e.preventDefault()
-      logSuspiciousActivityRef.current?.('Attempted to copy text')
-    }
-
-    const handleCut = (e: ClipboardEvent) => {
-      e.preventDefault()
-      logSuspiciousActivityRef.current?.('Attempted to cut text')
-    }
-
-    const handlePaste = (e: ClipboardEvent) => {
-      e.preventDefault()
-      logSuspiciousActivityRef.current?.('Attempted to paste text')
-    }
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isCtrlOrCmd = e.ctrlKey || e.metaKey
-      const isShift = e.shiftKey
-
-      if (e.key === 'F12') {
-        e.preventDefault()
-        logSuspiciousActivityRef.current?.('Attempted F12 (DevTools)')
-      } else if (isCtrlOrCmd && isShift && e.key.toLowerCase() === 'i') {
-        e.preventDefault()
-        logSuspiciousActivityRef.current?.('Attempted DevTools shortcut (Ctrl+Shift+I)')
-      } else if (isCtrlOrCmd && isShift && e.key.toLowerCase() === 'j') {
-        e.preventDefault()
-        logSuspiciousActivityRef.current?.('Attempted Console shortcut (Ctrl+Shift+J)')
-      } else if (isCtrlOrCmd && isShift && e.key.toLowerCase() === 'c') {
-        e.preventDefault()
-        logSuspiciousActivityRef.current?.('Attempted Element Inspect shortcut (Ctrl+Shift+C)')
-      } else if (isCtrlOrCmd && e.key.toLowerCase() === 'u') {
-        e.preventDefault()
-        logSuspiciousActivityRef.current?.('Attempted View Source (Ctrl+U)')
-      } else if (isCtrlOrCmd && e.key.toLowerCase() === 's') {
-        e.preventDefault()
-        logSuspiciousActivityRef.current?.('Attempted Save Page (Ctrl+S)')
-      }
-    }
-
-    const resetInactivityTimer = () => {
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current)
-      inactivityTimeoutRef.current = setTimeout(() => {
-        logSuspiciousActivityRef.current?.('User inactive for 45 seconds')
-      }, 45000)
-    }
-
-    const activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
-    activityEvents.forEach(evt => window.addEventListener(evt, resetInactivityTimer))
-    resetInactivityTimer()
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('blur', handleWindowBlur)
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    window.addEventListener('offline', handleOffline)
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('contextmenu', handleContextMenu)
-    window.addEventListener('copy', handleCopy)
-    window.addEventListener('cut', handleCut)
-    window.addEventListener('paste', handlePaste)
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('blur', handleWindowBlur)
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-      window.removeEventListener('offline', handleOffline)
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('contextmenu', handleContextMenu)
-      window.removeEventListener('copy', handleCopy)
-      window.removeEventListener('cut', handleCut)
-      window.removeEventListener('paste', handlePaste)
-      window.removeEventListener('keydown', handleKeyDown)
-      
-      activityEvents.forEach(evt => window.removeEventListener(evt, resetInactivityTimer))
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current)
-    }
-  }, [isRoundActive, roundFinished])
-
-  // Sync editor starter code when problem or language changes
-  useEffect(() => {
-    if (activeCodingProblem) {
-      const template = activeCodingProblem.starterTemplates?.[selectedLanguage] || ''
-      setCodeText(template)
-      setConsoleOutput('')
-      setTestCaseResults([])
-    }
-  }, [activeCodingProblem, selectedLanguage])
-
-  // Timer logic for active rounds
-  useEffect(() => {
-    if (isRoundActive && timeLeft > 0) {
+    if (isRoundActive && !roundFinished && !loading) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            clearInterval(timerRef.current!)
-            if (activeCodingProblem) {
-              handleAutoSubmitCoding()
-            } else {
-              handleFinishMCQRound()
-            }
+            if (timerRef.current) clearInterval(timerRef.current)
+            handleFinishRound()
             return 0
           }
           return prev - 1
         })
       }, 1000)
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
     }
-
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [isRoundActive, timeLeft, activeCodingProblem])
+  }, [isRoundActive, roundFinished, loading])
 
-  const startInterviewRound = async (roundNumber: number) => {
-    setCurrentRound(roundNumber)
+  // Track Visited Question
+  useEffect(() => {
+    if (activeQuizQuestions.length > 0 && activeQuizQuestions[currentQuestionIdx]) {
+      const qId = activeQuizQuestions[currentQuestionIdx].id
+      setVisitedQuestions((prev) => ({ ...prev, [qId]: true }))
+    }
+  }, [currentQuestionIdx, activeQuizQuestions])
+
+  const handleSelectCompany = (company: string) => {
+    setSelectedCompany(company)
+    setSelectingRole(true)
+  }
+
+  const handleSelectRole = (role: string) => {
+    setSelectedRole(role)
+    setSelectingRole(false)
+    setCurrentRound(1)
+    setUnlockedRounds({ 1: true })
+    setCompletedRounds({})
+  }
+
+  const handleStartRound = async (roundId: number) => {
+    if (!selectedCompany) return
+    setCurrentRound(roundId)
     setLoading(true)
-    setActiveQuizQuestions([])
-    setActiveCodingProblem(null)
-    setCurrentQuestionIdx(0)
-    setSelectedAnswers({})
-    setConsoleOutput('')
-    setTestCaseResults([])
-    setViolationsCount(0)
-    setSuspiciousActivities([])
-    
-    const rounds = getCompanyRounds(selectedCompany!, selectedRole)
-    const activeRound = rounds.find(r => r.id === roundNumber)
-    const isCoding = activeRound?.type === 'Code Editor'
-    
-    // 20 mins for coding, 6 mins for MCQ (10 questions)
-    setTimeLeft(isCoding ? 1200 : 360)
-    
-    setCodingSolvedVerified(false)
-    setRoundFinished(false)
     setIsRoundActive(false)
+    setRoundFinished(false)
+    setShowSubmitModal(false)
 
     try {
-      const response = await fetch('/api/generate', {
+      const res = await fetch('/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'test',
           company: selectedCompany,
-          round: roundNumber,
-          role: selectedRole
-        }),
+          role: selectedRole || 'Software Engineer',
+          round: roundId,
+          timestamp: Date.now()
+        })
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to generate interview round questions')
-      }
-
-      const data = (await response.json()) as GenerationResponse
-      setIsAI(data.isAI)
-      
-      if (isCoding) {
-        setActiveCodingProblem(data.codingProblem || null)
-        setSelectedLanguage('python') // reset default lang
-      } else {
-        setActiveQuizQuestions(data.questions || [])
+      const data = await res.json()
+      if (data.codingProblem) {
+        setActiveCodingProblem(data.codingProblem)
+        setActiveQuizQuestions([])
+        const initialCode = data.codingProblem.starterTemplates?.[selectedLanguage] || '# Write code solution here\n'
+        setCodeText(initialCode)
+        setTimeLeft(1200)
+      } else if (data.questions) {
+        setActiveQuizQuestions(data.questions)
+        setActiveCodingProblem(null)
+        setTimeLeft(360)
       }
       setIsRoundActive(true)
     } catch (err) {
-      console.error(err)
+      console.error('Error starting round:', err)
     } finally {
       setLoading(false)
+      setCurrentQuestionIdx(0)
+      setSelectedAnswers({})
+      setMarkedForReview({})
+      setVisitedQuestions({})
+      setConsoleOutput('')
+      setTestCaseResults([])
+      setCodingSolvedVerified(false)
     }
   }
 
-  const handleSelectOption = (optIdx: number) => {
-    const qId = activeQuizQuestions[currentQuestionIdx].id
-    setSelectedAnswers((prev) => ({ ...prev, [qId]: optIdx }))
+  const handleOptionSelect = (qId: number, optionIdx: number) => {
+    if (roundFinished) return
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [qId]: optionIdx
+    }))
   }
 
-  const handleFinishMCQRound = () => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    setIsRoundActive(true)
-    setRoundFinished(true)
+  const handleClearResponse = () => {
+    if (activeQuizQuestions[currentQuestionIdx]) {
+      const qId = activeQuizQuestions[currentQuestionIdx].id
+      setSelectedAnswers((prev) => {
+        const next = { ...prev }
+        delete next[qId]
+        return next
+      })
+    }
   }
 
-  const calculateMCQScore = () => {
-    let score = 0
-    activeQuizQuestions.forEach((q) => {
-      if (selectedAnswers[q.id] === q.correctOption) {
-        score++
-      }
-    })
-    return score
-  }
-
-  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Tab') {
-      e.preventDefault()
-      const textarea = e.currentTarget
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const val = textarea.value
-      
-      const newValue = val.substring(0, start) + '    ' + val.substring(end)
-      setCodeText(newValue)
-      
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + 4
-      }, 0)
-    } else if (e.key === 'Enter') {
-      const textarea = e.currentTarget
-      const start = textarea.selectionStart
-      const val = textarea.value
-      
-      const lastNewLine = val.lastIndexOf('\n', start - 1)
-      const currentLine = val.substring(lastNewLine + 1, start)
-      const indentMatch = currentLine.match(/^(\s*)/)
-      const indent = indentMatch ? indentMatch[1] : ''
-      
-      if (indent.length > 0) {
-        e.preventDefault()
-        const insertText = '\n' + indent
-        const newValue = val.substring(0, start) + insertText + val.substring(start)
-        setCodeText(newValue)
-        
-        setTimeout(() => {
-          textarea.selectionStart = textarea.selectionEnd = start + insertText.length
-        }, 0)
+  const handleMarkForReview = () => {
+    if (activeQuizQuestions[currentQuestionIdx]) {
+      const qId = activeQuizQuestions[currentQuestionIdx].id
+      setMarkedForReview((prev) => ({
+        ...prev,
+        [qId]: !prev[qId]
+      }))
+      if (currentQuestionIdx < activeQuizQuestions.length - 1) {
+        setCurrentQuestionIdx((prev) => prev + 1)
       }
     }
   }
 
-  // Maps UI language names to compiler IDs
-  const getLanguageId = (lang: string) => lang || 'python'
+  const handleSaveAndNext = () => {
+    if (currentQuestionIdx < activeQuizQuestions.length - 1) {
+      setCurrentQuestionIdx((prev) => prev + 1)
+    }
+  }
 
-  // Compiler code submission & execution via proxy API (OnlineCompiler)
-  const handleRunCompiler = async (isSubmit: boolean = false) => {
+  const handleLanguageChange = (lang: 'python' | 'javascript' | 'cpp' | 'java') => {
+    setSelectedLanguage(lang)
+    if (activeCodingProblem?.starterTemplates?.[lang]) {
+      setCodeText(activeCodingProblem.starterTemplates[lang])
+    }
+  }
+
+  const handleCompileCode = async (isSubmitAll: boolean = false) => {
     if (!activeCodingProblem) return
     setCompiling(true)
-    setConsoleOutput('Sending code to OnlineCompiler evaluation system...')
-    setTestCaseResults([])
+    setConsoleOutput('Compiling code solution...')
 
-    // Determine test cases to run
-    let testCasesToRun = []
-    if (useCustomInput && !isSubmit) {
-      testCasesToRun = [{ input: customInput, output: '' }]
-    } else {
-      testCasesToRun = isSubmit 
-        ? activeCodingProblem.testCases 
-        : [activeCodingProblem.testCases[0]]
-    }
+    const testCasesToRun = isSubmitAll ? activeCodingProblem.testCases : activeCodingProblem.testCases.slice(0, 1)
 
     try {
       const res = await fetch('/api/compile', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          source_code: codeText,
-          language_id: getLanguageId(selectedLanguage),
-          test_cases: testCasesToRun
+          language: selectedLanguage,
+          code: codeText,
+          testCases: testCasesToRun
         })
       })
 
-      if (!res.ok) {
-        const errData = await res.json()
-        throw new Error(errData.error || 'Compilation proxy error')
-      }
-
       const data = await res.json()
-      const results = data.results || []
+      setConsoleOutput(data.output || data.error || 'Execution finished.')
 
-      setTestCaseResults(results)
-      setActiveTestTab(0) // Default to first tab
-
-      if (useCustomInput && !isSubmit) {
-        const resItem = results[0]
-        let logs = ''
-        if (resItem.compile_output) {
-          logs += `Compilation Error:\n${resItem.compile_output}\n`
-        } else if (resItem.stderr) {
-          logs += `Runtime Error:\n${resItem.stderr}\n`
-        } else {
-          logs += `✓ Custom Input Executed Successfully\n\nOutput:\n${resItem.stdout || '(no output)'}\n`
-        }
-        setConsoleOutput(logs)
-        setCompiling(false)
-        return
-      }
-
-      let allPassed = true
-      let logs = ''
-
-      results.forEach((resItem: any, idx: number) => {
-        const tcName = isSubmit ? `Test Case ${idx + 1}` : `Sample Test Case`
-        if (resItem.passed) {
-          logs += `✓ ${tcName}: Passed\n`
-        } else {
-          allPassed = false
-          logs += `✗ ${tcName}: ${resItem.status?.description || 'Failed'}\n`
-          if (resItem.compile_output) {
-            logs += `Compilation Output:\n${resItem.compile_output}\n`
-          } else if (resItem.stderr) {
-            logs += `Runtime Error:\n${resItem.stderr}\n`
-          } else {
-            logs += `Expected:\n${testCasesToRun[idx].output.trim()}\nGot:\n${(resItem.stdout || '').trim()}\n`
-          }
-        }
-      })
-
-      if (allPassed) {
-        logs += `\nAll verified test cases passed successfully.`
-        if (isSubmit) {
+      if (data.results) {
+        setTestCaseResults(data.results)
+        const allPassed = data.results.every((r: any) => r.passed)
+        if (allPassed && isSubmitAll) {
           setCodingSolvedVerified(true)
         }
-      } else {
-        logs += `\nSome test cases failed. Please review your logic.`
-      }
-
-      setConsoleOutput(logs)
-    } catch (err: any) {
-      console.error(err)
-      setConsoleOutput(`Compilation Failed: ${err.message}`)
-    } finally {
-      setCompiling(false)
-    }
-  }
-
-  const handleVerifyCoding = async () => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    const companyRounds = getCompanyRounds(selectedCompany!, selectedRole)
-    const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRound)
-    
-    if (codingSolvedVerified) {
-      setCompletedRounds(prev => ({ ...prev, [currentRound]: true }))
-      if (activeRoundIdx < companyRounds.length - 1) {
-        const nextRound = companyRounds[activeRoundIdx + 1]
-        setUnlockedRounds(prev => ({ ...prev, [nextRound.id]: true }))
-      }
-      setIsRoundActive(false)
-      setRoundFinished(true)
-    } else {
-      setIsRoundActive(true)
-      setRoundFinished(true)
-    }
-  }
-
-  const handleAutoSubmitCoding = async () => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    setCompiling(true)
-    setConsoleOutput('Time limit reached. Auto-submitting to OnlineCompiler evaluation system...')
-    
-    try {
-      const res = await fetch('/api/compile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          source_code: codeText,
-          language_id: getLanguageId(selectedLanguage),
-          test_cases: activeCodingProblem!.testCases
-        })
-      })
-
-      if (!res.ok) throw new Error('Auto-submit compilation error')
-      
-      const data = await res.json()
-      const results = data.results || []
-      const allPassed = results.length > 0 && results.every((r: any) => r.passed)
-
-      const companyRounds = getCompanyRounds(selectedCompany!, selectedRole)
-      const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRound)
-
-      if (allPassed) {
-        setCompletedRounds(prev => ({ ...prev, [currentRound]: true }))
-        if (activeRoundIdx < companyRounds.length - 1) {
-          const nextRound = companyRounds[activeRoundIdx + 1]
-          setUnlockedRounds(prev => ({ ...prev, [nextRound.id]: true }))
-        }
-        setCodingSolvedVerified(true)
-        setIsRoundActive(false)
-        setRoundFinished(true)
-      } else {
-        setCodingSolvedVerified(false)
-        setIsRoundActive(true)
-        setRoundFinished(true)
       }
     } catch (err) {
-      console.error(err)
-      setCodingSolvedVerified(false)
-      setIsRoundActive(true)
-      setRoundFinished(true)
+      console.error('Compile error:', err)
+      setConsoleOutput('Execution Error: Connection failed.')
     } finally {
       setCompiling(false)
     }
   }
 
-  const handleNextRoadmap = async () => {
+  const handleFinishRound = async () => {
+    setRoundFinished(true)
     setIsRoundActive(false)
-    setRoundFinished(false)
-    
-    const companyRounds = getCompanyRounds(selectedCompany!, selectedRole)
-    const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRound)
-    
-    if (activeRoundIdx === companyRounds.length - 1) {
-      setCompletedRounds(prev => ({ ...prev, [currentRound]: true }))
-      try {
-        await fetch('/api/progress', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            type: 'test',
-            topic: `${selectedCompany} Full Interview`,
-            difficulty: 'hard',
-            score: 10,
-            total: 10
-          }),
-        })
-        window.dispatchEvent(new Event('storage'))
-      } catch (err) {
-        console.error('Error updating tests count in MongoDB:', err)
+    setShowSubmitModal(false)
+    if (timerRef.current) clearInterval(timerRef.current)
+
+    const rounds = getCompanyRounds(selectedCompany!, selectedRole)
+    const isCodingRound = activeCodingProblem !== null
+
+    let passed = false
+    let finalScore = 0
+
+    if (isCodingRound) {
+      passed = codingSolvedVerified
+      finalScore = passed ? 100 : 0
+    } else {
+      let correct = 0
+      activeQuizQuestions.forEach((q) => {
+        if (selectedAnswers[q.id] === q.correctOption) correct++
+      })
+      finalScore = Math.round((correct / activeQuizQuestions.length) * 100)
+      passed = finalScore >= 60
+    }
+
+    if (passed) {
+      setCompletedRounds((prev) => ({ ...prev, [currentRound]: true }))
+      if (currentRound < rounds.length) {
+        setUnlockedRounds((prev) => ({ ...prev, [currentRound + 1]: true }))
       }
+    }
+
+    try {
+      await fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: `${selectedCompany} - Round ${currentRound}`,
+          score: Math.round((finalScore / 100) * (isCodingRound ? 1 : activeQuizQuestions.length)),
+          total: isCodingRound ? 1 : activeQuizQuestions.length,
+          type: 'exam',
+          difficulty: getCompanyCategory(selectedCompany!)
+        })
+      })
+    } catch (err) {
+      console.error('Error saving exam progress:', err)
     }
   }
 
-  const formatTime = (seconds: number) => {
-    const min = Math.floor(seconds / 60)
-    const sec = seconds % 60
-    return `${min}:${sec < 10 ? '0' : ''}${sec}`
-  }
-
-  const resetRoadmap = (company?: string, roleOverride?: string | null) => {
-    const target = company || selectedCompany
-    if (!target) return
-    const rounds = getCompanyRounds(target, roleOverride || selectedRole)
-    
-    const initialUnlocked: Record<number, boolean> = {}
-    const initialCompleted: Record<number, boolean> = {}
-    
-    rounds.forEach(r => {
-      initialUnlocked[r.id] = r.id === rounds[0].id
-      initialCompleted[r.id] = false
-    })
-    
-    setUnlockedRounds(initialUnlocked)
-    setCompletedRounds(initialCompleted)
-    setCurrentRound(rounds[0].id)
-    setIsRoundActive(false)
-    setRoundFinished(false)
-  }
-
-  const quitCompany = () => {
+  const handleResetToCompanies = () => {
     setSelectedCompany(null)
     setSelectedRole(null)
     setSelectingRole(false)
+    setIsRoundActive(false)
+    setRoundFinished(false)
+    setShowSubmitModal(false)
+    setActiveQuizQuestions([])
+    setActiveCodingProblem(null)
   }
 
-  // Loading indicator screen
   if (loading) {
     return (
-      <div className="min-h-screen text-zinc-100 flex flex-col items-center justify-center p-6 animate-fade-in">
-        <div className="text-center max-w-md">
-          <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mx-auto mb-4" />
-          <h3 className="text-xl font-bold tracking-tight">Initiating Interview Round</h3>
-          <p className="text-sm text-zinc-400 mt-2 font-medium">
-            Loading assessment assets for Round {currentRound} of {selectedCompany}&apos;s recruitment funnel using DeepSeek API...
-          </p>
-        </div>
+      <div className="p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto flex flex-col items-center justify-center space-y-4 animate-fade-in font-mono">
+        <div className="w-10 h-10 border-2 border-zinc-800 border-t-indigo-500 rounded-full animate-spin" />
+        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+          INITIALIZING EXAMINATION PAPER FOR {selectedCompany} (ROUND {currentRound})...
+        </p>
       </div>
     )
   }
 
-  // Active coding problem round with Code Editor (Self-Hosted Judge0 CE Compiler)
-  if (selectedCompany && isRoundActive && activeCodingProblem) {
-    const problem = activeCodingProblem
-    const lines = codeText.split('\n')
+  // Active Round Assessment Screen (MCQ or Code Editor)
+  if (isRoundActive || roundFinished) {
+    const rounds = getCompanyRounds(selectedCompany!, selectedRole)
+    const activeRoundInfo = rounds.find((r) => r.id === currentRound)
+    const isCodingRound = activeCodingProblem !== null
+
+    let scoreCount = 0
+    if (roundFinished && !isCodingRound) {
+      activeQuizQuestions.forEach((q) => {
+        if (selectedAnswers[q.id] === q.correctOption) scoreCount++
+      })
+    }
+    const passPercentage = !isCodingRound ? Math.round((scoreCount / (activeQuizQuestions.length || 1)) * 100) : (codingSolvedVerified ? 100 : 0)
+    const isPassed = !isCodingRound ? passPercentage >= 60 : codingSolvedVerified
+
+    const answeredCount = Object.keys(selectedAnswers).length
+    const reviewCount = Object.values(markedForReview).filter(Boolean).length
+    const notVisitedCount = activeQuizQuestions.length - Object.keys(visitedQuestions).length
+    const notAnsweredCount = activeQuizQuestions.length - answeredCount
 
     return (
-      <div className="min-h-screen text-zinc-100 p-6 max-w-7xl mx-auto animate-fade-in flex flex-col space-y-4">
-        {/* Top Header Panel */}
-        <div className="flex items-center justify-between border-b border-zinc-900 pb-3 flex-shrink-0">
-          <div>
-            <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Round {currentRound}: DSA Coding Assessment</span>
-            <h1 className="text-xl font-black text-zinc-100 mt-0.5">{problem.title}</h1>
-          </div>
-          
+      <div className="p-4 sm:p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto space-y-4 animate-fade-in font-sans">
+        
+        {/* Assessment Top Header */}
+        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-rose-400 font-bold bg-rose-500/10 px-2.5 py-1.5 rounded-full border border-rose-500/20 animate-pulse">
-              <Clock className="h-3.5 w-3.5" />
-              {formatTime(timeLeft)}
-            </span>
-            <button 
-              onClick={() => setIsRoundActive(false)} 
-              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-all font-semibold cursor-pointer px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-850"
+            <button
+              onClick={() => {
+                setIsRoundActive(false)
+                setRoundFinished(false)
+              }}
+              className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+              title="Return to Assessment Roadmap"
             >
-              <ArrowLeft size={13} /> Back to Roadmap
+              <ArrowLeft size={16} />
             </button>
+
+            <div>
+              <span className="text-[10px] font-mono font-bold uppercase text-indigo-400 tracking-wider block">
+                {selectedCompany} • {selectedRole} RECRUITMENT PAPER
+              </span>
+              <h1 className="text-base sm:text-lg font-black uppercase text-zinc-100 mt-0.5">
+                {activeRoundInfo?.name}
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 self-end md:self-auto font-mono">
+            <div className="text-right bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl">
+              <span className="text-[9px] uppercase font-bold text-zinc-500 block tracking-wider">TIME REMAINING</span>
+              <span className="text-base sm:text-lg font-black text-emerald-400 tracking-wider">
+                {formatTime(timeLeft)}
+              </span>
+            </div>
+
+            {!roundFinished && (
+              <button
+                onClick={() => isCodingRound ? handleFinishRound() : setShowSubmitModal(true)}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+              >
+                SUBMIT ROUND
+              </button>
+            )}
           </div>
         </div>
 
-        {/* IDE Split Container */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[calc(100vh-175px)] overflow-hidden flex-1">
-          {/* Left Column: Problem description */}
-          <div className="lg:col-span-5 h-full overflow-y-auto pr-1 space-y-4">
-            <div className="glass-card rounded-xl p-5 border border-zinc-850 bg-zinc-900/10 space-y-4 text-xs font-medium">
-              <div>
-                <span className="text-[9px] uppercase font-bold text-indigo-400 tracking-wider">Problem Statement</span>
-                <p className="text-zinc-300 leading-relaxed mt-1.5 whitespace-pre-wrap">{problem.description}</p>
-              </div>
-
-              <div className="pt-3 border-t border-zinc-900">
-                <span className="text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Constraints</span>
-                <pre className="text-zinc-400 font-mono mt-1 bg-zinc-950/40 p-2 rounded border border-zinc-900">{problem.constraints || 'Standard complexity bounds apply.'}</pre>
-              </div>
-
-              <div className="pt-3 border-t border-zinc-900 space-y-1.5">
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Input Format</span>
-                  <p className="text-[11px] text-zinc-450 leading-relaxed mt-0.5">{problem.inputFormat}</p>
-                </div>
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Output Format</span>
-                  <p className="text-[11px] text-zinc-450 leading-relaxed mt-0.5">{problem.outputFormat}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-zinc-900">
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Sample Input</span>
-                  <pre className="text-[10px] text-zinc-400 font-mono p-2.5 rounded-lg bg-zinc-950/60 mt-1 border border-zinc-900 overflow-x-auto whitespace-pre-wrap">
-                    {problem.sampleInput}
-                  </pre>
-                </div>
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Sample Output</span>
-                  <pre className="text-[10px] text-zinc-400 font-mono p-2.5 rounded-lg bg-zinc-950/60 mt-1 border border-zinc-900 overflow-x-auto whitespace-pre-wrap">
-                    {problem.sampleOutput}
-                  </pre>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Code Editor + Console */}
-          <div className="lg:col-span-7 h-full flex flex-col justify-between border border-zinc-850 bg-zinc-900/10 glass-card rounded-2xl overflow-hidden">
-            {/* Editor Toolbar */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-850 bg-zinc-950/40 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <Code className="h-4 w-4 text-indigo-400" />
-                <select 
-                  value={selectedLanguage} 
-                  onChange={(e) => setSelectedLanguage(e.target.value as any)}
-                  className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-bold rounded-lg px-2.5 py-1 focus:ring-0 focus:outline-none cursor-pointer"
-                >
-                  <option value="python">Python 3</option>
-                  <option value="javascript">JavaScript (Node.js)</option>
-                  <option value="cpp">C++ (GCC)</option>
-                  <option value="java">Java (OpenJDK)</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleRunCompiler(false)}
-                  disabled={compiling || !codeText}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-850 text-[11px] font-bold text-zinc-350 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <Play size={11} className="text-zinc-400" />
-                  Run Sample
-                </button>
-                <button
-                  onClick={() => handleRunCompiler(true)}
-                  disabled={compiling || !codeText}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-650 hover:bg-indigo-500 text-[11px] font-bold text-white transition-all cursor-pointer shadow-md shadow-indigo-600/10 disabled:opacity-50"
-                >
-                  {compiling ? <Loader2 size={11} className="animate-spin" /> : <Terminal size={11} />}
-                  Submit Code
-                </button>
-              </div>
-            </div>
-
-            {/* Code Textarea editor with line count */}
-            <div className="flex-1 flex overflow-hidden bg-zinc-950/40 relative">
-              <div className="w-10 bg-zinc-950/80 text-zinc-650 font-mono text-[11px] leading-relaxed text-right pr-2 py-4 select-none border-r border-zinc-900 h-full overflow-hidden flex flex-col flex-shrink-0">
-                {lines.map((_, i) => (
-                  <span key={i} className="h-[21px] block">{i + 1}</span>
-                ))}
-              </div>
-              <textarea
-                value={codeText}
-                onChange={(e) => setCodeText(e.target.value)}
-                onKeyDown={handleEditorKeyDown}
-                className="flex-1 p-4 bg-transparent border-0 outline-none text-zinc-200 resize-none overflow-y-auto whitespace-pre font-mono text-[11px] leading-relaxed focus:ring-0 focus:outline-none h-full"
-                placeholder="// Write your program solution here..."
-                spellCheck={false}
-              />
-            </div>
-
-            {/* Terminal console output */}
-            <div className="h-44 border-t border-zinc-850 bg-zinc-950/80 flex flex-col flex-shrink-0">
-              <div className="flex items-center justify-between px-4 py-1.5 bg-zinc-950 border-b border-zinc-900 text-[10px] font-bold text-zinc-450 uppercase">
-                <span>Console Terminal Log</span>
-                <span className="text-indigo-400 font-semibold">{selectedLanguage.toUpperCase()} environment</span>
-              </div>
-              <div className="flex-1 p-3 overflow-y-auto font-mono text-[10px] text-zinc-350 whitespace-pre-wrap leading-relaxed">
-                {consoleOutput || "Terminal ready. Compile or submit code to check outputs against standard test cases."}
-              </div>
-            </div>
-
-            {/* Final validation gate */}
-            <div className="px-4 py-3 border-t border-zinc-850 bg-zinc-950/20 flex items-center justify-between gap-4 flex-shrink-0">
-              <span className="text-[10px] font-semibold text-zinc-450">
-                {codingSolvedVerified 
-                  ? "Verification checks completed. You may continue to next round."
-                  : "Pending verification: Verify solutions via compiler submissions. Needs 100% test cases passed."
-                }
-              </span>
-
-              <button
-                onClick={handleVerifyCoding}
-                disabled={!codingSolvedVerified}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border ${
-                  codingSolvedVerified
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/20 cursor-pointer shadow-md'
-                    : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 cursor-not-allowed'
+        {/* Round Finished Summary */}
+        {roundFinished ? (
+          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 text-center shadow-xl">
+            <div className="space-y-2 border-b border-zinc-850 pb-6">
+              <span
+                className={`text-[10px] font-mono font-bold uppercase px-3 py-1 rounded border ${
+                  isPassed
+                    ? 'bg-emerald-950 border-emerald-800 text-emerald-300'
+                    : 'bg-rose-950 border-rose-800 text-rose-300'
                 }`}
               >
-                Continue Round
-              </button>
-            </div>
-          </div>
-        </div>
+                {isPassed ? 'ROUND CLEARED - QUALIFIED' : 'ROUND CUTOFF UNMET'}
+              </span>
 
-        {showWarningModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="glass-card rounded-3xl p-8 border border-rose-500/20 max-w-sm w-full space-y-6 bg-zinc-900/90 text-center shadow-2xl shadow-rose-500/10">
-              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto">
-                <ShieldAlert className="h-6 w-6 text-rose-400" />
-              </div>
-              <div>
-                <h2 className="text-base font-black text-zinc-100 tracking-tight">Proctoring Warning</h2>
-                <p className="text-xs text-rose-400 mt-2 font-bold uppercase tracking-wide">
-                  Violation {violationsCount} of 3
-                </p>
-                <p className="text-[11px] text-zinc-400 mt-2.5 leading-relaxed font-medium">
-                  Suspicious Activity: <span className="text-zinc-250 font-bold">{warningMessage}</span>.
-                </p>
-                <p className="text-[10px] text-zinc-550 mt-4 leading-normal">
-                  Please focus on the exam window. You will be disqualified and your test auto-submitted after 3 violations.
-                </p>
-              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-zinc-100 uppercase tracking-tight">
+                {isCodingRound
+                  ? codingSolvedVerified ? 'ALL TEST CASES PASSED' : 'TEST CASES FAILED'
+                  : `SCORE: ${scoreCount} / ${activeQuizQuestions.length} (${passPercentage}%)`}
+              </h2>
+
+              <p className="text-xs text-zinc-400 font-mono">
+                {isPassed
+                  ? `You have cleared Round ${currentRound}. Proceed to Round ${currentRound + 1}.`
+                  : `Minimum passing threshold is 60%. Retake Round ${currentRound} to qualify.`}
+              </p>
+            </div>
+
+            <div className="pt-4">
               <button
-                onClick={async () => {
-                  setShowWarningModal(false)
-                  try {
-                    if (!document.fullscreenElement) {
-                      await document.documentElement.requestFullscreen()
-                    }
-                  } catch (err) {
-                    console.error(err)
-                  }
+                onClick={() => {
+                  setRoundFinished(false)
+                  setIsRoundActive(false)
                 }}
-                className="w-full py-3 rounded-xl text-xs font-bold bg-rose-650 hover:bg-rose-500 text-white transition-all cursor-pointer border border-rose-500/20"
+                className="px-6 py-3 rounded-xl text-xs font-bold font-mono uppercase bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
               >
-                Resume Test
+                RETURN TO ASSESSMENT PIPELINE
               </button>
             </div>
           </div>
-        )}
-      </div>
-    )
-  }
-
-  // Coding failed screen (Timeout or manual submission without verification check)
-  if (selectedCompany && isRoundActive && activeCodingProblem && roundFinished && !completedRounds[currentRound]) {
-    return (
-      <div className="min-h-screen text-zinc-100 p-6 max-w-2xl mx-auto flex flex-col justify-center animate-fade-in space-y-6">
-        <div className="glass-card rounded-3xl p-8 border border-zinc-850 bg-zinc-900/10 text-center">
-          <XCircle className="h-12 w-12 text-rose-455 mx-auto" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-400 mt-4">Coding Assessment</h2>
-          <h1 className="text-xl font-black mt-1">
-            Round {currentRound}: Failed
-          </h1>
-          <p className="text-zinc-400 text-xs mt-2 font-medium">
-            {violationsCount >= 3 
-              ? "You were disqualified due to security proctoring violations." 
-              : "You did not verify solving the DSA problem using the compiler before the timer expired."
-            }
-          </p>
-          {violationsCount >= 3 && (
-            <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs">
-              Disqualified: 3 Proctoring Violations Detected
-            </div>
-          )}
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={() => startInterviewRound(currentRound)}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 font-bold text-xs border border-rose-500/20 transition-all cursor-pointer shadow-lg shadow-rose-600/10"
-            >
-              <RefreshCw size={13} />
-              Retake Round {currentRound}
-            </button>
-          </div>
-        </div>
-
-        {/* Proctoring Security Audit Log */}
-        {suspiciousActivities.length > 0 && (
-          <div className="space-y-4 pt-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 px-1 flex items-center gap-2">
-              <ShieldAlert className="h-4 w-4" />
-              Proctoring Security Audit Log
-            </h3>
-            <div className="glass-card rounded-2xl p-5 border border-rose-500/15 bg-rose-500/5 space-y-3">
-              <p className="text-[11px] text-zinc-400 leading-normal">
-                The following proctoring events were captured during this assessment round:
-              </p>
-              <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                {suspiciousActivities.map((act, index) => (
-                  <div key={index} className="flex justify-between items-start text-xs border-b border-zinc-900/50 pb-2">
-                    <span className="text-rose-400 font-medium">{act.activity}</span>
-                    <span className="text-zinc-500 font-mono text-[10px] ml-4">{act.timestamp}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // Active MCQ round
-  if (selectedCompany && isRoundActive && !activeCodingProblem && activeQuizQuestions.length > 0) {
-    const currentQuestion = activeQuizQuestions[currentQuestionIdx]
-    const qId = currentQuestion.id
-    const userChoice = selectedAnswers[qId]
-
-    if (roundFinished) {
-      const score = calculateMCQScore()
-      const total = activeQuizQuestions.length
-      const percentage = Math.round((score / total) * 100)
-      const isPassed = percentage >= 60 // 60% threshold to pass MCQ rounds
-
-      const handleConfirmResults = () => {
-        if (isPassed) {
-          setCompletedRounds(prev => ({ ...prev, [currentRound]: true }))
-          const companyRounds = getCompanyRounds(selectedCompany!, selectedRole)
-          const activeRoundIdx = companyRounds.findIndex(r => r.id === currentRound)
-          if (activeRoundIdx < companyRounds.length - 1) {
-            const nextRound = companyRounds[activeRoundIdx + 1]
-            setUnlockedRounds(prev => ({ ...prev, [nextRound.id]: true }))
-          }
-          handleNextRoadmap()
-        } else {
-          setRoundFinished(false)
-        }
-      }
-
-      return (
-        <div className="min-h-screen text-zinc-100 p-6 max-w-4xl mx-auto animate-fade-in space-y-6">
-          {/* Results summary card */}
-          <div className="glass-card rounded-3xl p-8 text-center border border-zinc-800 bg-zinc-900/25 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
+        ) : isCodingRound ? (
+          /* IDE Code Compiler Screen */
+          <div className="grid lg:grid-cols-2 gap-6 items-start font-sans">
             
-            <div className="relative z-10 text-center space-y-4">
-              {isPassed && violationsCount < 3 ? (
-                <CheckCircle className="h-12 w-12 text-emerald-400 mx-auto" />
-              ) : (
-                <XCircle className="h-12 w-12 text-rose-455 mx-auto" />
-              )}
-              
-              <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-405 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Round Results</span>
-              <h1 className="text-3xl font-black mt-2">
-                Round {currentRound}: {isPassed && violationsCount < 3 ? 'Passed' : 'Failed'}
-              </h1>
-              <p className="text-zinc-400 text-xs mt-2 max-w-md mx-auto">
-                {violationsCount >= 3 
-                  ? "You were disqualified due to security proctoring violations."
-                  : `Score: ${score} / ${total} (${percentage}% accuracy). Needs at least 60% to pass.`
-                }
-              </p>
-              {violationsCount >= 3 && (
-                <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs max-w-sm mx-auto">
-                  Disqualified: 3 Proctoring Violations Detected
-                </div>
-              )}
+            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 space-y-5 shadow-xl">
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-400 block">
+                  PRACTICAL CODING PROBLEM
+                </span>
+                <h3 className="text-lg font-bold text-zinc-100 mt-0.5">{activeCodingProblem.title}</h3>
+              </div>
 
-              <div className="mt-8 flex justify-center gap-3">
-                {isPassed && violationsCount < 3 ? (
-                  <button
-                    onClick={handleConfirmResults}
-                    className="px-6 py-3 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/20 transition-all cursor-pointer shadow-lg shadow-indigo-650/10"
-                  >
-                    Continue to Roadmap
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => startInterviewRound(currentRound)}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-550 text-white font-bold text-xs border border-rose-500/25 transition-all cursor-pointer shadow-lg shadow-rose-650/10"
-                  >
-                    <RefreshCw size={13} />
-                    Retake Round {currentRound}
-                  </button>
-                )}
+              <div className="space-y-2 text-xs">
+                <span className="text-[10px] font-mono uppercase font-bold text-zinc-400 block">PROBLEM STATEMENT</span>
+                <p className="text-zinc-300 leading-relaxed font-normal bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800">
+                  {activeCodingProblem.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+                <div className="p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-zinc-500 block">INPUT SPEC</span>
+                  <span className="text-zinc-300 text-[11px] block">{activeCodingProblem.inputFormat}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-zinc-500 block">OUTPUT SPEC</span>
+                  <span className="text-zinc-300 text-[11px] block">{activeCodingProblem.outputFormat}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs font-mono">
+                <span className="text-[10px] uppercase font-bold text-zinc-400 block">SAMPLE CASE</span>
+                <div className="grid grid-cols-2 gap-3 text-[11px]">
+                  <div className="p-3 rounded-2xl bg-zinc-900 border border-zinc-800">
+                    <span className="text-[9px] uppercase font-bold text-zinc-500 block mb-1">INPUT</span>
+                    <pre className="text-zinc-300 whitespace-pre-wrap">{activeCodingProblem.sampleInput}</pre>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-zinc-900 border border-zinc-800">
+                    <span className="text-[9px] uppercase font-bold text-zinc-500 block mb-1">OUTPUT</span>
+                    <pre className="text-indigo-300 whitespace-pre-wrap">{activeCodingProblem.sampleOutput}</pre>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Proctoring Security Audit Log */}
-          {suspiciousActivities.length > 0 && (
-            <div className="space-y-4 pt-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 px-1 flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4" />
-                Proctoring Security Audit Log
-              </h3>
-              <div className="glass-card rounded-2xl p-5 border border-rose-500/15 bg-rose-500/5 space-y-3">
-                <p className="text-[11px] text-zinc-400 leading-normal">
-                  The following proctoring events were captured during this assessment round:
-                </p>
-                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                  {suspiciousActivities.map((act, index) => (
-                    <div key={index} className="flex justify-between items-start text-xs border-b border-zinc-900/50 pb-2">
-                      <span className="text-rose-455 font-medium">{act.activity}</span>
-                      <span className="text-zinc-500 font-mono text-[10px] ml-4">{act.timestamp}</span>
-                    </div>
+            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-zinc-850 pb-3 font-mono">
+                <div className="flex items-center gap-1.5 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+                  {(['python', 'javascript', 'cpp', 'java'] as const).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => handleLanguageChange(lang)}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                        selectedLanguage === lang
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      {lang === 'cpp' ? 'C++' : lang}
+                    </button>
                   ))}
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={compiling}
+                    onClick={() => handleCompileCode(false)}
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-all cursor-pointer"
+                  >
+                    RUN SAMPLE
+                  </button>
+                  <button
+                    disabled={compiling}
+                    onClick={() => handleCompileCode(true)}
+                    className="px-4 py-1.5 rounded-xl text-xs font-bold uppercase bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+                  >
+                    {compiling ? 'COMPILING...' : 'SUBMIT CODE'}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* Deep-dive review of questions */}
-          <div className="space-y-4 pt-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-450 px-1 flex items-center gap-2">
-              <BookOpen size={14} /> Questions Review
-            </h3>
-            <div className="space-y-4">
-              {activeQuizQuestions.map((q, idx) => {
-                const uChoice = selectedAnswers[q.id]
-                const isCorrect = uChoice === q.correctOption
-                const hasSkipped = uChoice === undefined
+              <textarea
+                rows={14}
+                value={codeText}
+                onChange={(e) => setCodeText(e.target.value)}
+                className="w-full text-xs font-mono rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-100 p-4 focus:border-indigo-500 outline-none leading-relaxed resize-none"
+              />
 
-                return (
-                  <div key={q.id} className={`glass-card rounded-2xl p-6 border ${isCorrect ? 'border-emerald-500/20 bg-emerald-955/5' : hasSkipped ? 'border-zinc-800 bg-zinc-900/10' : 'border-rose-500/20 bg-rose-955/5'}`}>
-                    <div className="flex items-start justify-between gap-4">
-                      <h4 className="font-bold text-sm text-zinc-200 leading-relaxed">{idx + 1}. {q.question}</h4>
-                      {isCorrect ? (
-                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                          <CheckCircle className="h-3.5 w-3.5" /> Correct
-                        </span>
-                      ) : hasSkipped ? (
-                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold text-zinc-400 bg-zinc-850 px-2.5 py-1 rounded-full border border-zinc-700">
-                          Skipped
-                        </span>
-                      ) : (
-                        <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold text-rose-405 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
-                          <XCircle className="h-3.5 w-3.5" /> Incorrect
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-3 mt-5">
-                      {q.options.map((opt, oIdx) => {
-                        const isCorrectOpt = oIdx === q.correctOption
-                        const isUserChoice = oIdx === uChoice
-                        
-                        let optStyle = 'bg-zinc-955/30 text-zinc-400 border border-zinc-850'
-                        if (isCorrectOpt) optStyle = 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-semibold'
-                        else if (isUserChoice) optStyle = 'bg-rose-500/10 text-rose-305 border border-rose-500/30 font-semibold'
-
-                        const optLabel = String.fromCharCode(65 + oIdx) // A, B, C, D
-
-                        return (
-                          <div key={oIdx} className={`px-4 py-3 rounded-xl text-xs font-medium flex items-center gap-3 transition-all ${optStyle}`}>
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                              isCorrectOpt ? 'bg-emerald-500/25 text-emerald-300' : isUserChoice ? 'bg-rose-500/25 text-rose-305' : 'bg-zinc-800 text-zinc-550'
-                            }`}>{optLabel}</span>
-                            <span>{opt}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    // Dynamic timer coloring
-    let timerBadgeColor = 'text-emerald-450 bg-emerald-500/10 border-emerald-555/20'
-    if (timeLeft < 90) { // < 1.5 mins
-      timerBadgeColor = 'text-rose-455 bg-rose-500/15 border-rose-500/30 animate-pulse font-black'
-    }
-
-    return (
-      <div className="min-h-screen text-zinc-100 p-6 max-w-7xl mx-auto animate-fade-in flex flex-col space-y-6">
-        {/* Navigation Indicator */}
-        <div className="flex items-center justify-between border-b border-zinc-900 pb-4 flex-shrink-0">
-          <div>
-            <span className="text-[10px] uppercase font-bold text-indigo-405">{selectedCompany} Assessment round</span>
-            <h2 className="text-sm font-bold text-zinc-200 mt-0.5">Round {currentRound}: Screening</h2>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all duration-350 ${timerBadgeColor}`}>
-              <Clock className="h-3.5 w-3.5" />
-              {formatTime(timeLeft)}
-            </span>
-            <span className="text-[10px] text-indigo-405 font-bold bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full">
-              Q: {currentQuestionIdx + 1} / {activeQuizQuestions.length}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Question Grid navigation */}
-          <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
-            <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] uppercase font-bold text-zinc-550 tracking-wider">Round Questions</span>
-                <span className="text-[10px] font-semibold text-indigo-405">
-                  {Object.keys(selectedAnswers).length} / {activeQuizQuestions.length} Done
-                </span>
+              <div className="space-y-2 font-mono">
+                <span className="text-[10px] uppercase font-bold text-zinc-400 block">EXECUTION CONSOLE</span>
+                <pre className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 min-h-[90px] whitespace-pre-wrap leading-relaxed">
+                  {consoleOutput || '// Click "RUN SAMPLE" or "SUBMIT CODE" to execute program.'}
+                </pre>
               </div>
+
+            </div>
+
+          </div>
+        ) : (
+          /* MCQ Assessment Dual-Pane CBT Layout */
+          <div className="grid lg:grid-cols-4 gap-4 items-start font-sans">
+            
+            {/* Question Paper Area */}
+            <div className="lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-6 shadow-xl flex flex-col justify-between min-h-[500px]">
               
-              <div className="grid grid-cols-5 gap-2">
-                {activeQuizQuestions.map((q, idx) => {
-                  const uChoice = selectedAnswers[q.id]
-                  const isCurrent = currentQuestionIdx === idx
-                  
-                  let statusStyle = 'bg-zinc-955/40 border-zinc-850 text-zinc-555 hover:border-zinc-700 hover:text-zinc-350'
-                  if (isCurrent) {
-                    statusStyle = 'border-indigo-500 text-indigo-400 bg-indigo-500/10 font-bold shadow-md shadow-indigo-500/5'
-                  } else if (uChoice !== undefined) {
-                    statusStyle = 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-650/10'
-                  }
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-zinc-850 pb-3 font-mono">
+                  <span className="text-xs font-bold uppercase text-indigo-400">
+                    QUESTION NO. {currentQuestionIdx + 1} OF {activeQuizQuestions.length}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase text-zinc-500 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded">
+                    SINGLE CHOICE (+1.0 MARKS)
+                  </span>
+                </div>
 
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => setCurrentQuestionIdx(idx)}
-                      className={`w-10 h-10 text-xs font-bold rounded-xl border flex items-center justify-center transition-all cursor-pointer ${statusStyle}`}
-                    >
-                      {idx + 1}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
+                <div className="bg-zinc-900/60 border border-zinc-800 p-4 rounded-xl">
+                  <p className="text-sm sm:text-base font-bold text-zinc-100 leading-relaxed">
+                    {activeQuizQuestions[currentQuestionIdx]?.question}
+                  </p>
+                </div>
 
-          {/* Right Column: Question Panel */}
-          <div className="lg:col-span-8 space-y-6">
-            <div className="glass-card rounded-2xl p-6 md:p-8 border border-zinc-800 bg-zinc-900/10 min-h-[380px] flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-zinc-555 tracking-wider">Question {currentQuestionIdx + 1} of {activeQuizQuestions.length}</span>
-                <h2 className="text-base font-bold text-zinc-150 leading-relaxed mt-3">{currentQuestion.question}</h2>
-
-                <div className="space-y-3 mt-6">
-                  {currentQuestion.options.map((option, index) => {
-                    const isSelected = userChoice === index
-                    const optionLetter = String.fromCharCode(65 + index) // A, B, C, D
-
-                    let cardStyle = 'bg-zinc-955/35 hover:bg-zinc-900/60 border-zinc-855 text-zinc-350 hover:text-zinc-200'
-                    if (isSelected) {
-                      cardStyle = 'bg-indigo-500/10 border-indigo-500 text-indigo-305 font-bold shadow-md shadow-indigo-500/5'
-                    }
-
+                <div className="space-y-3">
+                  {activeQuizQuestions[currentQuestionIdx]?.options.map((opt, optIdx) => {
+                    const isSelected = selectedAnswers[activeQuizQuestions[currentQuestionIdx].id] === optIdx
                     return (
                       <button
-                        key={index}
-                        onClick={() => handleSelectOption(index)}
-                        className={`w-full text-left px-5 py-4 rounded-xl text-xs font-semibold border transition-all flex items-center gap-4 group cursor-pointer ${cardStyle}`}
+                        key={optIdx}
+                        onClick={() => handleOptionSelect(activeQuizQuestions[currentQuestionIdx].id, optIdx)}
+                        className={`w-full text-left p-4 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer border flex items-center gap-3 ${
+                          isSelected
+                            ? 'bg-indigo-950/60 border-indigo-500 text-white font-bold shadow-md'
+                            : 'bg-zinc-900/40 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900'
+                        }`}
                       >
-                        <span className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center text-[10px] font-extrabold border transition-all ${
-                          isSelected ? 'bg-indigo-500 text-white border-indigo-400' : 'bg-zinc-905 text-zinc-550 border-zinc-805 group-hover:border-zinc-700'
-                        }`}>{optionLetter}</span>
-                        <span className="flex-1">{option}</span>
-                        {isSelected && <Check size={14} className="text-indigo-400" />}
+                        <div
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold font-mono flex-shrink-0 ${
+                            isSelected ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-zinc-700 text-zinc-500'
+                          }`}
+                        >
+                          {String.fromCharCode(65 + optIdx)}
+                        </div>
+                        <span className="leading-relaxed flex-1">{opt}</span>
                       </button>
                     )
                   })}
                 </div>
               </div>
 
-              {/* Navigation Action Buttons */}
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-zinc-905">
-                <button
-                  onClick={() => setIsRoundActive(false)}
-                  className="flex items-center gap-1 text-xs text-zinc-555 hover:text-zinc-350 transition-all font-bold cursor-pointer"
-                >
-                  <AlertCircle className="h-4 w-4" /> Quit to Roadmap
-                </button>
+              {/* Bottom Examination Action Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-850 font-mono text-xs">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleMarkForReview}
+                    className={`px-4 py-2 rounded-xl font-bold uppercase transition-all cursor-pointer border ${
+                      markedForReview[activeQuizQuestions[currentQuestionIdx]?.id]
+                        ? 'bg-purple-950 text-purple-300 border-purple-800'
+                        : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-850'
+                    }`}
+                  >
+                    {markedForReview[activeQuizQuestions[currentQuestionIdx]?.id] ? 'UNMARK REVIEW' : 'MARK FOR REVIEW & NEXT'}
+                  </button>
 
-                <div className="flex gap-2">
-                  {currentQuestionIdx > 0 && (
-                    <button
-                      onClick={() => setCurrentQuestionIdx((prev) => prev - 1)}
-                      className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-955/50 hover:bg-zinc-850 text-zinc-450 hover:text-zinc-205 text-xs font-bold cursor-pointer"
-                    >
-                      Previous
-                    </button>
-                  )}
+                  <button
+                    onClick={handleClearResponse}
+                    className="px-4 py-2 rounded-xl font-bold uppercase bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition-all cursor-pointer"
+                  >
+                    CLEAR RESPONSE
+                  </button>
+                </div>
 
-                  {currentQuestionIdx < activeQuizQuestions.length - 1 ? (
-                    <button
-                      onClick={() => setCurrentQuestionIdx((prev) => prev + 1)}
-                      className="px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-955/50 hover:bg-zinc-850 text-zinc-450 hover:text-zinc-205 text-xs font-bold cursor-pointer"
-                    >
-                      Next
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleFinishMCQRound}
-                      disabled={userChoice === undefined}
-                      className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-all ${
-                        userChoice !== undefined
-                          ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/20 cursor-pointer shadow-lg shadow-indigo-650/10'
-                          : 'bg-zinc-900 text-zinc-650 border-zinc-800/80 cursor-not-allowed'
-                      }`}
-                    >
-                      Submit Round
-                    </button>
-                  )}
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={currentQuestionIdx === 0}
+                    onClick={() => setCurrentQuestionIdx((prev) => prev - 1)}
+                    className={`px-4 py-2 rounded-xl font-bold uppercase transition-all cursor-pointer border ${
+                      currentQuestionIdx === 0
+                        ? 'bg-zinc-900 text-zinc-700 border-zinc-850 cursor-not-allowed opacity-40'
+                        : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-850'
+                    }`}
+                  >
+                    PREVIOUS
+                  </button>
+
+                  <button
+                    onClick={handleSaveAndNext}
+                    className="px-5 py-2 rounded-xl font-bold uppercase bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-lg shadow-indigo-600/20"
+                  >
+                    SAVE &amp; NEXT
+                  </button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {showWarningModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="glass-card rounded-3xl p-8 border border-rose-500/20 max-w-sm w-full space-y-6 bg-zinc-900/90 text-center shadow-2xl shadow-rose-500/10">
-              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto">
-                <ShieldAlert className="h-6 w-6 text-rose-450" />
-              </div>
-              <div>
-                <h2 className="text-base font-black text-zinc-100 tracking-tight">Proctoring Warning</h2>
-                <p className="text-xs text-rose-455 mt-2 font-bold uppercase tracking-wide">
-                  Violation {violationsCount} of 3
-                </p>
-                <p className="text-[11px] text-zinc-400 mt-2.5 leading-relaxed font-medium">
-                  Suspicious Activity: <span className="text-zinc-250 font-bold">{warningMessage}</span>.
-                </p>
-                <p className="text-[10px] text-zinc-555 mt-4 leading-normal">
-                  Please focus on the exam window. You will be disqualified and your test auto-submitted after 3 violations.
-                </p>
-              </div>
-              <button
-                onClick={async () => {
-                  setShowWarningModal(false)
-                  try {
-                    if (!document.fullscreenElement) {
-                      await document.documentElement.requestFullscreen()
-                    }
-                  } catch (err) {
-                    console.error(err)
-                  }
-                }}
-                className="w-full py-3 rounded-xl text-xs font-bold bg-rose-650 hover:bg-rose-550 text-white transition-all cursor-pointer border border-rose-500/20"
-              >
-                Resume Test
-              </button>
             </div>
+
+            {/* Question Palette Sidebar */}
+            <div className="lg:col-span-1 bg-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-4 shadow-xl font-mono">
+              <span className="text-[10px] font-bold uppercase text-zinc-400 block tracking-wider border-b border-zinc-850 pb-2">
+                QUESTION PALETTE
+              </span>
+
+              <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-emerald-600 inline-block" />
+                  <span className="text-zinc-300">ANSWERED ({answeredCount})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-amber-600 inline-block" />
+                  <span className="text-zinc-300">NOT ANSWERED ({notAnsweredCount})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-purple-600 inline-block" />
+                  <span className="text-zinc-300">REVIEW ({reviewCount})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-zinc-800 inline-block" />
+                  <span className="text-zinc-300">NOT VISITED ({notVisitedCount})</span>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-zinc-850">
+                <span className="text-[9px] uppercase font-bold text-zinc-500 block mb-2">CHOOSE A QUESTION</span>
+                <div className="grid grid-cols-5 gap-2">
+                  {activeQuizQuestions.map((q, idx) => {
+                    const qId = q.id
+                    const isAns = selectedAnswers[qId] !== undefined
+                    const isRev = markedForReview[qId]
+                    const isVis = visitedQuestions[qId]
+                    const isCurr = idx === currentQuestionIdx
+
+                    let colorClass = 'bg-zinc-900 border-zinc-800 text-zinc-400'
+                    if (isAns) colorClass = 'bg-emerald-600 border-emerald-500 text-white font-bold'
+                    else if (isRev) colorClass = 'bg-purple-600 border-purple-500 text-white font-bold'
+                    else if (isVis) colorClass = 'bg-amber-600 border-amber-500 text-white font-bold'
+
+                    return (
+                      <button
+                        key={qId}
+                        onClick={() => setCurrentQuestionIdx(idx)}
+                        className={`h-9 rounded-lg text-xs font-bold transition-all cursor-pointer border flex items-center justify-center ${colorClass} ${
+                          isCurr ? 'ring-2 ring-indigo-400 ring-offset-2 ring-offset-zinc-950 scale-105' : ''
+                        }`}
+                      >
+                        {idx + 1}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-zinc-850">
+                <button
+                  onClick={() => setShowSubmitModal(true)}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold uppercase bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-md shadow-indigo-600/20"
+                >
+                  SUBMIT ROUND
+                </button>
+              </div>
+
+            </div>
+
           </div>
         )}
-      </div>
-    )
-  }
 
-  // Role Selection Screen
-  if (selectedCompany && selectingRole) {
-    return (
-      <div className="min-h-screen text-zinc-100 p-6 max-w-4xl mx-auto flex flex-col justify-center animate-fade-in space-y-8">
-        <div className="text-center space-y-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Target Role Selection</span>
-          <h1 className="text-3xl font-black tracking-tight text-zinc-100 font-sans">Prepare for {selectedCompany}</h1>
-          <p className="text-zinc-400 text-xs max-w-lg mx-auto leading-relaxed">
-            Select the specialization path you are targeting. Your simulated interview rounds, conceptual assessments, and coding challenges will adapt to be highly accurate and practical.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto w-full">
-          {[
-            {
-              id: 'Software Engineer',
-              title: 'Software Engineer',
-              desc: 'Core data structures, algorithms (DSA), OOPs, and general software design paradigms.',
-              icon: <Cpu className="h-6 w-6 text-indigo-400" />
-            },
-            {
-              id: 'MERN Stack',
-              title: 'MERN Stack',
-              desc: 'Frontend and backend JavaScript, React rendering, Node.js architecture, and MongoDB data layers.',
-              icon: <Globe className="h-6 w-6 text-emerald-400" />
-            },
-            {
-              id: 'AI/ML',
-              title: 'AI/ML',
-              desc: 'Machine learning fundamentals, Python ML libraries, neural networks, and vector-space algorithms.',
-              icon: <Brain className="h-6 w-6 text-rose-400" />
-            },
-            {
-              id: 'DevOps',
-              title: 'DevOps',
-              desc: 'Linux scripting, container orchestration (Docker/K8s), deployment pipelines, and cloud scaling.',
-              icon: <Terminal className="h-6 w-6 text-cyan-400" />
-            }
-          ].map((roleItem) => (
-            <button
-              key={roleItem.id}
-              onClick={() => {
-                setSelectedRole(roleItem.id)
-                setSelectingRole(false)
-                resetRoadmap(selectedCompany, roleItem.id)
-              }}
-              className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10 hover:bg-zinc-800/40 text-left hover:border-zinc-750 transition-all duration-300 flex items-start gap-4 cursor-pointer group"
-            >
-              <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-850 flex-shrink-0">
-                {roleItem.icon}
-              </div>
+        {/* Submit Confirmation Modal */}
+        {showSubmitModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl font-sans">
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-zinc-200 group-hover:text-white transition-colors">{roleItem.title}</h3>
-                <p className="text-[11px] text-zinc-500 leading-relaxed font-medium">{roleItem.desc}</p>
+                <span className="text-[10px] font-mono font-bold uppercase text-indigo-400 tracking-wider">
+                  SUBMISSION CONFIRMATION
+                </span>
+                <h3 className="text-lg font-bold text-zinc-100">
+                  Submit Assessment Round?
+                </h3>
               </div>
-            </button>
-          ))}
-        </div>
 
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={quitCompany}
-            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-all font-semibold cursor-pointer px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-850"
-          >
-            <ArrowLeft size={13} /> Back to Companies
-          </button>
+              <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 space-y-2 text-xs font-mono text-zinc-300">
+                <div className="flex justify-between py-1 border-b border-zinc-850">
+                  <span>Total Questions:</span>
+                  <span className="font-bold text-zinc-100">{activeQuizQuestions.length}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-zinc-850">
+                  <span>Answered:</span>
+                  <span className="font-bold text-emerald-400">{answeredCount}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-zinc-850">
+                  <span>Marked for Review:</span>
+                  <span className="font-bold text-purple-400">{reviewCount}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span>Unanswered:</span>
+                  <span className="font-bold text-amber-400">{notAnsweredCount}</span>
+                </div>
+              </div>
+
+              <p className="text-xs text-zinc-400">
+                Are you sure you want to finish and submit your assessment round?
+              </p>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setShowSubmitModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-mono uppercase bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-850 cursor-pointer font-bold"
+                >
+                  CONTINUE TEST
+                </button>
+                <button
+                  onClick={handleFinishRound}
+                  className="px-5 py-2 rounded-xl text-xs font-mono uppercase bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 cursor-pointer font-bold"
+                >
+                  CONFIRM SUBMIT
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    )
+  }
+
+  // Role Selection Modal
+  if (selectingRole && selectedCompany) {
+    return (
+      <div className="p-6 text-zinc-100 min-h-screen max-w-4xl mx-auto space-y-6 animate-fade-in font-sans">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+          <div className="flex items-center gap-3 border-b border-zinc-850 pb-4">
+            <button
+              onClick={() => setSelectingRole(false)}
+              className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <div>
+              <span className="text-[10px] font-mono uppercase font-bold text-indigo-400 tracking-wider">
+                TARGET COMPANY: {selectedCompany}
+              </span>
+              <h2 className="text-lg font-bold text-zinc-100 mt-0.5">
+                SELECT ENGINEERING ROLE TRACK
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[
+              { role: 'Software Engineer', desc: 'Core DSA, System Design, Algorithms & Practical Coding.' },
+              { role: 'AI/ML', desc: 'Python, Math/NumPy, ML Pipelines & Vector Logic Coding.' },
+              { role: 'DevOps', desc: 'Linux, Docker/K8s, Networking & Script Parser Coding.' },
+              { role: 'MERN Stack', desc: 'React, Node, MongoDB, REST APIs & Config Integration Coding.' }
+            ].map(({ role, desc }) => (
+              <button
+                key={role}
+                onClick={() => handleSelectRole(role)}
+                className="bg-zinc-900/60 rounded-2xl p-6 border border-zinc-800 hover:border-indigo-500/50 text-left transition-all duration-200 cursor-pointer space-y-2 group"
+              >
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-400 block">
+                  TRACK: {role}
+                </span>
+                <h3 className="text-base font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors">
+                  {role} EXAMINATION SUITE
+                </h3>
+                <p className="text-[11px] text-zinc-400 font-normal leading-relaxed">
+                  {desc}
+                </p>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     )
   }
 
-  // Interview Roadmap Funnel for Selected Company
-  if (selectedCompany) {
+  // Company Round Roadmap Funnel View
+  if (selectedCompany && selectedRole) {
     const rounds = getCompanyRounds(selectedCompany, selectedRole)
-    const allCompleted = rounds.every(r => completedRounds[r.id])
 
     return (
-      <div className="min-h-screen text-zinc-100 p-6 max-w-3xl mx-auto animate-fade-in space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Company Funnel &bull; {selectedRole}</span>
-            <h1 className="text-3xl font-black text-zinc-100 mt-0.5">{selectedCompany} Recruitment Path</h1>
+      <div className="p-6 text-zinc-100 min-h-screen max-w-5xl mx-auto space-y-6 animate-fade-in font-sans">
+        
+        <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-1.5">
+            <button
+              onClick={handleResetToCompanies}
+              className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-indigo-400 hover:underline cursor-pointer mb-1"
+            >
+              <ArrowLeft size={12} />
+              <span>BACK TO ALL COMPANIES</span>
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-100 uppercase">
+              {selectedCompany} RECRUITMENT FUNNEL
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-400 font-normal">
+              Track: <span className="text-indigo-300 font-bold">{selectedRole}</span> • Complete each round sequentially to qualify for final selection.
+            </p>
           </div>
-          <button onClick={quitCompany} className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-all font-semibold cursor-pointer">
-            <ArrowLeft size={14} /> All Companies
-          </button>
         </div>
 
-        {/* Status indicator if hired */}
-        {allCompleted && (
-          <div className="glass-card rounded-2xl p-6 border border-emerald-500/20 bg-emerald-950/5 text-center space-y-3.5 animate-fade-in">
-            <UserCheck className="h-10 w-10 text-emerald-400 mx-auto" />
-            <div>
-              <h2 className="text-md font-bold text-zinc-100">Congratulations! You are Hired!</h2>
-              <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
-                You have successfully cleared all {rounds.length} interview rounds of {selectedCompany}. Mock test stats have been updated in your dashboard.
-              </p>
-            </div>
-            <button
-              onClick={() => resetRoadmap(selectedCompany, selectedRole)}
-              className="flex items-center gap-1.5 px-4.5 py-2.5 bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-350 hover:bg-zinc-800 rounded-xl mx-auto transition-all cursor-pointer"
-            >
-              <RefreshCw size={13} /> Retake Pathway
-            </button>
-          </div>
-        )}
-
-        {/* Roadmap Stages */}
+        {/* Rounds Timeline Funnel */}
         <div className="space-y-4">
-          {rounds.map((round) => {
-            const isUnlocked = unlockedRounds[round.id]
-            const isCompleted = completedRounds[round.id]
-            const isActive = isUnlocked && !isCompleted
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
+            SELECTION ROUNDS ({rounds.length} PIPELINE STAGES)
+          </h2>
 
-            let borderStyle = 'border-zinc-850'
-            let bgStyle = 'bg-zinc-900/5 opacity-55'
-            
-            if (isCompleted) {
-              borderStyle = 'border-emerald-500/20'
-              bgStyle = 'bg-emerald-950/2'
-            } else if (isActive) {
-              borderStyle = 'border-indigo-500/30 shadow-md shadow-indigo-500/2'
-              bgStyle = 'bg-zinc-900/10'
-            }
+          <div className="space-y-3">
+            {rounds.map((round) => {
+              const isUnlocked = unlockedRounds[round.id] || false
+              const isDone = completedRounds[round.id] || false
 
-            return (
-              <div
-                key={round.id}
-                className={`glass-card rounded-2xl p-5 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 ${borderStyle} ${bgStyle}`}
-              >
-                <div className="flex items-start gap-4">
-                  {/* Status indicator badge */}
-                  <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-850 flex-shrink-0 flex items-center justify-center h-12 w-12 text-zinc-500">
-                    {isCompleted ? (
-                      <CheckCircle className="text-emerald-400" size={20} />
-                    ) : isUnlocked ? (
-                      <ThumbsUp className="text-indigo-400" size={20} />
-                    ) : (
-                      <Lock className="text-zinc-650" size={18} />
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-sm font-bold text-zinc-200">{round.name}</h3>
-                      <span className="text-[9px] uppercase font-bold px-2 py-0.5 bg-zinc-950/80 rounded border border-zinc-850 text-zinc-500 font-mono">
+              return (
+                <div
+                  key={round.id}
+                  className={`rounded-2xl p-5 border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                    isDone
+                      ? 'bg-emerald-950/20 border-emerald-800/60'
+                      : isUnlocked
+                      ? 'bg-zinc-950 border-zinc-800 hover:border-indigo-500/50'
+                      : 'bg-zinc-950/40 border-zinc-900 opacity-40'
+                  }`}
+                >
+                  <div className="space-y-1 max-w-2xl">
+                    <div className="flex items-center gap-2 font-mono">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
                         {round.type}
                       </span>
+                      {isDone && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-emerald-950 border border-emerald-800 text-emerald-400">
+                          QUALIFIED
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-zinc-500 leading-relaxed font-medium mt-1">{round.desc}</p>
+                    <h3 className="text-base font-bold text-zinc-100">{round.name}</h3>
+                    <p className="text-xs text-zinc-400 font-normal">{round.desc}</p>
+                  </div>
+
+                  <div className="self-end sm:self-center font-mono">
+                    {isUnlocked ? (
+                      <button
+                        onClick={() => handleStartRound(round.id)}
+                        className={`px-5 py-2 rounded-xl text-xs font-bold uppercase transition-all cursor-pointer border ${
+                          isDone
+                            ? 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-850'
+                            : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500/30 shadow-md shadow-indigo-600/20'
+                        }`}
+                      >
+                        {isDone ? 'RETAKE PAPER' : 'START PAPER'}
+                      </button>
+                    ) : (
+                      <span className="text-xs font-bold text-zinc-600 px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-850 cursor-not-allowed">
+                        LOCKED
+                      </span>
+                    )}
                   </div>
                 </div>
-
-                {/* Navigation trigger button */}
-                <div className="flex items-center gap-2 self-end sm:self-center">
-                  {isCompleted ? (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full">
-                      Cleared
-                    </span>
-                  ) : isUnlocked ? (
-                    <button
-                      onClick={() => startInterviewRound(round.id)}
-                      className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/20 shadow-md shadow-indigo-500/10 transition-all cursor-pointer"
-                    >
-                      Start Round
-                      <ChevronRight size={13} />
-                    </button>
-                  ) : (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 bg-zinc-950/80 border border-zinc-850 px-3 py-1.5 rounded-full flex items-center gap-1">
-                      <Lock size={10} /> Locked
-                    </span>
-                  )}
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
+
       </div>
     )
   }
 
-  // Categories Landing grid view
+  // Company Selection Main Dashboard View
   return (
-    <div className="p-6 text-zinc-100 min-h-screen animate-fade-in space-y-6">
-      {/* Page Header */}
-      <div className="pb-4 border-b border-zinc-900 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-455 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">Recruiter Gates</span>
-          <h1 className="text-3xl font-black tracking-tight mt-2.5 bg-gradient-to-r from-zinc-100 to-zinc-450 bg-clip-text text-transparent">Company Tests</h1>
-          <p className="text-zinc-450 text-xs mt-1.5 max-w-xl">
-            Select corporations to start simulated multi-round recruitment pipelines containing Aptitude, English, system design, and coding evaluators.
+    <div className="p-6 text-zinc-100 min-h-screen max-w-7xl mx-auto space-y-6 animate-fade-in relative font-sans">
+      
+      {/* Top Banner */}
+      <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="space-y-1.5 max-w-xl z-10">
+          <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-950 border border-indigo-800 text-indigo-300 inline-block">
+            COMPANY EXAMINATION PIPELINE
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-100 uppercase">
+            RECRUITMENT TEST DIRECTORY
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-400 font-normal">
+            Select a target company to launch its official computer-based technical evaluation paper.
           </p>
         </div>
       </div>
 
-      {/* Stats Summary Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
-        <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <Award size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase text-zinc-555 tracking-wider">Completed Pathway Exams</span>
-            <p className="text-xl font-black text-zinc-200 mt-1">{stats.mockTestsCount} Companies cleared</p>
-          </div>
-        </div>
-        <div className="glass-card rounded-2xl p-5 border border-zinc-850 bg-zinc-900/10 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <TrendingUp size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase text-zinc-555 tracking-wider">Pass Record</span>
-            <p className="text-xl font-black text-emerald-400 mt-1">{stats.clearedCount} Assessments Passed</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Recruiter Tiers Grid */}
-      <div className="grid md:grid-cols-3 gap-6 mt-6">
-        {/* Tier-1 Product Giants */}
-        <div className="glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-900/5 flex flex-col hover:border-zinc-700/60 hover:shadow-lg transition-all duration-300 group">
-          <div className="flex items-center gap-3.5 mb-5 border-b border-zinc-905 pb-3 flex-shrink-0">
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-455 border border-indigo-500/20">
-              <Cpu size={20} />
-            </div>
-            <div>
-              <h2 className="text-md font-bold tracking-tight text-zinc-200 font-sans">Product Giants</h2>
-              <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Tier-1 Giants</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 flex-grow">
-            {productCompanies.map((company) => (
+      {/* Companies Grid Categories */}
+      <div className="space-y-6">
+        {/* Product Companies */}
+        <div className="space-y-3">
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
+            PRODUCT TECH COMPANIES
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {productCompanies.map((c) => (
               <button
-                key={company}
-                onClick={() => handleStartTest(company)}
-                className="text-left px-3.5 py-3 rounded-xl bg-zinc-950/20 hover:bg-indigo-650 border border-zinc-850 text-xs font-semibold text-zinc-400 hover:text-white hover:border-indigo-550 hover:shadow-sm transition-all duration-205 cursor-pointer"
+                key={c}
+                onClick={() => handleSelectCompany(c)}
+                className="bg-zinc-950 rounded-2xl p-4 border border-zinc-800 hover:border-indigo-500/50 text-left transition-all duration-200 cursor-pointer space-y-1 group"
               >
-                {company}
+                <span className="text-[10px] font-mono font-bold uppercase text-indigo-400 block">PRODUCT</span>
+                <h3 className="text-sm font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors truncate">
+                  {c}
+                </h3>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Service Based Firms */}
-        <div className="glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-905/5 flex flex-col hover:border-zinc-700/60 hover:shadow-lg transition-all duration-300 group">
-          <div className="flex items-center gap-3.5 mb-5 border-b border-zinc-905 pb-3 flex-shrink-0">
-            <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-455 border border-violet-500/20">
-              <Building size={20} />
-            </div>
-            <div>
-              <h2 className="text-md font-bold tracking-tight text-zinc-200 font-sans">Service Firms</h2>
-              <span className="text-[9px] uppercase font-bold text-zinc-555 tracking-wider">Scale Firms</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 flex-grow">
-            {serviceCompanies.map((company) => (
+        {/* Service Companies */}
+        <div className="space-y-3 pt-4 border-t border-zinc-850">
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
+            SERVICE &amp; CONSULTING ENTERPRISE
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {serviceCompanies.map((c) => (
               <button
-                key={company}
-                onClick={() => handleStartTest(company)}
-                className="text-left px-3.5 py-3 rounded-xl bg-zinc-950/20 hover:bg-violet-650 border border-zinc-850 text-xs font-semibold text-zinc-400 hover:text-white hover:border-violet-550 hover:shadow-sm transition-all duration-205 cursor-pointer"
+                key={c}
+                onClick={() => handleSelectCompany(c)}
+                className="bg-zinc-950 rounded-2xl p-4 border border-zinc-800 hover:border-indigo-500/50 text-left transition-all duration-200 cursor-pointer space-y-1 group"
               >
-                {company}
+                <span className="text-[10px] font-mono font-bold uppercase text-zinc-400 block">ENTERPRISE</span>
+                <h3 className="text-sm font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors truncate">
+                  {c}
+                </h3>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Indian Startups */}
-        <div className="glass-card rounded-2xl p-6 border border-zinc-800/80 bg-zinc-905/5 flex flex-col hover:border-zinc-700/60 hover:shadow-lg transition-all duration-300 group">
-          <div className="flex items-center gap-3.5 mb-5 border-b border-zinc-905 pb-3 flex-shrink-0">
-            <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-455 border border-cyan-500/20">
-              <Zap size={20} />
-            </div>
-            <div>
-              <h2 className="text-md font-bold tracking-tight text-zinc-200 font-sans">Indian Startups</h2>
-              <span className="text-[9px] uppercase font-bold text-zinc-550 tracking-wider">Unicorn Tiers</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 flex-grow">
-            {startups.map((company) => (
+        {/* High-Growth Startups */}
+        <div className="space-y-3 pt-4 border-t border-zinc-850">
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
+            HIGH-GROWTH TECH STARTUPS
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {startups.map((c) => (
               <button
-                key={company}
-                onClick={() => handleStartTest(company)}
-                className="text-left px-3.5 py-3 rounded-xl bg-zinc-950/20 hover:bg-cyan-650 border border-zinc-850 text-xs font-semibold text-zinc-400 hover:text-white hover:border-cyan-555 hover:shadow-sm transition-all duration-205 cursor-pointer"
+                key={c}
+                onClick={() => handleSelectCompany(c)}
+                className="bg-zinc-950 rounded-2xl p-4 border border-zinc-800 hover:border-indigo-500/50 text-left transition-all duration-200 cursor-pointer space-y-1 group"
               >
-                {company}
+                <span className="text-[10px] font-mono font-bold uppercase text-amber-400 block">STARTUP</span>
+                <h3 className="text-sm font-bold text-zinc-100 group-hover:text-indigo-300 transition-colors truncate">
+                  {c}
+                </h3>
               </button>
             ))}
           </div>
         </div>
       </div>
+
     </div>
   )
-
-  function handleStartTest(companyName: string) {
-    setSelectedCompany(companyName)
-    setSelectingRole(true)
-  }
 }
 
 export default Test

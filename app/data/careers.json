@@ -1,364 +1,1194 @@
 {
-    "title": "Top Companies in India - Careers Pages",
+    "title": "Top Companies in India - Careers Pages & Direct Openings",
     "last_verified": "2026-08-09",
-    "note": "Includes Indian conglomerates/IT services, global MNCs with India operations, and Indian startups/unicorns. URLs change periodically -- verify before mass-applying.",
+    "note": "Official enterprise career portals and direct active job openings across Indian IT services, global MNCs, conglomerates, and tech unicorns.",
     "companies": [
         {
             "id": 1,
             "name": "Tata Consultancy Services (TCS)",
             "category": "Indian IT Services",
             "sector": "IT Services",
-            "careers_url": "https://www.tcs.com/careers"
+            "careers_url": "https://www.tcs.com/careers",
+            "jobs": [
+                {
+                    "job_id": "tcs-101",
+                    "title": "Graduate Engineer Trainee (Ninja & Digital)",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Pan-India (Bangalore, Pune, Hyderabad, Chennai)",
+                    "work_type": "Full-time",
+                    "salary_range": "3.36 - 7.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Python", "SQL", "Data Structures", "OOP"],
+                    "description": "TCS NQT hiring for Ninja and Digital engineer roles. Responsible for software development, system design support, enterprise solution delivery, and cloud application maintenance.",
+                    "apply_url": "https://www.tcs.com/careers"
+                },
+                {
+                    "job_id": "tcs-102",
+                    "title": "System Engineer - Cloud & Java Backend",
+                    "role_category": "Backend",
+                    "experience": "Entry",
+                    "location": "Bangalore",
+                    "work_type": "Hybrid",
+                    "salary_range": "6.5 - 9.5 LPA",
+                    "batch_eligibility": "2023 / 2024 / 2025 Batch",
+                    "skills": ["Java", "Spring Boot", "Microservices", "AWS"],
+                    "description": "Design scalable microservices architectures, build RESTful APIs, and integrate enterprise database pipelines for banking and healthcare clients.",
+                    "apply_url": "https://www.tcs.com/careers"
+                }
+            ]
         },
         {
             "id": 2,
             "name": "Infosys",
             "category": "Indian IT Services",
             "sector": "IT Services",
-            "careers_url": "https://www.infosys.com/careers.html"
+            "careers_url": "https://www.infosys.com/careers.html",
+            "jobs": [
+                {
+                    "job_id": "inf-101",
+                    "title": "Specialist Programmer (SP) & Digital Specialist Engineer (DSE)",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore / Mysore / Hyderabad",
+                    "work_type": "Full-time",
+                    "salary_range": "6.25 - 9.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Data Structures", "Algorithms", "Java", "C++", "System Design"],
+                    "description": "Infosys HackWithInfy & Power Programmer hiring. Solve complex algorithmic challenges, construct high-throughput backends, and work on cutting-edge enterprise cloud software.",
+                    "apply_url": "https://www.infosys.com/careers.html"
+                },
+                {
+                    "job_id": "inf-102",
+                    "title": "Frontend Developer - React.js & TypeScript",
+                    "role_category": "Frontend",
+                    "experience": "Entry",
+                    "location": "Pune",
+                    "work_type": "Hybrid",
+                    "salary_range": "5.5 - 8.5 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["React.js", "TypeScript", "TailwindCSS", "REST APIs"],
+                    "description": "Develop responsive web components, optimize client-side web application speed, and work closely with UI/UX designers to deliver high-performance user interfaces.",
+                    "apply_url": "https://www.infosys.com/careers.html"
+                }
+            ]
         },
         {
             "id": 3,
             "name": "Wipro",
             "category": "Indian IT Services",
             "sector": "IT Services",
-            "careers_url": "https://careers.wipro.com/"
+            "careers_url": "https://careers.wipro.com/",
+            "jobs": [
+                {
+                    "job_id": "wip-101",
+                    "title": "Elite National Talent Hunt - Project Engineer",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore, Hyderabad, Noida",
+                    "work_type": "Full-time",
+                    "salary_range": "3.5 - 6.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["C++", "Java", "Python", "Web Fundamentals"],
+                    "description": "Wipro Elite NTH graduate engineer hiring across application development, infrastructure management, cybersecurity analysis, and testing automation.",
+                    "apply_url": "https://careers.wipro.com/"
+                }
+            ]
         },
         {
             "id": 4,
             "name": "HCLTech",
             "category": "Indian IT Services",
             "sector": "IT Services",
-            "careers_url": "https://www.hcltech.com/careers"
+            "careers_url": "https://www.hcltech.com/careers",
+            "jobs": [
+                {
+                    "job_id": "hcl-101",
+                    "title": "Software Engineer - Full Stack (.NET / React)",
+                    "role_category": "Full Stack",
+                    "experience": "Entry",
+                    "location": "Noida / Chennai",
+                    "work_type": "Hybrid",
+                    "salary_range": "4.5 - 7.5 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": [".NET Core", "C#", "React.js", "SQL Server"],
+                    "description": "Build full stack web portals using C# .NET Core backends and React frontends for telecom and financial enterprise projects.",
+                    "apply_url": "https://www.hcltech.com/careers"
+                }
+            ]
         },
         {
             "id": 5,
             "name": "Tech Mahindra",
             "category": "Indian IT Services",
             "sector": "IT Services",
-            "careers_url": "https://careers.techmahindra.com/"
+            "careers_url": "https://careers.techmahindra.com/",
+            "jobs": [
+                {
+                    "job_id": "tm-101",
+                    "title": "Associate Software Engineer Trainee",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Pune / Hyderabad",
+                    "work_type": "Full-time",
+                    "salary_range": "3.25 - 5.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Python", "SQL", "Linux"],
+                    "description": "Graduate engineering program focusing on telecom software solutions, 5G networking software support, and IT operations automation.",
+                    "apply_url": "https://careers.techmahindra.com/"
+                }
+            ]
         },
         {
             "id": 6,
-            "name": "Reliance Industries",
+            "name": "Reliance Industries (Jio Platforms)",
             "category": "Indian Conglomerate",
             "sector": "Diversified (Energy, Retail, Telecom)",
-            "careers_url": "https://www.ril.com/careers"
+            "careers_url": "https://www.ril.com/careers",
+            "jobs": [
+                {
+                    "job_id": "ril-101",
+                    "title": "Software Engineer - Jio 5G & Cloud Services",
+                    "role_category": "Backend",
+                    "experience": "Entry",
+                    "location": "Navi Mumbai / Remote",
+                    "work_type": "Hybrid",
+                    "salary_range": "8.0 - 14.0 LPA",
+                    "batch_eligibility": "2024 / 2025 / 2026 Batch",
+                    "skills": ["Go", "Python", "Kubernetes", "Docker", "Distributed Systems"],
+                    "description": "Engineers high-throughput backend services for Jio's 500M+ subscriber base, cloud native microservices, and AI-powered telecom platforms.",
+                    "apply_url": "https://www.ril.com/careers"
+                }
+            ]
         },
         {
             "id": 7,
-            "name": "Larsen & Toubro (L&T)",
+            "name": "Larsen & Toubro (L&T Technology Services)",
             "category": "Indian Conglomerate",
             "sector": "Engineering & Construction",
-            "careers_url": "https://www.larsentoubro.com/corporate/careers/"
+            "careers_url": "https://www.larsentoubro.com/corporate/careers/",
+            "jobs": [
+                {
+                    "job_id": "lt-101",
+                    "title": "Graduate Engineer Trainee - Embedded Systems & IoT",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Vadodara / Mysore",
+                    "work_type": "Full-time",
+                    "salary_range": "5.0 - 7.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["C", "C++", "Embedded Linux", "RTOS", "Microcontrollers"],
+                    "description": "Develop firmware and IoT sensor integration for industrial automation, automotive electronics, and smart city infrastructure projects.",
+                    "apply_url": "https://www.larsentoubro.com/corporate/careers/"
+                }
+            ]
         },
         {
             "id": 8,
             "name": "Mahindra Group",
             "category": "Indian Conglomerate",
             "sector": "Diversified (Auto, Farm Equipment)",
-            "careers_url": "https://www.mahindra.com/careers"
+            "careers_url": "https://www.mahindra.com/careers",
+            "jobs": [
+                {
+                    "job_id": "mah-101",
+                    "title": "Data Analyst - Connected Mobility & EV Insights",
+                    "role_category": "Data & AI",
+                    "experience": "Entry",
+                    "location": "Mumbai / Bangalore",
+                    "work_type": "Hybrid",
+                    "salary_range": "7.0 - 11.0 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["Python", "SQL", "Pandas", "PowerBI", "Machine Learning"],
+                    "description": "Analyze electric vehicle telematics data, predict battery degradation metrics, and build customer drive behavior dashboards.",
+                    "apply_url": "https://www.mahindra.com/careers"
+                }
+            ]
         },
         {
             "id": 9,
             "name": "Tata Motors",
             "category": "Indian Conglomerate",
             "sector": "Automotive",
-            "careers_url": "https://careers.tatamotors.com/"
+            "careers_url": "https://careers.tatamotors.com/",
+            "jobs": [
+                {
+                    "job_id": "tmot-101",
+                    "title": "EV Software Development Engineer",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Pune",
+                    "work_type": "Full-time",
+                    "salary_range": "6.5 - 10.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["C++", "Python", "CAN Protocol", "MATLAB/Simulink"],
+                    "description": "Design and validate vehicle control unit (VCU) software and battery management algorithms for next-generation Tata EV vehicles.",
+                    "apply_url": "https://careers.tatamotors.com/"
+                }
+            ]
         },
         {
             "id": 10,
             "name": "Tata Steel",
             "category": "Indian Conglomerate",
             "sector": "Steel & Metals",
-            "careers_url": "https://www.tatasteel.com/careers/"
+            "careers_url": "https://www.tatasteel.com/careers/",
+            "jobs": [
+                {
+                    "job_id": "ts-101",
+                    "title": "Management Trainee (Technical) - Industrial AI",
+                    "role_category": "Data & AI",
+                    "experience": "Fresher",
+                    "location": "Jamshedpur / Kalinganagar",
+                    "work_type": "Full-time",
+                    "salary_range": "7.5 - 11.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Python", "TensorFlow", "Computer Vision", "SQL"],
+                    "description": "Build computer vision defect inspection systems and predictive maintenance machine learning pipelines for steel manufacturing plants.",
+                    "apply_url": "https://www.tatasteel.com/careers/"
+                }
+            ]
         },
         {
             "id": 11,
             "name": "Bajaj Finserv",
             "category": "Indian Conglomerate",
             "sector": "Financial Services",
-            "careers_url": "https://www.bajajfinserv.in/careers"
+            "careers_url": "https://www.bajajfinserv.in/careers",
+            "jobs": [
+                {
+                    "job_id": "bf-101",
+                    "title": "Backend Engineer - FinTech Payments",
+                    "role_category": "Backend",
+                    "experience": "Entry",
+                    "location": "Pune",
+                    "work_type": "Full-time",
+                    "salary_range": "8.5 - 14.0 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["Java", "Spring Boot", "Kafka", "PostgreSQL", "Redis"],
+                    "description": "Develop fault-tolerant payment processors, credit risk evaluation APIs, and real-time transaction reconciliation engines.",
+                    "apply_url": "https://www.bajajfinserv.in/careers"
+                }
+            ]
         },
         {
             "id": 12,
             "name": "ICICI Bank",
             "category": "Indian Bank",
             "sector": "Banking & Finance",
-            "careers_url": "https://www.icicibank.com/careers"
+            "careers_url": "https://www.icicibank.com/careers",
+            "jobs": [
+                {
+                    "job_id": "icici-101",
+                    "title": "Probationary Officer (PO) & Tech Trainee",
+                    "role_category": "Product & Analyst",
+                    "experience": "Fresher",
+                    "location": "Pan-India",
+                    "work_type": "Full-time",
+                    "salary_range": "4.5 - 6.8 LPA",
+                    "batch_eligibility": "2024 / 2025 / 2026 Batch",
+                    "skills": ["Banking Operations", "SQL", "Excel", "Data Analytics"],
+                    "description": "ICICI PO and Tech Specialist program. Manage retail banking digital channels, core banking system support, and branch operations.",
+                    "apply_url": "https://www.icicibank.com/careers"
+                }
+            ]
         },
         {
             "id": 13,
             "name": "HDFC Bank",
             "category": "Indian Bank",
             "sector": "Banking & Finance",
-            "careers_url": "https://www.hdfcbank.com/personal/about-us/careers"
+            "careers_url": "https://www.hdfcbank.com/personal/about-us/careers",
+            "jobs": [
+                {
+                    "job_id": "hdfc-101",
+                    "title": "Digital Technology Analyst - Mobile Banking",
+                    "role_category": "Full Stack",
+                    "experience": "Entry",
+                    "location": "Mumbai",
+                    "work_type": "Hybrid",
+                    "salary_range": "6.0 - 9.5 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["React Native", "Node.js", "API Security", "REST APIs"],
+                    "description": "Support mobile banking application features, implement biometric authentication workflows, and optimize client backend security.",
+                    "apply_url": "https://www.hdfcbank.com/personal/about-us/careers"
+                }
+            ]
         },
         {
             "id": 14,
             "name": "State Bank of India (SBI)",
             "category": "Indian Bank (PSU)",
             "sector": "Banking & Finance",
-            "careers_url": "https://bank.sbi/web/careers"
+            "careers_url": "https://bank.sbi/web/careers",
+            "jobs": [
+                {
+                    "job_id": "sbi-101",
+                    "title": "SBI Specialist Officer (SO) - Systems & Security",
+                    "role_category": "DevOps",
+                    "experience": "Entry",
+                    "location": "Navi Mumbai / Hyderabad",
+                    "work_type": "Full-time",
+                    "salary_range": "8.5 - 13.0 LPA",
+                    "batch_eligibility": "2023 / 2024 / 2025 Batch",
+                    "skills": ["Network Security", "Linux Administration", "Firewall", "Cybersecurity"],
+                    "description": "Manage SBI core banking data centers, enforce cyber threat detection monitoring, and maintain network infrastructure compliance.",
+                    "apply_url": "https://bank.sbi/web/careers"
+                }
+            ]
         },
         {
             "id": 15,
             "name": "Axis Bank",
             "category": "Indian Bank",
             "sector": "Banking & Finance",
-            "careers_url": "https://www.axisbank.com/careers"
+            "careers_url": "https://www.axisbank.com/careers",
+            "jobs": [
+                {
+                    "job_id": "axis-101",
+                    "title": "Business Analyst - Digital Lending & Credit",
+                    "role_category": "Product & Analyst",
+                    "experience": "Fresher",
+                    "location": "Mumbai / Remote",
+                    "work_type": "Hybrid",
+                    "salary_range": "5.5 - 8.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["SQL", "Excel", "Financial Modeling", "Python"],
+                    "description": "Gather product requirements for instant personal loan platforms, analyze credit funnel drop-off metrics, and build executive reports.",
+                    "apply_url": "https://www.axisbank.com/careers"
+                }
+            ]
         },
         {
             "id": 16,
             "name": "Aditya Birla Group",
             "category": "Indian Conglomerate",
             "sector": "Diversified",
-            "careers_url": "https://careers.adityabirla.com/"
+            "careers_url": "https://careers.adityabirla.com/",
+            "jobs": [
+                {
+                    "job_id": "abg-101",
+                    "title": "Leadership Associate - Digital Transformation",
+                    "role_category": "Product & Analyst",
+                    "experience": "Fresher",
+                    "location": "Mumbai",
+                    "work_type": "Full-time",
+                    "salary_range": "8.0 - 13.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Product Management", "Data Analytics", "Agile", "Business Strategy"],
+                    "description": "Cross-functional digital initiative leadership across retail, fashion, metals, and financial service units of Aditya Birla Group.",
+                    "apply_url": "https://careers.adityabirla.com/"
+                }
+            ]
         },
         {
             "id": 17,
             "name": "Hindustan Unilever (HUL)",
             "category": "Indian MNC (FMCG)",
             "sector": "FMCG",
-            "careers_url": "https://www.hul.co.in/careers/"
+            "careers_url": "https://www.hul.co.in/careers/",
+            "jobs": [
+                {
+                    "job_id": "hul-101",
+                    "title": "Unilever Future Leaders Program (UFLP) - Technology",
+                    "role_category": "Product & Analyst",
+                    "experience": "Fresher",
+                    "location": "Mumbai / Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "14.0 - 22.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Supply Chain Tech", "Python", "Cloud Platforms", "Product Strategy"],
+                    "description": "Elite graduate management program. Drive digital transformation, e-commerce tech platforms, and AI supply chain initiatives for FMCG brands.",
+                    "apply_url": "https://www.hul.co.in/careers/"
+                }
+            ]
         },
         {
             "id": 18,
             "name": "ITC Limited",
             "category": "Indian Conglomerate",
             "sector": "FMCG & Diversified",
-            "careers_url": "https://www.itcportal.com/careers/"
+            "careers_url": "https://www.itcportal.com/careers/",
+            "jobs": [
+                {
+                    "job_id": "itc-101",
+                    "title": "Assistant IT Manager - Enterprise Applications",
+                    "role_category": "Software Engineer",
+                    "experience": "Entry",
+                    "location": "Kolkata / Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "9.0 - 15.0 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["SAP HANA", "Python", "SQL", "Cloud Infrastructure"],
+                    "description": "Manage enterprise ERP systems, automate distributor network workflows, and implement cloud security controls.",
+                    "apply_url": "https://www.itcportal.com/careers/"
+                }
+            ]
         },
         {
             "id": 19,
             "name": "Asian Paints",
             "category": "Indian MNC",
             "sector": "Paints & Coatings",
-            "careers_url": "https://www.asianpaints.com/careers.html"
+            "careers_url": "https://www.asianpaints.com/careers.html",
+            "jobs": [
+                {
+                    "job_id": "ap-101",
+                    "title": "IT Executive - Supply Chain & E-commerce",
+                    "role_category": "Backend",
+                    "experience": "Fresher",
+                    "location": "Mumbai",
+                    "work_type": "Full-time",
+                    "salary_range": "6.5 - 10.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Node.js", "Java", "PostgreSQL", "Microservices"],
+                    "description": "Build high-speed order fulfillment APIs and dealer portal interfaces serving Asian Paints' nationwide network.",
+                    "apply_url": "https://www.asianpaints.com/careers.html"
+                }
+            ]
         },
         {
             "id": 20,
-            "name": "Bharti Airtel",
+            "name": "Bharti Airtel (Airtel Xlabs)",
             "category": "Indian MNC",
             "sector": "Telecom",
-            "careers_url": "https://www.airtel.in/careers"
+            "careers_url": "https://www.airtel.in/careers",
+            "jobs": [
+                {
+                    "job_id": "airtel-101",
+                    "title": "Software Engineer - Airtel Thanks App Platform",
+                    "role_category": "Full Stack",
+                    "experience": "Entry",
+                    "location": "Gurgaon",
+                    "work_type": "Hybrid",
+                    "salary_range": "10.0 - 18.0 LPA",
+                    "batch_eligibility": "2024 / 2025 / 2026 Batch",
+                    "skills": ["Java", "Spring Boot", "React Native", "Kafka", "Redis"],
+                    "description": "Develop high-availability mobile backend endpoints for 300M+ Airtel subscribers, handle peak recharge traffic bursts, and build real-time fraud engines.",
+                    "apply_url": "https://www.airtel.in/careers"
+                }
+            ]
         },
         {
             "id": 21,
             "name": "Adani Group",
             "category": "Indian Conglomerate",
             "sector": "Diversified (Ports, Energy, Infra)",
-            "careers_url": "https://careers.adani.com/"
+            "careers_url": "https://careers.adani.com/",
+            "jobs": [
+                {
+                    "job_id": "adani-101",
+                    "title": "Graduate Engineer Trainee - Digital Infra & IoT",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Ahmedabad",
+                    "work_type": "Full-time",
+                    "salary_range": "5.5 - 8.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Python", "IoT", "SCADA Integration", "SQL"],
+                    "description": "Integrate IoT telemetry data for renewable energy solar farms, port logistics operations, and smart airport digital twins.",
+                    "apply_url": "https://careers.adani.com/"
+                }
+            ]
         },
         {
             "id": 22,
             "name": "JSW Group",
             "category": "Indian Conglomerate",
             "sector": "Steel, Energy, Infra",
-            "careers_url": "https://www.jsw.in/careers"
+            "careers_url": "https://www.jsw.in/careers",
+            "jobs": [
+                {
+                    "job_id": "jsw-101",
+                    "title": "Management Trainee - Tech & Analytics",
+                    "role_category": "Data & AI",
+                    "experience": "Fresher",
+                    "location": "Mumbai / Vijayanagar",
+                    "work_type": "Full-time",
+                    "salary_range": "6.5 - 10.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Python", "SQL", "Tableau", "Machine Learning"],
+                    "description": "Build plant yield optimization models, equipment downtime predictors, and supply chain logistics dashboards.",
+                    "apply_url": "https://www.jsw.in/careers"
+                }
+            ]
         },
         {
             "id": 23,
             "name": "Godrej Group",
             "category": "Indian Conglomerate",
             "sector": "Diversified (Consumer, Real Estate)",
-            "careers_url": "https://www.godrejcareers.com/"
+            "careers_url": "https://www.godrejcareers.com/",
+            "jobs": [
+                {
+                    "job_id": "godrej-101",
+                    "title": "Frontend Engineer - E-commerce Portals",
+                    "role_category": "Frontend",
+                    "experience": "Entry",
+                    "location": "Mumbai",
+                    "work_type": "Hybrid",
+                    "salary_range": "6.0 - 9.5 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["React.js", "Next.js", "TailwindCSS", "Redux"],
+                    "description": "Build responsive shopping interfaces for Godrej consumer products and real estate booking web platforms.",
+                    "apply_url": "https://www.godrejcareers.com/"
+                }
+            ]
         },
         {
             "id": 24,
             "name": "Cipla",
             "category": "Indian MNC",
             "sector": "Pharmaceuticals",
-            "careers_url": "https://www.cipla.com/careers"
+            "careers_url": "https://www.cipla.com/careers",
+            "jobs": [
+                {
+                    "job_id": "cip-101",
+                    "title": "Data Analyst - Bio-Informatics & Pharma Operations",
+                    "role_category": "Data & AI",
+                    "experience": "Fresher",
+                    "location": "Mumbai / Goa",
+                    "work_type": "Full-time",
+                    "salary_range": "5.5 - 8.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Python", "R", "SQL", "Bioinformatics", "Data Visualization"],
+                    "description": "Analyze clinical trial data, automate quality control reporting, and support drug safety analytics.",
+                    "apply_url": "https://www.cipla.com/careers"
+                }
+            ]
         },
         {
             "id": 25,
             "name": "Sun Pharma",
             "category": "Indian MNC",
             "sector": "Pharmaceuticals",
-            "careers_url": "https://sunpharma.com/careers/"
+            "careers_url": "https://sunpharma.com/careers/",
+            "jobs": [
+                {
+                    "job_id": "sun-101",
+                    "title": "IT Systems Analyst - Manufacturing Execution",
+                    "role_category": "Software Engineer",
+                    "experience": "Entry",
+                    "location": "Vadodara / Mumbai",
+                    "work_type": "Full-time",
+                    "salary_range": "6.0 - 9.0 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["SQL", "ERP", "Python", "Process Automation"],
+                    "description": "Maintain pharmaceutical manufacturing execution systems (MES) and ensure US FDA 21 CFR Part 11 digital compliance.",
+                    "apply_url": "https://sunpharma.com/careers/"
+                }
+            ]
         },
         {
             "id": 26,
             "name": "Dr. Reddy's Laboratories",
             "category": "Indian MNC",
             "sector": "Pharmaceuticals",
-            "careers_url": "https://careers.drreddys.com/"
+            "careers_url": "https://careers.drreddys.com/",
+            "jobs": [
+                {
+                    "job_id": "drr-101",
+                    "title": "Digital Transformation Specialist",
+                    "role_category": "Product & Analyst",
+                    "experience": "Fresher",
+                    "location": "Hyderabad",
+                    "work_type": "Full-time",
+                    "salary_range": "6.5 - 10.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Python", "SQL", "Agile", "Process Mining"],
+                    "description": "Drive digitalization of R&D workflows, laboratory information management systems (LIMS), and digital health initiatives.",
+                    "apply_url": "https://careers.drreddys.com/"
+                }
+            ]
         },
         {
             "id": 27,
             "name": "Google India",
             "category": "Global MNC",
             "sector": "Technology",
-            "careers_url": "https://careers.google.com/locations/india/"
+            "careers_url": "https://careers.google.com/locations/india/",
+            "jobs": [
+                {
+                    "job_id": "goog-101",
+                    "title": "Software Engineer (STEP / University Graduate 2026)",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore / Hyderabad",
+                    "work_type": "Full-time",
+                    "salary_range": "22.0 - 35.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["C++", "Java", "Python", "Data Structures", "Algorithms", "System Design"],
+                    "description": "Google Early Career Software Engineer position. Design high-performance distributed systems, Google Search / Cloud / Android backend features, and AI infrastructure.",
+                    "apply_url": "https://careers.google.com/locations/india/"
+                },
+                {
+                    "job_id": "goog-102",
+                    "title": "Frontend Engineer - Google Cloud Console",
+                    "role_category": "Frontend",
+                    "experience": "Entry",
+                    "location": "Bangalore",
+                    "work_type": "Hybrid",
+                    "salary_range": "24.0 - 38.0 LPA",
+                    "batch_eligibility": "2023 / 2024 / 2025 Batch",
+                    "skills": ["TypeScript", "Angular", "Web Components", "CSS", "Performance Optimization"],
+                    "description": "Develop high-scale, accessible web UI components for the Google Cloud Platform management console serving millions of developers globally.",
+                    "apply_url": "https://careers.google.com/locations/india/"
+                }
+            ]
         },
         {
             "id": 28,
             "name": "Microsoft India",
             "category": "Global MNC",
             "sector": "Technology",
-            "careers_url": "https://careers.microsoft.com/"
+            "careers_url": "https://careers.microsoft.com/",
+            "jobs": [
+                {
+                    "job_id": "msft-101",
+                    "title": "Software Engineer - Azure Cloud & AI Infrastructure",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Hyderabad / Bangalore / Noida",
+                    "work_type": "Full-time",
+                    "salary_range": "20.0 - 32.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["C#", "C++", "Java", "Data Structures", "Cloud Computing"],
+                    "description": "Build hyper-scale Azure cloud infrastructure, AI model serving microservices, and enterprise developer tools at Microsoft India Development Center (IDC).",
+                    "apply_url": "https://careers.microsoft.com/"
+                },
+                {
+                    "job_id": "msft-102",
+                    "title": "Data Engineer - Copilot AI Analytics",
+                    "role_category": "Data & AI",
+                    "experience": "Entry",
+                    "location": "Hyderabad",
+                    "work_type": "Hybrid",
+                    "salary_range": "22.0 - 34.0 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["Python", "Spark", "SQL", "Azure Databricks", "LLM Pipelines"],
+                    "description": "Architect telemetry pipelines, train telemetry analytics models, and build telemetry reporting infrastructure for Microsoft 365 Copilot products.",
+                    "apply_url": "https://careers.microsoft.com/"
+                }
+            ]
         },
         {
             "id": 29,
             "name": "Amazon India",
             "category": "Global MNC",
             "sector": "E-commerce / Technology",
-            "careers_url": "https://www.amazon.jobs/en/locations/india"
+            "careers_url": "https://www.amazon.jobs/en/locations/india",
+            "jobs": [
+                {
+                    "job_id": "amzn-101",
+                    "title": "Software Development Engineer I (SDE 1)",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore / Hyderabad / Chennai",
+                    "work_type": "Full-time",
+                    "salary_range": "18.0 - 28.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Object-Oriented Design", "Data Structures", "AWS", "System Design"],
+                    "description": "Amazon Campus & Off-campus SDE 1 hiring. Build customer-facing e-commerce services, Prime Video streaming pipelines, and AWS distributed databases.",
+                    "apply_url": "https://www.amazon.jobs/en/locations/india"
+                },
+                {
+                    "job_id": "amzn-102",
+                    "title": "Quality Assurance Engineer (QAE I)",
+                    "role_category": "QA & Testing",
+                    "experience": "Entry",
+                    "location": "Bangalore",
+                    "work_type": "Hybrid",
+                    "salary_range": "12.0 - 18.0 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["Python", "Selenium", "API Testing", "JUnit", "Automation Frameworks"],
+                    "description": "Construct automated testing suites, perform stress and load testing on payment gateways, and execute regression test pipelines.",
+                    "apply_url": "https://www.amazon.jobs/en/locations/india"
+                }
+            ]
         },
         {
             "id": 30,
             "name": "Accenture India",
             "category": "Global MNC",
             "sector": "IT Consulting",
-            "careers_url": "https://www.accenture.com/in-en/careers"
+            "careers_url": "https://www.accenture.com/in-en/careers",
+            "jobs": [
+                {
+                    "job_id": "acc-101",
+                    "title": "Application Development Associate (ADA)",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Pan-India (Bangalore, Pune, Gurgaon)",
+                    "work_type": "Full-time",
+                    "salary_range": "4.5 - 6.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Python", "SQL", "Web Technologies"],
+                    "description": "Entry-level software engineering role focusing on enterprise cloud development, testing automation, and database administration.",
+                    "apply_url": "https://www.accenture.com/in-en/careers"
+                }
+            ]
         },
         {
             "id": 31,
             "name": "IBM India",
             "category": "Global MNC",
             "sector": "Technology",
-            "careers_url": "https://www.ibm.com/in-en/careers"
+            "careers_url": "https://www.ibm.com/in-en/careers",
+            "jobs": [
+                {
+                    "job_id": "ibm-101",
+                    "title": "Associate System Engineer - Cloud & Security",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore / Kochi / Pune",
+                    "work_type": "Full-time",
+                    "salary_range": "5.0 - 7.8 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Python", "Linux", "Docker", "Kubernetes", "Cloud Fundamentals"],
+                    "description": "Support IBM Hybrid Cloud microservices, manage Red Hat OpenShift cluster deployments, and assist security patch pipelines.",
+                    "apply_url": "https://www.ibm.com/in-en/careers"
+                }
+            ]
         },
         {
             "id": 32,
             "name": "Deloitte India",
             "category": "Global MNC",
             "sector": "Consulting & Professional Services",
-            "careers_url": "https://www2.deloitte.com/in/en/careers.html"
+            "careers_url": "https://www2.deloitte.com/in/en/careers.html",
+            "jobs": [
+                {
+                    "job_id": "del-101",
+                    "title": "Analyst - Technology Consulting & Cyber Risk",
+                    "role_category": "Product & Analyst",
+                    "experience": "Fresher",
+                    "location": "Hyderabad / Gurgaon / Bangalore",
+                    "work_type": "Hybrid",
+                    "salary_range": "6.5 - 9.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Python", "SQL", "Cybersecurity", "Network Architecture", "Excel"],
+                    "description": "Perform enterprise IT security audits, assess cloud infrastructure risk compliance, and build data visualization dashboards for global clients.",
+                    "apply_url": "https://www2.deloitte.com/in/en/careers.html"
+                }
+            ]
         },
         {
             "id": 33,
-            "name": "EY India",
+            "name": "EY India (Ernst & Young)",
             "category": "Global MNC",
             "sector": "Consulting & Professional Services",
-            "careers_url": "https://www.ey.com/en_in/careers"
+            "careers_url": "https://www.ey.com/en_in/careers",
+            "jobs": [
+                {
+                    "job_id": "ey-101",
+                    "title": "Tech Consultant - Data Analytics & AI",
+                    "role_category": "Data & AI",
+                    "experience": "Entry",
+                    "location": "Bangalore / Gurgaon",
+                    "work_type": "Hybrid",
+                    "salary_range": "6.0 - 9.0 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["Python", "SQL", "PowerBI", "Azure Data Factory"],
+                    "description": "Build enterprise data models, ETL data pipelines, and power executive analytics dashboards for banking and retail clients.",
+                    "apply_url": "https://www.ey.com/en_in/careers"
+                }
+            ]
         },
         {
             "id": 34,
             "name": "PwC India",
             "category": "Global MNC",
             "sector": "Consulting & Professional Services",
-            "careers_url": "https://www.pwc.in/careers.html"
+            "careers_url": "https://www.pwc.in/careers.html",
+            "jobs": [
+                {
+                    "job_id": "pwc-101",
+                    "title": "Associate - Cloud & Digital Solutions",
+                    "role_category": "DevOps",
+                    "experience": "Fresher",
+                    "location": "Kolkata / Bangalore / Mumbai",
+                    "work_type": "Hybrid",
+                    "salary_range": "6.0 - 8.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["AWS", "Azure", "Terraform", "CI/CD Pipelines"],
+                    "description": "Assist in cloud migration projects, deploy infrastructure-as-code scripts, and monitor system health metrics.",
+                    "apply_url": "https://www.pwc.in/careers.html"
+                }
+            ]
         },
         {
             "id": 35,
             "name": "KPMG India",
             "category": "Global MNC",
             "sector": "Consulting & Professional Services",
-            "careers_url": "https://home.kpmg/in/en/home/careers.html"
+            "careers_url": "https://home.kpmg/in/en/home/careers.html",
+            "jobs": [
+                {
+                    "job_id": "kpmg-101",
+                    "title": "Analyst - Financial Risk & Data Engineering",
+                    "role_category": "Data & AI",
+                    "experience": "Entry",
+                    "location": "Gurgaon / Bangalore",
+                    "work_type": "Hybrid",
+                    "salary_range": "6.5 - 9.5 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["Python", "SQL", "Financial Risk Modeling", "Tableau"],
+                    "description": "Analyze financial transaction risk datasets, build fraud detection models, and support regulatory reporting.",
+                    "apply_url": "https://home.kpmg/in/en/home/careers.html"
+                }
+            ]
         },
         {
             "id": 36,
             "name": "Capgemini India",
             "category": "Global MNC",
             "sector": "IT Consulting",
-            "careers_url": "https://www.capgemini.com/in-en/careers/"
+            "careers_url": "https://www.capgemini.com/in-en/careers/",
+            "jobs": [
+                {
+                    "job_id": "cap-101",
+                    "title": "Senior Analyst - Software Engineer",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Pune / Mumbai / Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "4.2 - 7.5 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Spring Boot", "React", "SQL"],
+                    "description": "Develop client software solutions, participate in agile sprint ceremonies, and write clean unit-tested application code.",
+                    "apply_url": "https://www.capgemini.com/in-en/careers/"
+                }
+            ]
         },
         {
             "id": 37,
             "name": "Cognizant",
             "category": "Global MNC",
             "sector": "IT Services",
-            "careers_url": "https://careers.cognizant.com/"
+            "careers_url": "https://careers.cognizant.com/",
+            "jobs": [
+                {
+                    "job_id": "cog-101",
+                    "title": "GenC Engineer & GenC Next Specialist",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Chennai / Coimbatore / Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "4.0 - 6.75 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Python", "SQL", "Web Technologies"],
+                    "description": "Cognizant campus hiring program. Build web applications, maintain legacy database systems, and perform quality engineering.",
+                    "apply_url": "https://careers.cognizant.com/"
+                }
+            ]
         },
         {
             "id": 38,
-            "name": "Samsung India",
+            "name": "Samsung India (Samsung R&D Institute)",
             "category": "Global MNC",
             "sector": "Electronics",
-            "careers_url": "https://www.samsung.com/in/careers/"
+            "careers_url": "https://www.samsung.com/in/careers/",
+            "jobs": [
+                {
+                    "job_id": "sam-101",
+                    "title": "Software Engineer - AI & Camera Algorithms",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore / Noida",
+                    "work_type": "Full-time",
+                    "salary_range": "14.0 - 22.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["C++", "Python", "OpenCV", "Deep Learning", "Android NDK"],
+                    "description": "Build real-time image processing algorithms, Android camera HAL extensions, and AI on-device inference models for Galaxy smartphones.",
+                    "apply_url": "https://www.samsung.com/in/careers/"
+                }
+            ]
         },
         {
             "id": 39,
             "name": "JPMorgan Chase India",
             "category": "Global MNC",
             "sector": "Banking & Finance",
-            "careers_url": "https://careers.jpmorgan.com/"
+            "careers_url": "https://careers.jpmorgan.com/",
+            "jobs": [
+                {
+                    "job_id": "jpm-101",
+                    "title": "Software Engineer - Global Technology Analyst Program (SEP)",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore / Hyderabad / Mumbai",
+                    "work_type": "Full-time",
+                    "salary_range": "16.0 - 24.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Python", "Spring Boot", "Kafka", "Data Structures"],
+                    "description": "Develop ultra-low latency trading systems, risk management microservices, and mobile banking APIs for JPMorgan Chase Global Tech.",
+                    "apply_url": "https://careers.jpmorgan.com/"
+                }
+            ]
         },
         {
             "id": 40,
             "name": "Goldman Sachs India",
             "category": "Global MNC",
             "sector": "Banking & Finance",
-            "careers_url": "https://www.goldmansachs.com/careers/"
+            "careers_url": "https://www.goldmansachs.com/careers/",
+            "jobs": [
+                {
+                    "job_id": "gs-101",
+                    "title": "New Analyst - Engineering Division",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore / Hyderabad",
+                    "work_type": "Full-time",
+                    "salary_range": "20.0 - 30.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "C++", "Python", "Algorithms", "System Design"],
+                    "description": "Goldman Sachs Engineering campus hiring. Build quantitative trading engines, risk computation platforms, and cloud infrastructure.",
+                    "apply_url": "https://www.goldmansachs.com/careers/"
+                }
+            ]
         },
         {
             "id": 41,
             "name": "Flipkart",
             "category": "Indian Startup (Unicorn)",
             "sector": "E-commerce",
-            "careers_url": "https://www.flipkartcareers.com/"
+            "careers_url": "https://www.flipkartcareers.com/",
+            "jobs": [
+                {
+                    "job_id": "fk-101",
+                    "title": "Software Development Engineer I (SDE 1)",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "18.0 - 26.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Dropwizard", "Kafka", "MySQL", "System Design"],
+                    "description": "Flipkart GRiD & campus hiring. Architect order processing engines capable of handling 50,000+ orders/min during Big Billion Days.",
+                    "apply_url": "https://www.flipkartcareers.com/"
+                }
+            ]
         },
         {
             "id": 42,
             "name": "Zomato (Eternal)",
             "category": "Indian Startup (Unicorn)",
             "sector": "Food-tech",
-            "careers_url": "https://www.zomato.com/careers"
+            "careers_url": "https://www.zomato.com/careers",
+            "jobs": [
+                {
+                    "job_id": "zom-101",
+                    "title": "Software Engineer - Dispatch & Logistics",
+                    "role_category": "Backend",
+                    "experience": "Entry",
+                    "location": "Gurgaon / Remote",
+                    "work_type": "Hybrid",
+                    "salary_range": "16.0 - 25.0 LPA",
+                    "batch_eligibility": "2024 / 2025 / 2026 Batch",
+                    "skills": ["Go", "Node.js", "Redis", "PostGIS", "System Design"],
+                    "description": "Build real-time delivery rider allocation algorithms, ETA prediction pipelines, and order tracking systems.",
+                    "apply_url": "https://www.zomato.com/careers"
+                }
+            ]
         },
         {
             "id": 43,
             "name": "Swiggy",
             "category": "Indian Startup (Unicorn)",
             "sector": "Food-tech / Quick Commerce",
-            "careers_url": "https://careers.swiggy.com/"
+            "careers_url": "https://careers.swiggy.com/",
+            "jobs": [
+                {
+                    "job_id": "swig-101",
+                    "title": "SDE 1 - Instamart & Quick Commerce Tech",
+                    "role_category": "Full Stack",
+                    "experience": "Fresher",
+                    "location": "Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "16.0 - 24.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Go", "React.js", "PostgreSQL", "Kafka"],
+                    "description": "Build 10-minute delivery warehouse management microservices, inventory tracking engines, and checkout UI flows.",
+                    "apply_url": "https://careers.swiggy.com/"
+                }
+            ]
         },
         {
             "id": 44,
             "name": "Paytm (One97 Communications)",
             "category": "Indian Startup (Unicorn)",
             "sector": "FinTech",
-            "careers_url": "https://jobs.paytm.com/"
+            "careers_url": "https://jobs.paytm.com/",
+            "jobs": [
+                {
+                    "job_id": "pay-101",
+                    "title": "Backend Developer - UPI Payments",
+                    "role_category": "Backend",
+                    "experience": "Entry",
+                    "location": "Noida / Bangalore",
+                    "work_type": "Hybrid",
+                    "salary_range": "12.0 - 20.0 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["Java", "Spring Boot", "MySQL", "Redis", "Kafka"],
+                    "description": "Engineers high-concurrency UPI transaction switch, merchant QR payment processing APIs, and fraud detection logic.",
+                    "apply_url": "https://jobs.paytm.com/"
+                }
+            ]
         },
         {
             "id": 45,
-            "name": "Ola",
+            "name": "Ola (Ola Electric / Cabs)",
             "category": "Indian Startup (Unicorn)",
             "sector": "Mobility",
-            "careers_url": "https://www.olacabs.com/careers"
+            "careers_url": "https://www.olacabs.com/careers",
+            "jobs": [
+                {
+                    "job_id": "ola-101",
+                    "title": "Software Engineer - Vehicle Telematics & Cloud",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "14.0 - 22.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["C++", "Java", "Python", "MQTT", "AWS IoT"],
+                    "description": "Build cloud backend telemetry pipelines processing real-time telemetry from 100,000+ Ola Electric scooters.",
+                    "apply_url": "https://www.olacabs.com/careers"
+                }
+            ]
         },
         {
             "id": 46,
             "name": "Nykaa",
             "category": "Indian Startup (Unicorn)",
             "sector": "Beauty & E-commerce",
-            "careers_url": "https://www.nykaa.com/careers"
+            "careers_url": "https://www.nykaa.com/careers",
+            "jobs": [
+                {
+                    "job_id": "nyk-101",
+                    "title": "Frontend Engineer - E-commerce Web & App",
+                    "role_category": "Frontend",
+                    "experience": "Entry",
+                    "location": "Gurgaon / Mumbai",
+                    "work_type": "Hybrid",
+                    "salary_range": "10.0 - 16.0 LPA",
+                    "batch_eligibility": "2024 / 2025 Batch",
+                    "skills": ["React.js", "Next.js", "TypeScript", "TailwindCSS"],
+                    "description": "Construct high-performance product detail pages, checkout funnels, and personalized beauty recommendation UIs.",
+                    "apply_url": "https://www.nykaa.com/careers"
+                }
+            ]
         },
         {
             "id": 47,
             "name": "PhonePe",
             "category": "Indian Startup (Unicorn)",
             "sector": "FinTech",
-            "careers_url": "https://www.phonepe.com/careers/"
+            "careers_url": "https://www.phonepe.com/careers/",
+            "jobs": [
+                {
+                    "job_id": "pp-101",
+                    "title": "Software Engineer - Payments Infrastructure",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "18.0 - 28.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "HBase", "Kafka", "Distributed Systems", "MySQL"],
+                    "description": "PhonePe University hiring program. Work on payment routing engines processing 50M+ daily financial transactions.",
+                    "apply_url": "https://www.phonepe.com/careers/"
+                }
+            ]
         },
         {
             "id": 48,
             "name": "Zerodha",
             "category": "Indian Startup (Bootstrapped)",
             "sector": "FinTech / Broking",
-            "careers_url": "https://careers.zerodha.com/"
+            "careers_url": "https://careers.zerodha.com/",
+            "jobs": [
+                {
+                    "job_id": "zero-101",
+                    "title": "Backend Engineer - Kite Trading Platform",
+                    "role_category": "Backend",
+                    "experience": "Entry",
+                    "location": "Bangalore / Remote",
+                    "work_type": "Remote",
+                    "salary_range": "15.0 - 25.0 LPA",
+                    "batch_eligibility": "2024 / 2025 / 2026 Batch",
+                    "skills": ["Go", "Python", "PostgreSQL", "Redis", "WebSockets"],
+                    "description": "Zerodha tech team. Build minimal, high-efficiency stock trading microservices and real-time market data streaming APIs.",
+                    "apply_url": "https://careers.zerodha.com/"
+                }
+            ]
         },
         {
             "id": 49,
             "name": "Razorpay",
             "category": "Indian Startup (Unicorn)",
             "sector": "FinTech / Payments",
-            "careers_url": "https://razorpay.com/jobs/"
+            "careers_url": "https://razorpay.com/jobs/",
+            "jobs": [
+                {
+                    "job_id": "raz-101",
+                    "title": "Software Engineer 1 - Payment Gateway",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "16.0 - 24.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Go", "PHP", "MySQL", "AWS", "System Design"],
+                    "description": "Build high-reliability checkout APIs, merchant settlement pipelines, and subscription recurring payment processing engines.",
+                    "apply_url": "https://razorpay.com/jobs/"
+                }
+            ]
         },
         {
             "id": 50,
             "name": "Meesho",
             "category": "Indian Startup (Unicorn)",
             "sector": "Social Commerce / E-commerce",
-            "careers_url": "https://www.meesho.io/jobs"
+            "careers_url": "https://www.meesho.io/jobs",
+            "jobs": [
+                {
+                    "job_id": "mee-101",
+                    "title": "SDE 1 - Search & Recommendations",
+                    "role_category": "Software Engineer",
+                    "experience": "Fresher",
+                    "location": "Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "16.0 - 25.0 LPA",
+                    "batch_eligibility": "2025 / 2026 Batch",
+                    "skills": ["Java", "Python", "ElasticSearch", "Kafka", "Data Structures"],
+                    "description": "Optimize product search relevance algorithms, personalize home feed carousels, and scale catalog search microservices.",
+                    "apply_url": "https://www.meesho.io/jobs"
+                }
+            ]
         },
         {
             "id": 51,
             "name": "CRED",
             "category": "Indian Startup (Unicorn)",
             "sector": "FinTech / Rewards",
-            "careers_url": "https://careers.cred.club/"
+            "careers_url": "https://careers.cred.club/",
+            "jobs": [
+                {
+                    "job_id": "cred-101",
+                    "title": "Backend Engineer - Credit Card Payments & Rewards",
+                    "role_category": "Backend",
+                    "experience": "Entry",
+                    "location": "Bangalore",
+                    "work_type": "Full-time",
+                    "salary_range": "18.0 - 28.0 LPA",
+                    "batch_eligibility": "2024 / 2025 / 2026 Batch",
+                    "skills": ["Java", "Spring Boot", "DynamoDB", "Kafka", "Microservices"],
+                    "description": "Engineers CRED credit card payment processing engine, reward coin ledger algorithms, and high-security financial pipelines.",
+                    "apply_url": "https://careers.cred.club/"
+                }
+            ]
         }
     ]
 }

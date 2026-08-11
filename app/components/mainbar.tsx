@@ -8,7 +8,6 @@ import Test from '../pages/test'
 import Practice from '../pages/practice'
 import Blog from '../pages/blog'
 import Careers from '../pages/careers'
-import JobAlertsBanner from './JobAlertsBanner'
 
 interface MainBarProps {
   selectedPage: string
@@ -18,9 +17,6 @@ interface MainBarProps {
 const MainBar: React.FC<MainBarProps> = ({ selectedPage, setSelectedPage }) => {
   return (
     <div className="w-full flex flex-col min-h-full">
-      {/* Top Interactive Job Alerts Banner */}
-      <JobAlertsBanner onNavigateToCareers={() => setSelectedPage?.('careers')} />
-
       {/* Page Content View Container */}
       <div className="flex-1 p-2 sm:p-4 space-y-4 text-zinc-100">
         {selectedPage === 'home' && <Home />}
