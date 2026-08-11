@@ -698,10 +698,10 @@ const Practice = () => {
                 </h3>
                 <p className="text-[11px] text-zinc-400 font-normal leading-relaxed">
                   {diff === 'Easy'
-                    ? '10 foundational questions to verify syntax and logic.'
+                    ? '20 foundational questions to verify syntax and logic.'
                     : diff === 'Medium'
-                    ? '10 real-world scenario questions and core algorithms.'
-                    : '10 high-complexity optimization and architecture questions.'}
+                    ? '20 real-world scenario questions and core algorithms.'
+                    : '20 high-complexity optimization and architecture questions.'}
                 </p>
               </button>
             ))}
